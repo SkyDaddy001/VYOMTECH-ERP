@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: callcenter-config
+  labels:
+    app: callcenter-api
+data:
+  DB_NAME: "callcenter"
+  DB_USER: "callcenter_user"
+  REDIS_HOST: "redis-service"
+  REDIS_PORT: "6379"
+  LOG_LEVEL: "info"
+  AI_CACHE_TTL: "1800"
+  RATE_LIMIT_REQUESTS: "100"
+  RATE_LIMIT_WINDOW: "60"
+  MAX_CONCURRENT_CALLS: "10"
+  SESSION_TIMEOUT: "3600"
+  PASSWORD_RESET_EXPIRY: "3600"
