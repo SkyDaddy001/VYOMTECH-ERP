@@ -18,7 +18,7 @@ func SetupRoutesWithServices(
 	agentService *services.AgentService,
 	log *logger.Logger,
 ) *mux.Router {
-	return setupRoutes(authService, nil, passwordResetHandler, agentService, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, log)
+	return setupRoutes(authService, nil, passwordResetHandler, agentService, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, log)
 }
 
 // SetupRoutesWithTenant configures all API routes with tenant service
@@ -29,10 +29,10 @@ func SetupRoutesWithTenant(
 	agentService *services.AgentService,
 	log *logger.Logger,
 ) *mux.Router {
-	return setupRoutes(authService, tenantService, passwordResetHandler, agentService, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, log)
+	return setupRoutes(authService, tenantService, passwordResetHandler, agentService, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, log)
 }
 
-// SetupRoutesWithGamification configures all API routes with gamification service
+// SetupRoutesWithGamification configures all API routes with gamification features
 func SetupRoutesWithGamification(
 	authService *services.AuthService,
 	tenantService *services.TenantService,
@@ -41,10 +41,10 @@ func SetupRoutesWithGamification(
 	gamificationService *services.GamificationService,
 	log *logger.Logger,
 ) *mux.Router {
-	return setupRoutes(authService, tenantService, passwordResetHandler, agentService, gamificationService, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, log)
+	return setupRoutes(authService, tenantService, passwordResetHandler, agentService, gamificationService, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, log)
 }
 
-// SetupRoutesWithCoreFeatures configures all API routes with core features (leads, calls, campaigns, AI)
+// SetupRoutesWithCoreFeatures configures all API routes with core features and real-time support
 func SetupRoutesWithCoreFeatures(
 	authService *services.AuthService,
 	tenantService *services.TenantService,
@@ -57,7 +57,7 @@ func SetupRoutesWithCoreFeatures(
 	aiOrchestrator *services.AIOrchestrator,
 	log *logger.Logger,
 ) *mux.Router {
-	return setupRoutes(authService, tenantService, passwordResetHandler, agentService, gamificationService, leadService, callService, campaignService, aiOrchestrator, nil, nil, nil, nil, nil, nil, nil, log)
+	return setupRoutes(authService, tenantService, passwordResetHandler, agentService, gamificationService, leadService, callService, campaignService, aiOrchestrator, nil, nil, nil, nil, nil, nil, nil, nil, nil, log)
 }
 
 // SetupRoutesWithRealtime configures all API routes with realtime WebSocket support
@@ -79,7 +79,7 @@ func SetupRoutesWithRealtime(
 	customizationService services.TenantCustomizationService,
 	log *logger.Logger,
 ) *mux.Router {
-	return setupRoutes(authService, tenantService, passwordResetHandler, agentService, gamificationService, leadService, callService, campaignService, aiOrchestrator, webSocketHub, leadScoringService, dashboardService, taskService, notificationService, customizationService, nil, log)
+	return setupRoutes(authService, tenantService, passwordResetHandler, agentService, gamificationService, leadService, callService, campaignService, aiOrchestrator, webSocketHub, leadScoringService, dashboardService, taskService, notificationService, customizationService, nil, nil, nil, log)
 }
 
 // SetupRoutesWithPhase3C configures all API routes including Phase 3C (Modular Monetization)
@@ -100,9 +100,11 @@ func SetupRoutesWithPhase3C(
 	notificationService services.NotificationService,
 	customizationService services.TenantCustomizationService,
 	phase3cServices *services.Phase3CServices,
+	salesService *services.SalesService,
+	realEstateService *services.RealEstateService,
 	log *logger.Logger,
 ) *mux.Router {
-	return setupRoutes(authService, tenantService, passwordResetHandler, agentService, gamificationService, leadService, callService, campaignService, aiOrchestrator, webSocketHub, leadScoringService, dashboardService, taskService, notificationService, customizationService, phase3cServices, log)
+	return setupRoutes(authService, tenantService, passwordResetHandler, agentService, gamificationService, leadService, callService, campaignService, aiOrchestrator, webSocketHub, leadScoringService, dashboardService, taskService, notificationService, customizationService, phase3cServices, salesService, realEstateService, log)
 }
 
 func setupRoutes(
@@ -122,6 +124,8 @@ func setupRoutes(
 	notificationService services.NotificationService,
 	customizationService services.TenantCustomizationService,
 	phase3cServices *services.Phase3CServices,
+	salesService *services.SalesService,
+	realEstateService *services.RealEstateService,
 	log *logger.Logger,
 ) *mux.Router {
 	r := mux.NewRouter()
@@ -551,6 +555,119 @@ func setupRoutes(
 		// POST   /api/v1/billing/usage
 		// GET    /api/v1/billing/invoices
 		// GET    /api/v1/billing/charges
+	}
+
+	// Sales Module routes (protected)
+	if salesService != nil {
+		salesHandler := handlers.NewSalesHandler(salesService.DB)
+		salesRoutes := v1.PathPrefix("/sales").Subrouter()
+		salesRoutes.Use(middleware.AuthMiddleware(authService, log))
+		salesRoutes.Use(middleware.TenantIsolationMiddleware(log))
+
+		// Lead endpoints
+		salesRoutes.HandleFunc("/leads", salesHandler.ListSalesLeads).Methods("GET")
+		salesRoutes.HandleFunc("/leads", salesHandler.CreateSalesLead).Methods("POST")
+		salesRoutes.HandleFunc("/leads/{id}", salesHandler.GetSalesLead).Methods("GET")
+		salesRoutes.HandleFunc("/leads/{id}", salesHandler.UpdateSalesLead).Methods("PUT")
+		salesRoutes.HandleFunc("/leads/{id}", salesHandler.DeleteSalesLead).Methods("DELETE")
+
+		// Customer endpoints
+		salesRoutes.HandleFunc("/customers", salesHandler.ListSalesCustomers).Methods("GET")
+		salesRoutes.HandleFunc("/customers", salesHandler.CreateSalesCustomer).Methods("POST")
+		salesRoutes.HandleFunc("/customers/{id}", salesHandler.GetSalesCustomer).Methods("GET")
+		salesRoutes.HandleFunc("/customers/{id}", salesHandler.UpdateSalesCustomer).Methods("PUT")
+
+		// Quotation endpoints
+		salesRoutes.HandleFunc("/quotations", salesHandler.ListSalesQuotations).Methods("GET")
+		salesRoutes.HandleFunc("/quotations", salesHandler.CreateSalesQuotation).Methods("POST")
+		salesRoutes.HandleFunc("/quotations/{id}", salesHandler.GetSalesQuotation).Methods("GET")
+
+		// Sales Order endpoints
+		salesRoutes.HandleFunc("/orders", salesHandler.ListSalesOrders).Methods("GET")
+		salesRoutes.HandleFunc("/orders", salesHandler.CreateSalesOrder).Methods("POST")
+		salesRoutes.HandleFunc("/orders/{id}", salesHandler.GetSalesOrder).Methods("GET")
+		salesRoutes.HandleFunc("/orders/{id}/status", salesHandler.UpdateSalesOrderStatus).Methods("PUT")
+
+		// Invoice endpoints
+		salesRoutes.HandleFunc("/invoices", salesHandler.ListSalesInvoices).Methods("GET")
+		salesRoutes.HandleFunc("/invoices", salesHandler.CreateSalesInvoice).Methods("POST")
+		salesRoutes.HandleFunc("/invoices/{id}", salesHandler.GetSalesInvoice).Methods("GET")
+
+		// Payment endpoints
+		salesRoutes.HandleFunc("/payments", salesHandler.CreateSalesPayment).Methods("POST")
+
+		// Delivery endpoints
+		salesRoutes.HandleFunc("/delivery-notes", salesHandler.CreateDeliveryNote).Methods("POST")
+		salesRoutes.HandleFunc("/delivery-notes/{id}/pod", salesHandler.UpdateDeliveryPOD).Methods("PUT")
+
+		// Credit Note endpoints
+		salesRoutes.HandleFunc("/credit-notes", salesHandler.CreateCreditNote).Methods("POST")
+
+		// Metrics endpoints
+		salesRoutes.HandleFunc("/metrics/{salesperson_id}", salesHandler.GetSalespersonMetrics).Methods("GET")
+		salesRoutes.HandleFunc("/metrics/calculate", salesHandler.CalculateAndUpdateMetrics).Methods("POST")
+
+		// Milestone & Tracking endpoints
+		salesRoutes.HandleFunc("/milestones/lead", salesHandler.CreateLeadMilestone).Methods("POST")
+		salesRoutes.HandleFunc("/milestones/lead/{lead_id}", salesHandler.GetLeadMilestones).Methods("GET")
+
+		// Engagement endpoints
+		salesRoutes.HandleFunc("/engagement", salesHandler.CreateLeadEngagement).Methods("POST")
+		salesRoutes.HandleFunc("/engagement/{lead_id}", salesHandler.GetLeadEngagements).Methods("GET")
+
+		// Booking endpoints
+		salesRoutes.HandleFunc("/bookings", salesHandler.CreateBooking).Methods("POST")
+		salesRoutes.HandleFunc("/bookings", salesHandler.GetBookings).Methods("GET")
+
+		// Account Ledger endpoints
+		salesRoutes.HandleFunc("/ledger", salesHandler.CreateLedgerEntry).Methods("POST")
+		salesRoutes.HandleFunc("/ledger/{customer_id}", salesHandler.GetCustomerLedger).Methods("GET")
+
+		// Campaign endpoints
+		salesRoutes.HandleFunc("/campaigns", salesHandler.CreateCampaign).Methods("POST")
+		salesRoutes.HandleFunc("/campaigns", salesHandler.GetCampaigns).Methods("GET")
+
+		// Reporting & Analytics endpoints
+		salesRoutes.HandleFunc("/reports/funnel", salesHandler.LeadFunnelAnalysis).Methods("GET")
+		salesRoutes.HandleFunc("/reports/source-performance", salesHandler.LeadSourcePerformance).Methods("GET")
+		salesRoutes.HandleFunc("/reports/bookings", salesHandler.BookingSummary).Methods("GET")
+		salesRoutes.HandleFunc("/reports/customer-ledger/{customer_id}", salesHandler.CustomerLedgerSummary).Methods("GET")
+		salesRoutes.HandleFunc("/reports/milestone-timeline/{lead_id}", salesHandler.MilestoneTimeline).Methods("GET")
+		salesRoutes.HandleFunc("/reports/engagement-stats/{lead_id}", salesHandler.LeadEngagementStats).Methods("GET")
+		salesRoutes.HandleFunc("/reports/dashboard", salesHandler.DashboardMetrics).Methods("GET")
+	}
+
+	// ============================================
+	// REAL ESTATE PROPERTY MANAGEMENT ROUTES
+	// ============================================
+	if realEstateService != nil {
+		realEstateHandler := handlers.NewRealEstateHandler(realEstateService.DB)
+		realEstateRoutes := v1.PathPrefix("/real-estate").Subrouter()
+		realEstateRoutes.Use(middleware.AuthMiddleware(authService, log))
+		realEstateRoutes.Use(middleware.TenantIsolationMiddleware(log))
+
+		// Property Projects
+		realEstateRoutes.HandleFunc("/projects", realEstateHandler.CreateProject).Methods("POST")
+		realEstateRoutes.HandleFunc("/projects", realEstateHandler.GetProjects).Methods("GET")
+
+		// Property Units
+		realEstateRoutes.HandleFunc("/units", realEstateHandler.CreateUnit).Methods("POST")
+		realEstateRoutes.HandleFunc("/projects/{project_id}/units", realEstateHandler.ListUnits).Methods("GET")
+
+		// Customer Bookings
+		realEstateRoutes.HandleFunc("/bookings", realEstateHandler.CreateBooking).Methods("POST")
+		realEstateRoutes.HandleFunc("/bookings", realEstateHandler.GetBookings).Methods("GET")
+
+		// Payments
+		realEstateRoutes.HandleFunc("/payments", realEstateHandler.RecordPayment).Methods("POST")
+		realEstateRoutes.HandleFunc("/bookings/{booking_id}/payments", realEstateHandler.GetPayments).Methods("GET")
+
+		// Milestone Tracking
+		realEstateRoutes.HandleFunc("/milestones", realEstateHandler.TrackMilestone).Methods("POST")
+		realEstateRoutes.HandleFunc("/milestones/{booking_id}", realEstateHandler.GetMilestones).Methods("GET")
+
+		// Account Ledger
+		realEstateRoutes.HandleFunc("/ledger/{booking_id}", realEstateHandler.GetAccountLedger).Methods("GET")
 	}
 
 	// OPTIONS handler for CORS preflight requests

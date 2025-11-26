@@ -70,11 +70,17 @@ func main() {
 	// Phase 3C Services (Modular Monetization)
 	phase3cServices := services.NewPhase3CServices(dbConn, log)
 
+	// Sales Service
+	salesService := services.NewSalesService(dbConn)
+
+	// Real Estate Service
+	realEstateService := services.NewRealEstateService(dbConn)
+
 	// Initialize handlers
 	passwordResetHandler := handlers.NewPasswordResetHandler(passwordResetService)
 
 	// Setup router with all services
-	r := router.SetupRoutesWithPhase3C(authService, tenantService, passwordResetHandler, agentService, gamificationService, leadService, callService, campaignService, aiOrchestrator, webSocketHub, leadScoringService, dashboardService, taskService, notificationService, tenantCustomizationService, phase3cServices, log)
+	r := router.SetupRoutesWithPhase3C(authService, tenantService, passwordResetHandler, agentService, gamificationService, leadService, callService, campaignService, aiOrchestrator, webSocketHub, leadScoringService, dashboardService, taskService, notificationService, tenantCustomizationService, phase3cServices, salesService, realEstateService, log)
 
 	// Create HTTP server
 	server := &http.Server{

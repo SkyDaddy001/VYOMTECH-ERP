@@ -22,6 +22,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const menuItems = [
     { href: '/dashboard', label: 'Dashboard', icon: '📊' },
+    // Call Center Modules
     { href: '/dashboard/agents', label: 'Agents', icon: '👥' },
     { href: '/dashboard/calls', label: 'Calls', icon: '📞' },
     { href: '/dashboard/leads', label: 'Leads', icon: '📋' },
@@ -29,6 +30,14 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     { href: '/dashboard/workflows', label: 'Workflows', icon: '⚙️' },
     { href: '/dashboard/scheduled-tasks', label: 'Scheduled Tasks', icon: '⏱️' },
     { href: '/dashboard/reports', label: 'Reports', icon: '📈' },
+    // Business Modules (Phase 3E)
+    { href: '/dashboard/hr', label: 'HR & Payroll', icon: '👨‍💼' },
+    { href: '/dashboard/accounts', label: 'Accounts (GL)', icon: '💰' },
+    { href: '/dashboard/sales', label: 'Sales', icon: '🛒' },
+    { href: '/dashboard/purchase', label: 'Purchase', icon: '📦' },
+    { href: '/dashboard/construction', label: 'Construction', icon: '🏗️' },
+    { href: '/dashboard/civil', label: 'Civil', icon: '🌉' },
+    { href: '/dashboard/presales', label: 'Post Sales', icon: '⭐' },
   ]
 
   return (

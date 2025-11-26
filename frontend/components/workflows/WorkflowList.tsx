@@ -6,6 +6,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useWorkflow } from '@/contexts/WorkflowContext';
 import { WorkflowDefinition, WorkflowFilter } from '@/types/workflow';
+import { formatDateToDDMMMYYYY } from '@/lib/dateFormat';
 
 export const WorkflowList: React.FC = () => {
   const {
@@ -175,7 +176,7 @@ export const WorkflowList: React.FC = () => {
                     {workflow.actions?.length || 0}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                    {new Date(workflow.updated_at).toLocaleDateString()}
+                    {formatDateToDDMMMYYYY(workflow.updated_at)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right">
                     <div className="flex gap-2 justify-end">

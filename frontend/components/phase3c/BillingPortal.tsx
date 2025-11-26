@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react'
 import { useBillingStore } from '@/contexts/phase3cStore'
 import toast from 'react-hot-toast'
+import { formatDateToDDMMMYYYY } from '@/lib/dateFormat'
 
 export function BillingPortal() {
   const { invoices, plans, charges, fetchInvoices, fetchPlans, fetchCharges, markAsPaid, loading, error } =
@@ -109,7 +110,7 @@ export function BillingPortal() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600">
-                      {new Date(invoice.created_at).toLocaleDateString()}
+                      {formatDateToDDMMMYYYY(invoice.created_at)}
                     </td>
                     <td className="px-4 py-3 text-sm space-x-2">
                       <button
