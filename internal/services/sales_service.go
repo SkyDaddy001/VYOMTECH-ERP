@@ -253,3 +253,230 @@ func (s *SalesService) PostPaymentToGL(tenantID, paymentID string, glService *GL
 
 	return journalEntry.ID, nil
 }
+
+// ============================================================================
+// SALES DASHBOARD QUERY METHODS
+// ============================================================================
+
+// GetSalesOverviewMetrics returns aggregated sales overview metrics
+func (s *SalesService) GetSalesOverviewMetrics(tenantID string) (map[string]interface{}, error) {
+	metrics := map[string]interface{}{
+		"ytd_revenue":           0.0,
+		"current_month_revenue": 0.0,
+		"total_opportunities":   0,
+		"pipeline_value":        0.0,
+		"conversion_rate":       0.0,
+		"top_customers":         []map[string]interface{}{},
+	}
+
+	// Query YTD revenue from invoices
+	query := `
+		SELECT COALESCE(SUM(invoice_amount), 0) as ytd_revenue
+		FROM sales_invoices
+		WHERE tenant_id = ? AND deleted_at IS NULL 
+		AND YEAR(invoice_date) = YEAR(NOW())
+	`
+
+	var ytdRevenue float64
+	err := s.DB.QueryRow(query, tenantID).Scan(&ytdRevenue)
+	if err != nil && err != sql.ErrNoRows {
+		return metrics, fmt.Errorf("failed to query YTD revenue: %w", err)
+	}
+	metrics["ytd_revenue"] = ytdRevenue
+
+	// Query current month revenue
+	query = `
+		SELECT COALESCE(SUM(invoice_amount), 0) as month_revenue
+		FROM sales_invoices
+		WHERE tenant_id = ? AND deleted_at IS NULL 
+		AND YEAR(invoice_date) = YEAR(NOW()) 
+		AND MONTH(invoice_date) = MONTH(NOW())
+	`
+
+	var monthRevenue float64
+	err = s.DB.QueryRow(query, tenantID).Scan(&monthRevenue)
+	if err != nil && err != sql.ErrNoRows {
+		return metrics, fmt.Errorf("failed to query monthly revenue: %w", err)
+	}
+	metrics["current_month_revenue"] = monthRevenue
+
+	// Query pipeline opportunities
+	query = `
+		SELECT COUNT(*) as total_ops, COALESCE(SUM(expected_value), 0) as pipeline_value
+		FROM sales_opportunities
+		WHERE tenant_id = ? AND deleted_at IS NULL AND stage NOT IN ('Closed-Won', 'Closed-Lost')
+	`
+
+	var totalOps int
+	var pipelineValue float64
+	err = s.DB.QueryRow(query, tenantID).Scan(&totalOps, &pipelineValue)
+	if err != nil && err != sql.ErrNoRows {
+		return metrics, fmt.Errorf("failed to query opportunities: %w", err)
+	}
+	metrics["total_opportunities"] = totalOps
+	metrics["pipeline_value"] = pipelineValue
+
+	// Calculate conversion rate
+	if totalOps > 0 {
+		var closedWon int
+		query = `
+			SELECT COUNT(*) FROM sales_opportunities
+			WHERE tenant_id = ? AND deleted_at IS NULL AND stage = 'Closed-Won'
+		`
+		_ = s.DB.QueryRow(query, tenantID).Scan(&closedWon)
+		metrics["conversion_rate"] = (float64(closedWon) / float64(totalOps)) * 100
+	}
+
+	return metrics, nil
+}
+
+// GetPipelineAnalysisMetrics returns sales pipeline by stage analysis
+func (s *SalesService) GetPipelineAnalysisMetrics(tenantID string) (map[string]interface{}, error) {
+	metrics := map[string]interface{}{
+		"by_stage": map[string]interface{}{},
+	}
+
+	// Query opportunities by stage
+	query := `
+		SELECT stage, COUNT(*) as count, COALESCE(SUM(expected_value), 0) as total_value,
+		       AVG(DATEDIFF(NOW(), created_at)) as avg_days_in_stage
+		FROM sales_opportunities
+		WHERE tenant_id = ? AND deleted_at IS NULL
+		GROUP BY stage
+	`
+
+	rows, err := s.DB.Query(query, tenantID)
+	if err != nil {
+		return metrics, fmt.Errorf("failed to query pipeline: %w", err)
+	}
+	defer rows.Close()
+
+	byStage := make(map[string]interface{})
+	for rows.Next() {
+		var stage string
+		var count int
+		var totalValue float64
+		var avgDays int
+
+		if err := rows.Scan(&stage, &count, &totalValue, &avgDays); err != nil {
+			continue
+		}
+
+		byStage[stage] = map[string]interface{}{
+			"opportunity_count": count,
+			"total_value":       totalValue,
+			"avg_age_days":      avgDays,
+		}
+	}
+
+	metrics["by_stage"] = byStage
+	return metrics, nil
+}
+
+// GetSalesMetricsForPeriod returns sales metrics for a specified period
+func (s *SalesService) GetSalesMetricsForPeriod(tenantID string, startDate, endDate time.Time) (map[string]interface{}, error) {
+	metrics := map[string]interface{}{
+		"period_revenue":        0.0,
+		"invoice_count":         0,
+		"average_invoice_value": 0.0,
+		"collection_rate":       0.0,
+		"top_customers":         []map[string]interface{}{},
+		"top_products":          []map[string]interface{}{},
+	}
+
+	// Query invoices for period
+	query := `
+		SELECT COUNT(*) as invoice_count, 
+		       COALESCE(SUM(invoice_amount), 0) as total_revenue,
+		       COALESCE(AVG(invoice_amount), 0) as avg_invoice
+		FROM sales_invoices
+		WHERE tenant_id = ? AND deleted_at IS NULL 
+		AND invoice_date BETWEEN ? AND ?
+	`
+
+	var invoiceCount int
+	var totalRevenue, avgInvoice float64
+
+	err := s.DB.QueryRow(query, tenantID, startDate, endDate).Scan(&invoiceCount, &totalRevenue, &avgInvoice)
+	if err != nil && err != sql.ErrNoRows {
+		return metrics, fmt.Errorf("failed to query period metrics: %w", err)
+	}
+
+	metrics["invoice_count"] = invoiceCount
+	metrics["period_revenue"] = totalRevenue
+	metrics["average_invoice_value"] = avgInvoice
+
+	// Calculate collection rate from payments
+	query = `
+		SELECT COALESCE(SUM(payment_amount), 0) as total_collected
+		FROM sales_payments
+		WHERE tenant_id = ? AND deleted_at IS NULL 
+		AND payment_date BETWEEN ? AND ?
+	`
+
+	var totalCollected float64
+	err = s.DB.QueryRow(query, tenantID, startDate, endDate).Scan(&totalCollected)
+	if err == nil && totalRevenue > 0 {
+		metrics["collection_rate"] = (totalCollected / totalRevenue) * 100
+	}
+
+	return metrics, nil
+}
+
+// GetInvoiceStatusMetrics returns invoice aging and status metrics
+func (s *SalesService) GetInvoiceStatusMetrics(tenantID string) (map[string]interface{}, error) {
+	metrics := map[string]interface{}{
+		"total_outstanding": 0.0,
+		"overdue_count":     0,
+		"average_dso":       0.0,
+		"aging_buckets": map[string]interface{}{
+			"current": 0.0,
+			"30_days": 0.0,
+			"60_days": 0.0,
+			"90_days": 0.0,
+			"over_90": 0.0,
+		},
+	}
+
+	// Query outstanding invoices
+	query := `
+		SELECT COALESCE(SUM(i.invoice_amount - COALESCE(p.paid_amount, 0)), 0) as outstanding,
+		       COUNT(DISTINCT CASE WHEN i.due_date < NOW() THEN i.id END) as overdue_count
+		FROM sales_invoices i
+		LEFT JOIN (
+			SELECT invoice_id, SUM(payment_amount) as paid_amount
+			FROM sales_payments
+			WHERE tenant_id = ? AND payment_status = 'Completed'
+			GROUP BY invoice_id
+		) p ON i.id = p.invoice_id
+		WHERE i.tenant_id = ? AND i.deleted_at IS NULL AND i.invoice_status NOT IN ('Cancelled', 'Paid')
+	`
+
+	var outstanding float64
+	var overdueCount int
+
+	err := s.DB.QueryRow(query, tenantID, tenantID).Scan(&outstanding, &overdueCount)
+	if err != nil && err != sql.ErrNoRows {
+		return metrics, fmt.Errorf("failed to query invoice status: %w", err)
+	}
+
+	metrics["total_outstanding"] = outstanding
+	metrics["overdue_count"] = overdueCount
+
+	// Calculate DSO (Days Sales Outstanding)
+	query = `
+		SELECT AVG(DATEDIFF(NOW(), invoice_date)) as avg_dso
+		FROM sales_invoices
+		WHERE tenant_id = ? AND deleted_at IS NULL 
+		AND invoice_status NOT IN ('Cancelled', 'Paid')
+		AND invoice_date > DATE_SUB(NOW(), INTERVAL 90 DAY)
+	`
+
+	var avgDSO int
+	err = s.DB.QueryRow(query, tenantID).Scan(&avgDSO)
+	if err == nil {
+		metrics["average_dso"] = avgDSO
+	}
+
+	return metrics, nil
+}

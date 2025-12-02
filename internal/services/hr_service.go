@@ -569,3 +569,263 @@ func (s *HRService) PostPayrollToGL(tenantID, payrollID string, glService *GLSer
 
 	return journalEntry.ID, nil
 }
+
+// ============================================================================
+// HR DASHBOARD QUERY METHODS
+// ============================================================================
+
+// GetWorkforceMetrics returns workforce statistics
+func (s *HRService) GetWorkforceMetrics(tenantID string) (map[string]interface{}, error) {
+	result := map[string]interface{}{
+		"total_employees":    0,
+		"active_employees":   0,
+		"on_leave":           0,
+		"inactive":           0,
+		"contractors":        0,
+		"by_department":      make(map[string]int),
+		"by_employment_type": make(map[string]int),
+	}
+
+	// Get total and active employees
+	query := `SELECT 
+		COUNT(CASE WHEN status = 'Active' THEN 1 END) as active,
+		COUNT(CASE WHEN status = 'Inactive' THEN 1 END) as inactive,
+		COUNT(CASE WHEN employment_type = 'Contractor' THEN 1 END) as contractors,
+		COUNT(*) as total
+		FROM employees WHERE tenant_id = ? AND deleted_at IS NULL`
+
+	var active, inactive, contractors, total int
+	err := s.DB.QueryRow(query, tenantID).Scan(&active, &inactive, &contractors, &total)
+	if err != nil && err != sql.ErrNoRows {
+		return nil, err
+	}
+
+	result["total_employees"] = total
+	result["active_employees"] = active
+	result["inactive"] = inactive
+	result["contractors"] = contractors
+
+	// Get employees by department
+	deptQuery := `SELECT department, COUNT(*) as count 
+		FROM employees WHERE tenant_id = ? AND status = 'Active' AND deleted_at IS NULL 
+		GROUP BY department`
+
+	rows, err := s.DB.Query(deptQuery, tenantID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	byDept := result["by_department"].(map[string]int)
+	for rows.Next() {
+		var dept string
+		var count int
+		if err := rows.Scan(&dept, &count); err != nil {
+			return nil, err
+		}
+		byDept[dept] = count
+	}
+
+	return result, nil
+}
+
+// GetPayrollSummary returns payroll data for a month
+func (s *HRService) GetPayrollSummary(tenantID string, payrollMonth time.Time) (map[string]interface{}, error) {
+	result := map[string]interface{}{
+		"month":           payrollMonth.Format("2006-01"),
+		"total_employees": 0,
+		"summary":         make(map[string]float64),
+		"by_department":   make(map[string]float64),
+	}
+
+	query := `SELECT 
+		COUNT(*) as total_emp,
+		COALESCE(SUM(gross_salary), 0) as total_gross,
+		COALESCE(SUM(total_deductions), 0) as total_deductions,
+		COALESCE(SUM(net_salary), 0) as total_net
+		FROM payroll 
+		WHERE tenant_id = ? AND YEAR(payroll_date) = ? AND MONTH(payroll_date) = ?
+		AND deleted_at IS NULL`
+
+	var totalEmp int
+	var grossSalary, totalDed, netSalary float64
+	err := s.DB.QueryRow(query, tenantID, payrollMonth.Year(), int(payrollMonth.Month())).
+		Scan(&totalEmp, &grossSalary, &totalDed, &netSalary)
+	if err != nil && err != sql.ErrNoRows {
+		return nil, err
+	}
+
+	result["total_employees"] = totalEmp
+	summary := result["summary"].(map[string]float64)
+	summary["total_gross_salary"] = grossSalary
+	summary["total_deductions"] = totalDed
+	summary["total_net_salary"] = netSalary
+	summary["average_salary"] = 0
+	if totalEmp > 0 {
+		summary["average_salary"] = grossSalary / float64(totalEmp)
+	}
+
+	// Get payroll by department
+	deptQuery := `SELECT e.department, COALESCE(SUM(p.gross_salary), 0) as dept_salary
+		FROM payroll p
+		JOIN employees e ON p.employee_id = e.id
+		WHERE p.tenant_id = ? AND YEAR(p.payroll_date) = ? AND MONTH(p.payroll_date) = ?
+		AND p.deleted_at IS NULL
+		GROUP BY e.department`
+
+	rows, err := s.DB.Query(deptQuery, tenantID, payrollMonth.Year(), int(payrollMonth.Month()))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	byDept := result["by_department"].(map[string]float64)
+	for rows.Next() {
+		var dept string
+		var salary float64
+		if err := rows.Scan(&dept, &salary); err != nil {
+			return nil, err
+		}
+		byDept[dept] = salary
+	}
+
+	return result, nil
+}
+
+// GetAttendanceMetrics returns attendance statistics for a period
+func (s *HRService) GetAttendanceMetrics(tenantID string, startDate, endDate time.Time) (map[string]interface{}, error) {
+	result := map[string]interface{}{
+		"period":          map[string]string{"start": startDate.Format("2006-01-02"), "end": endDate.Format("2006-01-02")},
+		"overall_metrics": make(map[string]interface{}),
+		"by_department":   make(map[string]interface{}),
+		"total_workdays":  0,
+		"total_presents":  0,
+		"total_absents":   0,
+		"total_leaves":    0,
+	}
+
+	// Calculate total presents and absents
+	query := `SELECT 
+		COUNT(CASE WHEN attendance_status = 'Present' THEN 1 END) as presents,
+		COUNT(CASE WHEN attendance_status = 'Absent' THEN 1 END) as absents,
+		COUNT(CASE WHEN attendance_status = 'Leave' THEN 1 END) as leaves,
+		COUNT(DISTINCT attendance_date) as workdays
+		FROM attendance 
+		WHERE tenant_id = ? AND attendance_date >= ? AND attendance_date <= ?
+		AND deleted_at IS NULL`
+
+	var presents, absents, leaves, workdays int
+	err := s.DB.QueryRow(query, tenantID, startDate, endDate).Scan(&presents, &absents, &leaves, &workdays)
+	if err != nil && err != sql.ErrNoRows {
+		return nil, err
+	}
+
+	result["total_presents"] = presents
+	result["total_absents"] = absents
+	result["total_leaves"] = leaves
+	result["total_workdays"] = workdays
+
+	// Calculate overall metrics
+	overall := result["overall_metrics"].(map[string]interface{})
+	if workdays > 0 {
+		overall["attendance_rate"] = (float64(presents) / float64(workdays)) * 100
+		overall["absence_rate"] = (float64(absents) / float64(workdays)) * 100
+	}
+	overall["total_presents"] = presents
+	overall["total_absents"] = absents
+	overall["total_leaves"] = leaves
+
+	// Get attendance by department
+	deptQuery := `SELECT e.department,
+		COUNT(CASE WHEN a.attendance_status = 'Present' THEN 1 END) as dept_presents,
+		COUNT(CASE WHEN a.attendance_status = 'Absent' THEN 1 END) as dept_absents
+		FROM attendance a
+		JOIN employees e ON a.employee_id = e.id
+		WHERE a.tenant_id = ? AND a.attendance_date >= ? AND a.attendance_date <= ?
+		AND a.deleted_at IS NULL
+		GROUP BY e.department`
+
+	rows, err := s.DB.Query(deptQuery, tenantID, startDate, endDate)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	byDept := result["by_department"].(map[string]interface{})
+	for rows.Next() {
+		var dept string
+		var deptPresents, deptAbsents int
+		if err := rows.Scan(&dept, &deptPresents, &deptAbsents); err != nil {
+			return nil, err
+		}
+		byDept[dept] = map[string]int{
+			"presents": deptPresents,
+			"absents":  deptAbsents,
+		}
+	}
+
+	return result, nil
+}
+
+// GetLeaveAnalytics returns leave request analytics
+func (s *HRService) GetLeaveAnalytics(tenantID string) (map[string]interface{}, error) {
+	result := map[string]interface{}{
+		"leave_summary":     make(map[string]int),
+		"by_leave_type":     make(map[string]interface{}),
+		"pending_approvals": 0,
+	}
+
+	// Get leave request summary
+	query := `SELECT 
+		COUNT(CASE WHEN status = 'Pending' THEN 1 END) as pending,
+		COUNT(CASE WHEN status = 'Approved' THEN 1 END) as approved,
+		COUNT(CASE WHEN status = 'Rejected' THEN 1 END) as rejected,
+		COUNT(CASE WHEN status = 'Cancelled' THEN 1 END) as cancelled
+		FROM leave_requests 
+		WHERE tenant_id = ? AND deleted_at IS NULL`
+
+	var pending, approved, rejected, cancelled int
+	err := s.DB.QueryRow(query, tenantID).Scan(&pending, &approved, &rejected, &cancelled)
+	if err != nil && err != sql.ErrNoRows {
+		return nil, err
+	}
+
+	summary := result["leave_summary"].(map[string]int)
+	summary["pending"] = pending
+	summary["approved"] = approved
+	summary["rejected"] = rejected
+	summary["cancelled"] = cancelled
+	result["pending_approvals"] = pending
+
+	// Get leave by type
+	typeQuery := `SELECT leave_type, COUNT(*) as count, SUM(number_of_days) as total_days
+		FROM leave_requests 
+		WHERE tenant_id = ? AND status = 'Approved' AND deleted_at IS NULL
+		GROUP BY leave_type`
+
+	rows, err := s.DB.Query(typeQuery, tenantID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	byType := result["by_leave_type"].(map[string]interface{})
+	for rows.Next() {
+		var leaveType string
+		var count int
+		var totalDays sql.NullFloat64
+		if err := rows.Scan(&leaveType, &count, &totalDays); err != nil {
+			return nil, err
+		}
+		days := 0.0
+		if totalDays.Valid {
+			days = totalDays.Float64
+		}
+		byType[leaveType] = map[string]interface{}{
+			"count":      count,
+			"total_days": days,
+		}
+	}
+
+	return result, nil
+}

@@ -56,7 +56,7 @@ func (h *HRDashboardHandler) GetHROverview(w http.ResponseWriter, r *http.Reques
 
 // GetPayrollSummary returns payroll summary for a period
 func (h *HRDashboardHandler) GetPayrollSummary(w http.ResponseWriter, r *http.Request) {
-	_ = r.Context().Value(middleware.TenantIDKey).(string)
+	tenantID := r.Context().Value(middleware.TenantIDKey).(string)
 
 	var req struct {
 		PayrollMonth time.Time `json:"payroll_month"`
@@ -67,27 +67,16 @@ func (h *HRDashboardHandler) GetPayrollSummary(w http.ResponseWriter, r *http.Re
 		return
 	}
 
+	// Call the service to get aggregated payroll data
+	payrollData, err := h.HRService.GetPayrollSummary(tenantID, req.PayrollMonth)
+	if err != nil {
+		http.Error(w, "Failed to fetch payroll data: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	response := map[string]interface{}{
 		"payroll_month": req.PayrollMonth.Format("2006-01"),
-		"summary": map[string]float64{
-			"gross_salary":          0,
-			"basic_pay":             0,
-			"allowances":            0,
-			"deductions":            0,
-			"net_salary":            0,
-			"employer_contribution": 0,
-			"total_cost":            0,
-		},
-		"breakdown": map[string]interface{}{
-			"by_department": map[string]float64{},
-			"by_grade":      map[string]float64{},
-		},
-		"compliance": map[string]interface{}{
-			"esi_contribution": 0,
-			"pf_contribution":  0,
-			"professional_tax": 0,
-			"tds_deducted":     0,
-		},
+		"data":          payrollData,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -96,7 +85,7 @@ func (h *HRDashboardHandler) GetPayrollSummary(w http.ResponseWriter, r *http.Re
 
 // GetAttendanceDashboard returns attendance metrics
 func (h *HRDashboardHandler) GetAttendanceDashboard(w http.ResponseWriter, r *http.Request) {
-	_ = r.Context().Value(middleware.TenantIDKey).(string)
+	tenantID := r.Context().Value(middleware.TenantIDKey).(string)
 
 	var req struct {
 		StartDate time.Time `json:"start_date"`
@@ -108,19 +97,19 @@ func (h *HRDashboardHandler) GetAttendanceDashboard(w http.ResponseWriter, r *ht
 		return
 	}
 
+	// Call the service to get aggregated attendance metrics
+	attendanceData, err := h.HRService.GetAttendanceMetrics(tenantID, req.StartDate, req.EndDate)
+	if err != nil {
+		http.Error(w, "Failed to fetch attendance data: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	response := map[string]interface{}{
 		"period": map[string]string{
 			"start": req.StartDate.Format("2006-01-02"),
 			"end":   req.EndDate.Format("2006-01-02"),
 		},
-		"overall_metrics": map[string]float64{
-			"attendance_rate":       0,
-			"absent_count":          0,
-			"late_arrival_count":    0,
-			"early_departure_count": 0,
-		},
-		"by_department": map[string]interface{}{},
-		"trend":         []map[string]interface{}{},
+		"data": attendanceData,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -129,39 +118,18 @@ func (h *HRDashboardHandler) GetAttendanceDashboard(w http.ResponseWriter, r *ht
 
 // GetLeaveDashboard returns leave analytics
 func (h *HRDashboardHandler) GetLeaveDashboard(w http.ResponseWriter, r *http.Request) {
-	_ = r.Context().Value(middleware.TenantIDKey).(string)
+	tenantID := r.Context().Value(middleware.TenantIDKey).(string)
+
+	// Call the service to get leave analytics
+	leaveData, err := h.HRService.GetLeaveAnalytics(tenantID)
+	if err != nil {
+		http.Error(w, "Failed to fetch leave data: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
 
 	response := map[string]interface{}{
-		"leave_summary": map[string]interface{}{
-			"pending_requests": 0,
-			"approved":         0,
-			"rejected":         0,
-			"cancelled":        0,
-		},
-		"by_leave_type": map[string]interface{}{
-			"sick_leave": map[string]int{
-				"available": 0,
-				"taken":     0,
-				"pending":   0,
-			},
-			"casual_leave": map[string]int{
-				"available": 0,
-				"taken":     0,
-				"pending":   0,
-			},
-			"earned_leave": map[string]int{
-				"available": 0,
-				"taken":     0,
-				"pending":   0,
-			},
-			"maternity_leave": map[string]int{
-				"available": 0,
-				"taken":     0,
-				"pending":   0,
-			},
-		},
-		"top_requestors":   []map[string]interface{}{},
-		"approval_pending": []map[string]interface{}{},
+		"fiscal_year": time.Now().Year(),
+		"data":        leaveData,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -170,9 +138,11 @@ func (h *HRDashboardHandler) GetLeaveDashboard(w http.ResponseWriter, r *http.Re
 
 // GetComplianceDashboard returns HR compliance status
 func (h *HRDashboardHandler) GetComplianceDashboard(w http.ResponseWriter, r *http.Request) {
-	_ = r.Context().Value(middleware.TenantIDKey).(string)
+	tenantID := r.Context().Value(middleware.TenantIDKey).(string)
+	_ = tenantID
 
 	response := map[string]interface{}{
+		"timestamp": time.Now().Format(time.RFC3339),
 		"compliance_status": map[string]interface{}{
 			"esi_compliant":      true,
 			"epf_compliant":      true,
@@ -180,19 +150,11 @@ func (h *HRDashboardHandler) GetComplianceDashboard(w http.ResponseWriter, r *ht
 			"gratuity_compliant": true,
 			"overall_status":     "Compliant",
 		},
-		"pending_audits": []map[string]interface{}{},
 		"violations": map[string]int{
 			"critical": 0,
 			"high":     0,
 			"medium":   0,
 			"low":      0,
-		},
-		"upcoming_deadlines": []map[string]interface{}{
-			{
-				"compliance_item": "ESI Return Filing",
-				"due_date":        time.Now().AddDate(0, 0, 7).Format("2006-01-02"),
-				"status":          "Pending",
-			},
 		},
 	}
 

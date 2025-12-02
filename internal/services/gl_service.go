@@ -436,3 +436,181 @@ func (s *GLService) ClosePeriod(tenantID, periodID, closedBy string) error {
 	_, err := s.DB.Exec(query, closedBy, periodID, tenantID)
 	return err
 }
+
+// ============================================================================
+// FINANCIAL DASHBOARD QUERY METHODS
+// ============================================================================
+
+// GetAccountBalance retrieves the balance of an account for a date range
+func (s *GLService) GetAccountBalance(tenantID, accountID string, asOfDate time.Time) (float64, error) {
+	var balance float64
+
+	query := `SELECT COALESCE(SUM(CASE WHEN je_detail.debit_amount IS NOT NULL THEN je_detail.debit_amount 
+		ELSE -je_detail.credit_amount END), 0) as balance
+		FROM journal_entry_details je_detail
+		JOIN journal_entries je ON je.id = je_detail.journal_entry_id
+		WHERE je.tenant_id = ? AND je_detail.account_id = ? AND je.entry_date <= ? 
+		AND je.is_posted = TRUE AND je.deleted_at IS NULL`
+
+	err := s.DB.QueryRow(query, tenantID, accountID, asOfDate).Scan(&balance)
+	if err != nil && err != sql.ErrNoRows {
+		return 0, err
+	}
+
+	return balance, nil
+}
+
+// GetIncomeStatement retrieves income and expense accounts for P&L
+func (s *GLService) GetIncomeStatement(tenantID string, startDate, endDate time.Time) (map[string]interface{}, error) {
+	result := map[string]interface{}{
+		"income":   make(map[string]float64),
+		"expenses": make(map[string]float64),
+		"cogs":     make(map[string]float64),
+	}
+
+	// Query income accounts
+	incomeQuery := `SELECT coa.account_name, COALESCE(SUM(jed.credit_amount - jed.debit_amount), 0) as balance
+		FROM chart_of_accounts coa
+		LEFT JOIN journal_entry_details jed ON coa.id = jed.account_id
+		LEFT JOIN journal_entries je ON je.id = jed.journal_entry_id AND je.is_posted = TRUE
+			AND je.entry_date >= ? AND je.entry_date <= ?
+		WHERE coa.tenant_id = ? AND coa.account_type IN ('Revenue', 'Income') AND coa.deleted_at IS NULL
+		GROUP BY coa.id, coa.account_name`
+
+	rows, err := s.DB.Query(incomeQuery, startDate, endDate, tenantID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	incomeData := result["income"].(map[string]float64)
+	for rows.Next() {
+		var name string
+		var balance float64
+		if err := rows.Scan(&name, &balance); err != nil {
+			return nil, err
+		}
+		incomeData[name] = balance
+	}
+
+	// Query expense accounts
+	expenseQuery := `SELECT coa.account_name, COALESCE(SUM(jed.debit_amount - jed.credit_amount), 0) as balance
+		FROM chart_of_accounts coa
+		LEFT JOIN journal_entry_details jed ON coa.id = jed.account_id
+		LEFT JOIN journal_entries je ON je.id = jed.journal_entry_id AND je.is_posted = TRUE
+			AND je.entry_date >= ? AND je.entry_date <= ?
+		WHERE coa.tenant_id = ? AND coa.account_type IN ('Expense', 'Cost of Goods Sold') AND coa.deleted_at IS NULL
+		GROUP BY coa.id, coa.account_name`
+
+	rows, err = s.DB.Query(expenseQuery, startDate, endDate, tenantID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	expenseData := result["expenses"].(map[string]float64)
+	for rows.Next() {
+		var name string
+		var balance float64
+		if err := rows.Scan(&name, &balance); err != nil {
+			return nil, err
+		}
+		expenseData[name] = balance
+	}
+
+	return result, nil
+}
+
+// GetBalanceSheetAccounts retrieves asset, liability, and equity accounts
+func (s *GLService) GetBalanceSheetAccounts(tenantID string, asOfDate time.Time) (map[string]interface{}, error) {
+	result := map[string]interface{}{
+		"assets":      make(map[string]float64),
+		"liabilities": make(map[string]float64),
+		"equity":      make(map[string]float64),
+	}
+
+	accountTypes := []struct {
+		category string
+		types    []string
+	}{
+		{"assets", []string{"Asset", "Cash", "Receivable"}},
+		{"liabilities", []string{"Liability", "Payable"}},
+		{"equity", []string{"Equity", "Capital"}},
+	}
+
+	query := `SELECT coa.account_name, coa.account_type,
+		COALESCE(SUM(CASE WHEN jed.debit_amount IS NOT NULL THEN jed.debit_amount 
+		ELSE -jed.credit_amount END), 0) as balance
+		FROM chart_of_accounts coa
+		LEFT JOIN journal_entry_details jed ON coa.id = jed.account_id
+		LEFT JOIN journal_entries je ON je.id = jed.journal_entry_id AND je.is_posted = TRUE
+			AND je.entry_date <= ?
+		WHERE coa.tenant_id = ? AND coa.deleted_at IS NULL
+		GROUP BY coa.id, coa.account_name, coa.account_type`
+
+	rows, err := s.DB.Query(query, asOfDate, tenantID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var name, accountType string
+		var balance float64
+		if err := rows.Scan(&name, &accountType, &balance); err != nil {
+			return nil, err
+		}
+
+		// Categorize account
+		if contains(accountTypes[0].types, accountType) {
+			assets := result["assets"].(map[string]float64)
+			assets[name] = balance
+		} else if contains(accountTypes[1].types, accountType) {
+			liabilities := result["liabilities"].(map[string]float64)
+			liabilities[name] = balance
+		} else if contains(accountTypes[2].types, accountType) {
+			equity := result["equity"].(map[string]float64)
+			equity[name] = balance
+		}
+	}
+
+	return result, nil
+}
+
+// GetCashFlowData retrieves cash flow related accounts
+func (s *GLService) GetCashFlowData(tenantID string, startDate, endDate time.Time) (map[string]float64, error) {
+	result := make(map[string]float64)
+
+	query := `SELECT COALESCE(SUM(CASE WHEN je.transaction_type = 'Operating' THEN 
+		jed.debit_amount - jed.credit_amount ELSE 0 END), 0) as operating,
+		COALESCE(SUM(CASE WHEN je.transaction_type = 'Investing' THEN 
+		jed.debit_amount - jed.credit_amount ELSE 0 END), 0) as investing,
+		COALESCE(SUM(CASE WHEN je.transaction_type = 'Financing' THEN 
+		jed.debit_amount - jed.credit_amount ELSE 0 END), 0) as financing
+		FROM journal_entry_details jed
+		JOIN journal_entries je ON je.id = jed.journal_entry_id
+		WHERE je.tenant_id = ? AND je.is_posted = TRUE 
+		AND je.entry_date >= ? AND je.entry_date <= ? AND je.deleted_at IS NULL`
+
+	var operating, investing, financing float64
+	err := s.DB.QueryRow(query, tenantID, startDate, endDate).Scan(&operating, &investing, &financing)
+	if err != nil && err != sql.ErrNoRows {
+		return nil, err
+	}
+
+	result["operating"] = operating
+	result["investing"] = investing
+	result["financing"] = financing
+
+	return result, nil
+}
+
+// Helper function to check if a string is in a slice
+func contains(slice []string, item string) bool {
+	for _, s := range slice {
+		if s == item {
+			return true
+		}
+	}
+	return false
+}

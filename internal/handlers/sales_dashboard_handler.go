@@ -27,25 +27,18 @@ func NewSalesDashboardHandler(salesService *services.SalesService) *SalesDashboa
 
 // GetSalesOverview returns sales department overview
 func (h *SalesDashboardHandler) GetSalesOverview(w http.ResponseWriter, r *http.Request) {
-	_ = r.Context().Value(middleware.TenantIDKey).(string)
+	tenantID := r.Context().Value(middleware.TenantIDKey).(string)
+
+	// Call service to get overview metrics
+	overviewData, err := h.SalesService.GetSalesOverviewMetrics(tenantID)
+	if err != nil {
+		http.Error(w, "Failed to fetch sales overview: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
 
 	response := map[string]interface{}{
-		"revenue_metrics": map[string]interface{}{
-			"ytd_revenue":           0,
-			"current_month":         0,
-			"previous_month":        0,
-			"month_on_month_growth": 0.0,
-			"target_achievement":    0.0,
-		},
-		"sales_pipeline": map[string]interface{}{
-			"total_opportunities": 0,
-			"pipeline_value":      0,
-			"expected_revenue":    0,
-			"conversion_rate":     0.0,
-		},
-		"performance_by_rep": []map[string]interface{}{},
-		"top_customers":      []map[string]interface{}{},
-		"recent_activity":    []map[string]interface{}{},
+		"timestamp": time.Now().Format(time.RFC3339),
+		"data":      overviewData,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -54,60 +47,18 @@ func (h *SalesDashboardHandler) GetSalesOverview(w http.ResponseWriter, r *http.
 
 // GetPipelineAnalysis returns sales pipeline analysis
 func (h *SalesDashboardHandler) GetPipelineAnalysis(w http.ResponseWriter, r *http.Request) {
-	_ = r.Context().Value(middleware.TenantIDKey).(string)
+	tenantID := r.Context().Value(middleware.TenantIDKey).(string)
+
+	// Call service to get pipeline analysis
+	pipelineData, err := h.SalesService.GetPipelineAnalysisMetrics(tenantID)
+	if err != nil {
+		http.Error(w, "Failed to fetch pipeline data: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
 
 	response := map[string]interface{}{
-		"pipeline_summary": map[string]interface{}{
-			"total_opportunities": 0,
-			"total_value":         0,
-			"weighted_value":      0,
-			"average_deal_size":   0,
-		},
-		"by_stage": []map[string]interface{}{
-			{
-				"stage":         "Prospecting",
-				"opportunities": 0,
-				"value":         0,
-				"count_change":  0,
-				"value_change":  0,
-			},
-			{
-				"stage":         "Qualification",
-				"opportunities": 0,
-				"value":         0,
-				"count_change":  0,
-				"value_change":  0,
-			},
-			{
-				"stage":         "Proposal",
-				"opportunities": 0,
-				"value":         0,
-				"count_change":  0,
-				"value_change":  0,
-			},
-			{
-				"stage":         "Negotiation",
-				"opportunities": 0,
-				"value":         0,
-				"count_change":  0,
-				"value_change":  0,
-			},
-			{
-				"stage":         "Closed Won",
-				"opportunities": 0,
-				"value":         0,
-				"count_change":  0,
-				"value_change":  0,
-			},
-		},
-		"by_region":  map[string]interface{}{},
-		"by_product": map[string]interface{}{},
-		"aged_pipeline": map[string]interface{}{
-			"0_to_30_days":  0,
-			"31_to_60_days": 0,
-			"61_to_90_days": 0,
-			"over_90_days":  0,
-		},
+		"timestamp": time.Now().Format(time.RFC3339),
+		"data":      pipelineData,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -116,10 +67,11 @@ func (h *SalesDashboardHandler) GetPipelineAnalysis(w http.ResponseWriter, r *ht
 
 // GetSalesMetrics returns detailed sales metrics
 func (h *SalesDashboardHandler) GetSalesMetrics(w http.ResponseWriter, r *http.Request) {
-	_ = r.Context().Value(middleware.TenantIDKey).(string)
+	tenantID := r.Context().Value(middleware.TenantIDKey).(string)
 
 	var req struct {
-		Period string `json:"period"` // "monthly", "quarterly", "annual"
+		StartDate time.Time `json:"start_date"`
+		EndDate   time.Time `json:"end_date"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -127,29 +79,19 @@ func (h *SalesDashboardHandler) GetSalesMetrics(w http.ResponseWriter, r *http.R
 		return
 	}
 
+	// Call service to get period metrics
+	metricsData, err := h.SalesService.GetSalesMetricsForPeriod(tenantID, req.StartDate, req.EndDate)
+	if err != nil {
+		http.Error(w, "Failed to fetch sales metrics: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	response := map[string]interface{}{
-		"period": req.Period,
-		"revenue": map[string]interface{}{
-			"total_revenue":       0,
-			"new_revenue":         0,
-			"recurring_revenue":   0,
-			"average_order_value": 0,
+		"period": map[string]string{
+			"start": req.StartDate.Format("2006-01-02"),
+			"end":   req.EndDate.Format("2006-01-02"),
 		},
-		"invoices": map[string]interface{}{
-			"total_invoices": 0,
-			"invoiced_value": 0,
-			"paid_value":     0,
-			"outstanding":    0,
-		},
-		"by_sales_rep":    []map[string]interface{}{},
-		"by_product_line": []map[string]interface{}{},
-		"by_customer_segment": map[string]interface{}{
-			"enterprise": 0,
-			"mid_market": 0,
-			"smb":        0,
-			"startup":    0,
-		},
-		"trend": []map[string]interface{}{},
+		"data": metricsData,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -193,40 +135,18 @@ func (h *SalesDashboardHandler) GetForecast(w http.ResponseWriter, r *http.Reque
 
 // GetInvoiceStatus returns invoice tracking dashboard
 func (h *SalesDashboardHandler) GetInvoiceStatus(w http.ResponseWriter, r *http.Request) {
-	_ = r.Context().Value(middleware.TenantIDKey).(string)
+	tenantID := r.Context().Value(middleware.TenantIDKey).(string)
+
+	// Call service to get invoice status metrics
+	invoiceData, err := h.SalesService.GetInvoiceStatusMetrics(tenantID)
+	if err != nil {
+		http.Error(w, "Failed to fetch invoice data: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
 
 	response := map[string]interface{}{
-		"summary": map[string]interface{}{
-			"total_invoices": 0,
-			"total_value":    0,
-			"paid":           0,
-			"outstanding":    0,
-			"overdue":        0,
-		},
-		"by_status": map[string]interface{}{
-			"issued":    0,
-			"delivered": 0,
-			"paid":      0,
-			"overdue":   0,
-			"cancelled": 0,
-		},
-		"aging_report": map[string]interface{}{
-			"0_to_30_days":  0,
-			"31_to_60_days": 0,
-			"61_to_90_days": 0,
-			"over_90_days":  0,
-		},
-		"top_overdue_customers": []map[string]interface{}{},
-		"collection_pipeline": []map[string]interface{}{
-			{
-				"period":   "This Week",
-				"expected": 0,
-			},
-			{
-				"period":   "Next 7-14 Days",
-				"expected": 0,
-			},
-		},
+		"timestamp": time.Now().Format(time.RFC3339),
+		"data":      invoiceData,
 	}
 
 	w.Header().Set("Content-Type", "application/json")

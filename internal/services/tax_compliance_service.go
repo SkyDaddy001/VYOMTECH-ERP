@@ -489,3 +489,93 @@ func (s *TaxComplianceService) GetTaxComplianceStatus(
 
 	return response, nil
 }
+
+// ============================================================================
+// TAX COMPLIANCE DASHBOARD QUERY METHODS
+// ============================================================================
+
+// GetTaxComplianceMetrics returns aggregated tax compliance metrics for dashboard
+func (s *TaxComplianceService) GetTaxComplianceMetrics(tenantID string) (map[string]interface{}, error) {
+	metrics := map[string]interface{}{
+		"income_tax_status":  "Compliant",
+		"gst_status":         "Compliant",
+		"tds_status":         "Compliant",
+		"advance_tax_status": "Compliant",
+		"itr_filed":          false,
+		"gstr_filed":         0,
+		"tds_collected":      0.0,
+		"advance_tax_paid":   0.0,
+		"violations":         0,
+	}
+
+	// Query Income Tax compliance
+	query := `
+		SELECT COUNT(*) as count,
+		       SUM(CASE WHEN status = 'Filed' THEN 1 ELSE 0 END) as filed,
+		       SUM(CASE WHEN status = 'Not Filed' THEN 1 ELSE 0 END) as not_filed
+		FROM income_tax_compliance
+		WHERE tenant_id = ? AND deleted_at IS NULL
+	`
+
+	var itCount, itFiled, itNotFiled int
+	err := s.DB.QueryRow(query, tenantID).Scan(&itCount, &itFiled, &itNotFiled)
+	if err != nil && err != sql.ErrNoRows {
+		return metrics, fmt.Errorf("failed to query IT metrics: %w", err)
+	}
+	if itFiled > 0 {
+		metrics["itr_filed"] = true
+		metrics["income_tax_status"] = "Filed"
+	} else if itNotFiled > 0 {
+		metrics["income_tax_status"] = "Pending"
+	}
+
+	// Query GST compliance
+	query = `
+		SELECT COUNT(*) as count,
+		       SUM(CASE WHEN filing_status = 'Filed' THEN 1 ELSE 0 END) as filed
+		FROM gst_compliance
+		WHERE tenant_id = ? AND deleted_at IS NULL
+	`
+
+	var gstCount, gstFiled int
+	err = s.DB.QueryRow(query, tenantID).Scan(&gstCount, &gstFiled)
+	if err != nil && err != sql.ErrNoRows {
+		return metrics, fmt.Errorf("failed to query GST metrics: %w", err)
+	}
+	metrics["gstr_filed"] = gstFiled
+	if gstFiled < gstCount {
+		metrics["gst_status"] = "Partial - " + fmt.Sprintf("%d/%d returns filed", gstFiled, gstCount)
+	}
+
+	// Query TDS collections
+	query = `
+		SELECT COALESCE(SUM(tds_amount), 0) as total_tds,
+		       COUNT(*) as return_count
+		FROM tds_compliance
+		WHERE tenant_id = ? AND deleted_at IS NULL
+	`
+
+	var tdsTotalAmount float64
+	var tdsReturnCount int
+	err = s.DB.QueryRow(query, tenantID).Scan(&tdsTotalAmount, &tdsReturnCount)
+	if err != nil && err != sql.ErrNoRows {
+		return metrics, fmt.Errorf("failed to query TDS metrics: %w", err)
+	}
+	metrics["tds_collected"] = tdsTotalAmount
+
+	// Query Advance Tax
+	query = `
+		SELECT COALESCE(SUM(amount_paid), 0) as total_paid
+		FROM advance_tax_compliance
+		WHERE tenant_id = ? AND deleted_at IS NULL AND payment_status = 'Paid'
+	`
+
+	var advanceTaxPaid float64
+	err = s.DB.QueryRow(query, tenantID).Scan(&advanceTaxPaid)
+	if err != nil && err != sql.ErrNoRows {
+		return metrics, fmt.Errorf("failed to query advance tax metrics: %w", err)
+	}
+	metrics["advance_tax_paid"] = advanceTaxPaid
+
+	return metrics, nil
+}

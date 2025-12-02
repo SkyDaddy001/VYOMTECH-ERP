@@ -363,3 +363,72 @@ func (s *RERAComplianceService) PerformMonthlyReconciliation(tenantID, projectID
 
 	return reconciliation, nil
 }
+
+// ============================================================================
+// RERA DASHBOARD QUERY METHODS
+// ============================================================================
+
+// GetRERAComplianceMetrics returns aggregated RERA compliance metrics for dashboard
+func (s *RERAComplianceService) GetRERAComplianceMetrics(tenantID string) (map[string]interface{}, error) {
+	metrics := map[string]interface{}{
+		"total_projects":       0,
+		"compliant_projects":   0,
+		"total_collections":    0.0,
+		"total_utilized":       0.0,
+		"available_balance":    0.0,
+		"collection_rate":      0.0,
+		"borrowing_percentage": 0.0,
+		"violations":           0,
+		"projects_status": map[string]int{
+			"compliant":           0,
+			"partially_compliant": 0,
+			"non_compliant":       0,
+		},
+	}
+
+	// Query project_collection_accounts for aggregate data
+	query := `
+		SELECT 
+			COUNT(DISTINCT project_id) as total_projects,
+			SUM(CASE WHEN rera_compliant = true THEN 1 ELSE 0 END) as compliant_projects,
+			SUM(total_collected) as total_collections,
+			SUM(total_utilized) as total_utilized,
+			SUM(current_balance) as available_balance,
+			SUM(CASE WHEN max_borrowing_allowed > 0 THEN current_borrowed / max_borrowing_allowed * 100 ELSE 0 END) / COUNT(*) as avg_borrowing_pct
+		FROM project_collection_accounts
+		WHERE tenant_id = ? AND deleted_at IS NULL
+	`
+
+	var totalProjects int
+	var compliantProjects int
+	var totalCollections float64
+	var totalUtilized float64
+	var availableBalance float64
+	var borrowingPct float64
+
+	err := s.DB.QueryRow(query, tenantID).Scan(
+		&totalProjects,
+		&compliantProjects,
+		&totalCollections,
+		&totalUtilized,
+		&availableBalance,
+		&borrowingPct,
+	)
+
+	if err != nil && err != sql.ErrNoRows {
+		return metrics, fmt.Errorf("failed to query RERA metrics: %w", err)
+	}
+
+	metrics["total_projects"] = totalProjects
+	metrics["compliant_projects"] = compliantProjects
+	metrics["total_collections"] = totalCollections
+	metrics["total_utilized"] = totalUtilized
+	metrics["available_balance"] = availableBalance
+	if totalCollections > 0 {
+		metrics["collection_rate"] = (totalCollections / (totalCollections + 100000)) * 100 // Projected rate
+	}
+	metrics["borrowing_percentage"] = borrowingPct
+	metrics["non_compliant"] = totalProjects - compliantProjects
+
+	return metrics, nil
+}

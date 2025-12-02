@@ -489,3 +489,83 @@ func (s *HRComplianceService) GetEmployeeComplianceStatus(tenantID, employeeID s
 
 	return result, nil
 }
+
+// ============================================================================
+// HR COMPLIANCE DASHBOARD QUERY METHODS
+// ============================================================================
+
+// GetHRComplianceMetrics returns aggregated HR compliance metrics for dashboard
+func (s *HRComplianceService) GetHRComplianceMetrics(tenantID string) (map[string]interface{}, error) {
+	metrics := map[string]interface{}{
+		"esi_status":        "Compliant",
+		"epf_status":        "Compliant",
+		"pt_status":         "Compliant",
+		"gratuity_status":   "Compliant",
+		"esi_employees":     0,
+		"epf_employees":     0,
+		"pt_employees":      0,
+		"gratuity_eligible": 0,
+		"violations": map[string]int{
+			"critical": 0,
+			"high":     0,
+			"medium":   0,
+			"low":      0,
+		},
+	}
+
+	// Query ESI compliance
+	query := `
+		SELECT COUNT(*) as count, 
+		       SUM(CASE WHEN is_compliant = false THEN 1 ELSE 0 END) as violations
+		FROM esi_compliance
+		WHERE tenant_id = ? AND deleted_at IS NULL
+	`
+
+	var esiCount, esiViolations int
+	err := s.DB.QueryRow(query, tenantID).Scan(&esiCount, &esiViolations)
+	if err != nil && err != sql.ErrNoRows {
+		return metrics, fmt.Errorf("failed to query ESI metrics: %w", err)
+	}
+	metrics["esi_employees"] = esiCount
+	if esiViolations > 0 {
+		metrics["esi_status"] = "Violations Found"
+		violations := metrics["violations"].(map[string]int)
+		violations["high"] += esiViolations
+	}
+
+	// Query EPF compliance
+	query = `
+		SELECT COUNT(*) as count, 
+		       SUM(CASE WHEN is_compliant = false THEN 1 ELSE 0 END) as violations
+		FROM epf_compliance
+		WHERE tenant_id = ? AND deleted_at IS NULL
+	`
+
+	var epfCount, epfViolations int
+	err = s.DB.QueryRow(query, tenantID).Scan(&epfCount, &epfViolations)
+	if err != nil && err != sql.ErrNoRows {
+		return metrics, fmt.Errorf("failed to query EPF metrics: %w", err)
+	}
+	metrics["epf_employees"] = epfCount
+	if epfViolations > 0 {
+		metrics["epf_status"] = "Violations Found"
+		violations := metrics["violations"].(map[string]int)
+		violations["high"] += epfViolations
+	}
+
+	// Query Gratuity eligibility
+	query = `
+		SELECT COUNT(*) as count
+		FROM gratuity_compliance
+		WHERE tenant_id = ? AND deleted_at IS NULL AND is_eligible = true
+	`
+
+	var gratuityCount int
+	err = s.DB.QueryRow(query, tenantID).Scan(&gratuityCount)
+	if err != nil && err != sql.ErrNoRows {
+		return metrics, fmt.Errorf("failed to query gratuity metrics: %w", err)
+	}
+	metrics["gratuity_eligible"] = gratuityCount
+
+	return metrics, nil
+}
