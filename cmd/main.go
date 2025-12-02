@@ -76,11 +76,42 @@ func main() {
 	// Real Estate Service
 	realEstateService := services.NewRealEstateService(dbConn)
 
+	// Civil Engineering Service
+	civilService := services.NewCivilService(dbConn)
+
+	// Construction Service
+	constructionService := services.NewConstructionService(dbConn)
+
+	// BOQ Service
+	boqService := services.NewBOQService(dbConn)
+
+	// HR & Payroll Service
+	hrService := services.NewHRService(dbConn)
+
+	// GL (General Ledger) Service
+	glService := services.NewGLService(dbConn)
+
+	// Compliance Services (RERA, HR, Tax)
+	reraComplianceService := services.NewRERAComplianceService(dbConn)
+	hrComplianceService := services.NewHRComplianceService(dbConn)
+	taxComplianceService := services.NewTaxComplianceService(dbConn)
+
 	// Initialize handlers
 	passwordResetHandler := handlers.NewPasswordResetHandler(passwordResetService)
 
+	// Compliance Handlers
+	reraComplianceHandler := handlers.NewRERAComplianceHandler(reraComplianceService)
+	hrComplianceHandler := handlers.NewHRComplianceHandler(hrComplianceService)
+	taxComplianceHandler := handlers.NewTaxComplianceHandler(taxComplianceService)
+
+	// Dashboard Handlers
+	financialDashboardHandler := handlers.NewFinancialDashboardHandler(glService)
+	hrDashboardHandler := handlers.NewHRDashboardHandler(hrService, hrComplianceService)
+	complianceDashboardHandler := handlers.NewComplianceDashboardHandler(reraComplianceService, hrComplianceService, taxComplianceService)
+	salesDashboardHandler := handlers.NewSalesDashboardHandler(salesService)
+
 	// Setup router with all services
-	r := router.SetupRoutesWithPhase3C(authService, tenantService, passwordResetHandler, agentService, gamificationService, leadService, callService, campaignService, aiOrchestrator, webSocketHub, leadScoringService, dashboardService, taskService, notificationService, tenantCustomizationService, phase3cServices, salesService, realEstateService, log)
+	r := router.SetupRoutesWithPhase3C(authService, tenantService, passwordResetHandler, agentService, gamificationService, leadService, callService, campaignService, aiOrchestrator, webSocketHub, leadScoringService, dashboardService, taskService, notificationService, tenantCustomizationService, phase3cServices, salesService, realEstateService, civilService, constructionService, boqService, hrService, glService, reraComplianceHandler, hrComplianceHandler, taxComplianceHandler, financialDashboardHandler, hrDashboardHandler, complianceDashboardHandler, salesDashboardHandler, log)
 
 	// Create HTTP server
 	server := &http.Server{

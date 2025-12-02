@@ -13,6 +13,10 @@ services:
       - "3306:3306"
     volumes:
       - ./migrations/001_initial_schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./migrations/002_civil_schema.sql:/docker-entrypoint-initdb.d/02-civil.sql
+      - ./migrations/003_construction_schema.sql:/docker-entrypoint-initdb.d/03-construction.sql
+      - ./migrations/004_gamification_schema.sql:/docker-entrypoint-initdb.d/04-gamification.sql
+      - ./migrations/005_scheduled_tasks_schema.sql:/docker-entrypoint-initdb.d/05-scheduled-tasks.sql
       - mysql_data:/var/lib/mysql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
@@ -89,7 +93,7 @@ services:
       - callcenter-network
 
   frontend:
-    image: node:20-alpine
+    image: node:22-alpine
     container_name: callcenter-frontend
     working_dir: /app
     ports:
@@ -98,7 +102,7 @@ services:
       NEXT_PUBLIC_API_URL: "http://app:8080"
     volumes:
       - ./frontend:/app
-    command: sh -c "npm install && npm run dev -- --hostname 0.0.0.0"
+    command: sh -c "npm install -g npm@11.6.4 && npm install && npm install baseline-browser-mapping@latest && npm run dev -- --hostname 0.0.0.0"
     depends_on:
       - app
     networks:

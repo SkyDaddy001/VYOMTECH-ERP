@@ -227,7 +227,7 @@ export const NUMBER_FORMAT = {
   },
 
   money: {
-    format: (num: number) => '$' + num.toLocaleString('en-US', { maximumFractionDigits: 0 }),
+    format: (num: number) => '₹' + num.toLocaleString('en-US', { maximumFractionDigits: 0 }),
   },
 } as const
 

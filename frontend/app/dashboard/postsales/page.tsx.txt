@@ -1,0 +1,449 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import toast from 'react-hot-toast'
+import TicketList from '@/components/modules/PostSales/TicketList'
+import TicketForm from '@/components/modules/PostSales/TicketForm'
+import WarrantyList from '@/components/modules/PostSales/WarrantyList'
+import WarrantyForm from '@/components/modules/PostSales/WarrantyForm'
+import KnowledgeList from '@/components/modules/PostSales/KnowledgeList'
+import KnowledgeForm from '@/components/modules/PostSales/KnowledgeForm'
+import { postSalesService } from '@/services/postsales.service'
+import { ServiceTicket, Warranty, KnowledgeArticle, PostSalesMetrics, CustomerFeedback } from '@/types/postsales'
+
+type TabType = 'tickets' | 'warranties' | 'knowledge' | 'feedback'
+type FormType = 'ticket' | 'warranty' | 'article' | null
+
+export default function PostSalesPage() {
+  const [activeTab, setActiveTab] = useState<TabType>('tickets')
+  const [showForm, setShowForm] = useState(false)
+  const [editingItem, setEditingItem] = useState<any>(null)
+  const [formType, setFormType] = useState<FormType>(null)
+
+  // Data states
+  const [tickets, setTickets] = useState<ServiceTicket[]>([])
+  const [warranties, setWarranties] = useState<Warranty[]>([])
+  const [articles, setArticles] = useState<KnowledgeArticle[]>([])
+  const [metrics, setMetrics] = useState<PostSalesMetrics | null>(null)
+  const [feedback, setFeedback] = useState<CustomerFeedback[]>([])
+
+  // Loading states
+  const [ticketsLoading, setTicketsLoading] = useState(false)
+  const [warrantiesLoading, setWarrantiesLoading] = useState(false)
+  const [articlesLoading, setArticlesLoading] = useState(false)
+
+  // Load tickets
+  const loadTickets = async () => {
+    setTicketsLoading(true)
+    try {
+      const data = await postSalesService.getTickets()
+      setTickets(data)
+    } catch (error) {
+      toast.error('Failed to load tickets')
+    } finally {
+      setTicketsLoading(false)
+    }
+  }
+
+  // Load warranties
+  const loadWarranties = async () => {
+    setWarrantiesLoading(true)
+    try {
+      const data = await postSalesService.getWarranties()
+      setWarranties(data)
+    } catch (error) {
+      toast.error('Failed to load warranties')
+    } finally {
+      setWarrantiesLoading(false)
+    }
+  }
+
+  // Load articles
+  const loadArticles = async () => {
+    setArticlesLoading(true)
+    try {
+      const data = await postSalesService.getArticles()
+      setArticles(data)
+    } catch (error) {
+      toast.error('Failed to load articles')
+    } finally {
+      setArticlesLoading(false)
+    }
+  }
+
+  // Load metrics
+  const loadMetrics = async () => {
+    try {
+      const data = await postSalesService.getMetrics()
+      setMetrics(data)
+    } catch (error) {
+      // Metrics are optional
+    }
+  }
+
+  // Load feedback
+  const loadFeedback = async () => {
+    try {
+      const data = await postSalesService.getFeedback()
+      setFeedback(data)
+    } catch (error) {
+      // Feedback is optional
+    }
+  }
+
+  // Load data on tab change
+  useEffect(() => {
+    loadMetrics()
+    switch (activeTab) {
+      case 'tickets':
+        loadTickets()
+        break
+      case 'warranties':
+        loadWarranties()
+        break
+      case 'knowledge':
+        loadArticles()
+        break
+      case 'feedback':
+        loadFeedback()
+        break
+    }
+  }, [activeTab])
+
+  // Ticket CRUD
+  const handleCreateTicket = () => {
+    setEditingItem(null)
+    setFormType('ticket')
+    setShowForm(true)
+  }
+
+  const handleEditTicket = (ticket: ServiceTicket) => {
+    setEditingItem(ticket)
+    setFormType('ticket')
+    setShowForm(true)
+  }
+
+  const handleDeleteTicket = async (ticket: ServiceTicket) => {
+    if (!confirm('Are you sure?')) return
+    try {
+      await postSalesService.deleteTicket(ticket.id || '')
+      toast.success('Ticket deleted!')
+      loadTickets()
+    } catch (error) {
+      toast.error('Failed to delete ticket')
+    }
+  }
+
+  const handleUpdateTicketStatus = async (ticket: ServiceTicket, status: string) => {
+    try {
+      await postSalesService.updateTicketStatus(ticket.id || '', status)
+      toast.success('Ticket status updated!')
+      loadTickets()
+    } catch (error) {
+      toast.error('Failed to update ticket status')
+    }
+  }
+
+  const handleSubmitTicket = async (data: Partial<ServiceTicket>) => {
+    try {
+      if (editingItem) {
+        await postSalesService.updateTicket(editingItem.id, data)
+      } else {
+        await postSalesService.createTicket(data)
+      }
+      setShowForm(false)
+      loadTickets()
+    } catch (error) {
+      throw error
+    }
+  }
+
+  // Warranty CRUD
+  const handleCreateWarranty = () => {
+    setEditingItem(null)
+    setFormType('warranty')
+    setShowForm(true)
+  }
+
+  const handleEditWarranty = (warranty: Warranty) => {
+    setEditingItem(warranty)
+    setFormType('warranty')
+    setShowForm(true)
+  }
+
+  const handleDeleteWarranty = async (warranty: Warranty) => {
+    if (!confirm('Are you sure?')) return
+    try {
+      await postSalesService.deleteWarranty(warranty.id || '')
+      toast.success('Warranty deleted!')
+      loadWarranties()
+    } catch (error) {
+      toast.error('Failed to delete warranty')
+    }
+  }
+
+  const handleSubmitWarranty = async (data: Partial<Warranty>) => {
+    try {
+      if (editingItem) {
+        await postSalesService.updateWarranty(editingItem.id, data)
+      } else {
+        await postSalesService.createWarranty(data)
+      }
+      setShowForm(false)
+      loadWarranties()
+    } catch (error) {
+      throw error
+    }
+  }
+
+  // Article CRUD
+  const handleCreateArticle = () => {
+    setEditingItem(null)
+    setFormType('article')
+    setShowForm(true)
+  }
+
+  const handleEditArticle = (article: KnowledgeArticle) => {
+    setEditingItem(article)
+    setFormType('article')
+    setShowForm(true)
+  }
+
+  const handleDeleteArticle = async (article: KnowledgeArticle) => {
+    if (!confirm('Are you sure?')) return
+    try {
+      await postSalesService.deleteArticle(article.id || '')
+      toast.success('Article deleted!')
+      loadArticles()
+    } catch (error) {
+      toast.error('Failed to delete article')
+    }
+  }
+
+  const handleSubmitArticle = async (data: Partial<KnowledgeArticle>) => {
+    try {
+      if (editingItem) {
+        await postSalesService.updateArticle(editingItem.id, data)
+      } else {
+        await postSalesService.createArticle(data)
+      }
+      setShowForm(false)
+      loadArticles()
+    } catch (error) {
+      throw error
+    }
+  }
+
+  const closeForm = () => {
+    setShowForm(false)
+    setEditingItem(null)
+    setFormType(null)
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-100 p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">Post-Sales Management</h1>
+          <p className="text-gray-600">Manage service tickets, warranties, and customer satisfaction</p>
+        </div>
+
+        {/* Metrics */}
+        {metrics && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div className="bg-white rounded-lg shadow p-4 border border-gray-200">
+              <p className="text-gray-600 text-xs font-medium">Total Tickets</p>
+              <p className="text-2xl font-bold text-blue-600 mt-1">{metrics.total_tickets}</p>
+            </div>
+            <div className="bg-white rounded-lg shadow p-4 border border-gray-200">
+              <p className="text-gray-600 text-xs font-medium">Open Tickets</p>
+              <p className="text-2xl font-bold text-red-600 mt-1">{metrics.open_tickets}</p>
+            </div>
+            <div className="bg-white rounded-lg shadow p-4 border border-gray-200">
+              <p className="text-gray-600 text-xs font-medium">Avg Resolution</p>
+              <p className="text-2xl font-bold text-purple-600 mt-1">{metrics.avg_resolution_time} days</p>
+            </div>
+            <div className="bg-white rounded-lg shadow p-4 border border-gray-200">
+              <p className="text-gray-600 text-xs font-medium">Satisfaction</p>
+              <p className="text-2xl font-bold text-green-600 mt-1">{metrics.customer_satisfaction.toFixed(1)}/5</p>
+            </div>
+          </div>
+        )}
+
+        {/* Tabs */}
+        <div className="bg-white rounded-lg shadow mb-6 border border-gray-200">
+          <div className="flex flex-wrap border-b border-gray-200">
+            <button
+              onClick={() => {
+                setActiveTab('tickets')
+                setShowForm(false)
+              }}
+              className={`flex-1 py-4 px-6 text-center font-medium transition ${
+                activeTab === 'tickets'
+                  ? 'border-b-2 border-blue-600 text-blue-600'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Tickets
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab('warranties')
+                setShowForm(false)
+              }}
+              className={`flex-1 py-4 px-6 text-center font-medium transition ${
+                activeTab === 'warranties'
+                  ? 'border-b-2 border-blue-600 text-blue-600'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Warranties
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab('knowledge')
+                setShowForm(false)
+              }}
+              className={`flex-1 py-4 px-6 text-center font-medium transition ${
+                activeTab === 'knowledge'
+                  ? 'border-b-2 border-blue-600 text-blue-600'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Knowledge Base
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab('feedback')
+                setShowForm(false)
+              }}
+              className={`flex-1 py-4 px-6 text-center font-medium transition ${
+                activeTab === 'feedback'
+                  ? 'border-b-2 border-blue-600 text-blue-600'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Feedback
+            </button>
+          </div>
+
+          {/* Tab Content */}
+          <div className="p-6">
+            {/* Tickets Tab */}
+            {activeTab === 'tickets' && (
+              <div>
+                {!showForm ? (
+                  <div>
+                    <button
+                      onClick={handleCreateTicket}
+                      className="mb-4 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium"
+                    >
+                      + Create Ticket
+                    </button>
+                    <TicketList
+                      tickets={tickets}
+                      loading={ticketsLoading}
+                      onEdit={handleEditTicket}
+                      onDelete={handleDeleteTicket}
+                      onStatusChange={handleUpdateTicketStatus}
+                    />
+                  </div>
+                ) : (
+                  <TicketForm
+                    ticket={editingItem}
+                    onSubmit={handleSubmitTicket}
+                    onCancel={closeForm}
+                  />
+                )}
+              </div>
+            )}
+
+            {/* Warranties Tab */}
+            {activeTab === 'warranties' && (
+              <div>
+                {!showForm ? (
+                  <div>
+                    <button
+                      onClick={handleCreateWarranty}
+                      className="mb-4 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium"
+                    >
+                      + Create Warranty
+                    </button>
+                    <WarrantyList
+                      warranties={warranties}
+                      loading={warrantiesLoading}
+                      onEdit={handleEditWarranty}
+                      onDelete={handleDeleteWarranty}
+                    />
+                  </div>
+                ) : (
+                  <WarrantyForm
+                    warranty={editingItem}
+                    onSubmit={handleSubmitWarranty}
+                    onCancel={closeForm}
+                  />
+                )}
+              </div>
+            )}
+
+            {/* Knowledge Tab */}
+            {activeTab === 'knowledge' && (
+              <div>
+                {!showForm ? (
+                  <div>
+                    <button
+                      onClick={handleCreateArticle}
+                      className="mb-4 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium"
+                    >
+                      + Create Article
+                    </button>
+                    <KnowledgeList
+                      articles={articles}
+                      loading={articlesLoading}
+                      onEdit={handleEditArticle}
+                      onDelete={handleDeleteArticle}
+                    />
+                  </div>
+                ) : (
+                  <KnowledgeForm
+                    article={editingItem}
+                    onSubmit={handleSubmitArticle}
+                    onCancel={closeForm}
+                  />
+                )}
+              </div>
+            )}
+
+            {/* Feedback Tab */}
+            {activeTab === 'feedback' && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {feedback.map((f, idx) => (
+                    <div key={idx} className="bg-gradient-to-br from-rose-50 to-rose-100 rounded-lg p-4 border border-rose-200">
+                      <p className="text-sm font-semibold text-rose-900 mb-2">{f.period}</p>
+                      <div className="space-y-2">
+                        <div>
+                          <p className="text-xs text-rose-700">Satisfaction</p>
+                          <p className="text-xl font-bold text-rose-600">{f.satisfaction_score.toFixed(1)}/5</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-rose-700">NPS Score</p>
+                          <p className="text-xl font-bold text-rose-600">{f.nps_score.toFixed(1)}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-rose-700">Churn Rate</p>
+                          <p className="text-xl font-bold text-rose-600">{(f.churn_rate * 100).toFixed(1)}%</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}

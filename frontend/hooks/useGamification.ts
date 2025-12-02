@@ -72,32 +72,26 @@ export function useGamification() {
   }, [])
 
   const fetchActiveChallenges = useCallback(async () => {
-    setLoading(true)
-    setError(null)
     try {
       const data = await gamificationService.getActiveChallenges()
       setChallenges(data as any[])
       return data
     } catch (err: any) {
-      setError(err.message || 'Failed to fetch active challenges')
-      return null
-    } finally {
-      setLoading(false)
+      console.warn('Failed to fetch active challenges (optional):', err.message)
+      setChallenges([])
+      return []
     }
   }, [])
 
   const fetchLeaderboard = useCallback(async (limit?: number) => {
-    setLoading(true)
-    setError(null)
     try {
       const data = await gamificationService.getLeaderboard(limit)
       setLeaderboard(data as any[])
       return data
     } catch (err: any) {
-      setError(err.message || 'Failed to fetch leaderboard')
-      return null
-    } finally {
-      setLoading(false)
+      console.warn('Failed to fetch leaderboard (optional):', err.message)
+      setLeaderboard([])
+      return []
     }
   }, [])
 

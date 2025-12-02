@@ -6,9 +6,10 @@ import Link from 'next/link'
 interface LoginFormProps {
   onSubmit: (email: string, password: string) => Promise<void>
   loading?: boolean
+  apiError?: string | null
 }
 
-export default function LoginForm({ onSubmit, loading = false }: LoginFormProps) {
+export default function LoginForm({ onSubmit, loading = false, apiError = null }: LoginFormProps) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -32,6 +33,12 @@ export default function LoginForm({ onSubmit, loading = false }: LoginFormProps)
       </h1>
 
       <form onSubmit={handleSubmit} className="space-y-4">
+        {apiError && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <p className="text-red-800 text-sm font-medium">Error: {apiError}</p>
+          </div>
+        )}
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Email

@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"time"
 
 	"multi-tenant-ai-callcenter/internal/models"
@@ -29,7 +30,7 @@ func NewAuditService(db *sql.DB, log *logger.Logger) *AuditService {
 func (as *AuditService) LogAction(ctx context.Context, log *models.AuditLog) error {
 	query := `
 		INSERT INTO audit_logs (tenant_id, user_id, action, resource, details, ip_address, user_agent, status, created_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 	`
 
 	result, err := as.db.ExecContext(ctx, query,
@@ -57,43 +58,50 @@ func (as *AuditService) GetAuditLogs(ctx context.Context, tenantID string, filte
 	query := `
 		SELECT id, tenant_id, user_id, action, resource, details, ip_address, user_agent, status, created_at
 		FROM audit_logs
-		WHERE tenant_id = ?
+		WHERE tenant_id = $1
 	`
 
 	args := []interface{}{tenantID}
+	paramIndex := 2
 
 	// Apply filters
 	if userID, ok := filters["user_id"]; ok {
-		query += ` AND user_id = ?`
+		query += ` AND user_id = $` + strconv.Itoa(paramIndex)
 		args = append(args, userID)
+		paramIndex++
 	}
 
 	if action, ok := filters["action"]; ok {
-		query += ` AND action = ?`
+		query += ` AND action = $` + strconv.Itoa(paramIndex)
 		args = append(args, action)
+		paramIndex++
 	}
 
 	if resource, ok := filters["resource"]; ok {
-		query += ` AND resource = ?`
+		query += ` AND resource = $` + strconv.Itoa(paramIndex)
 		args = append(args, resource)
+		paramIndex++
 	}
 
 	if status, ok := filters["status"]; ok {
-		query += ` AND status = ?`
+		query += ` AND status = $` + strconv.Itoa(paramIndex)
 		args = append(args, status)
+		paramIndex++
 	}
 
 	if startDate, ok := filters["start_date"]; ok {
-		query += ` AND created_at >= ?`
+		query += ` AND created_at >= $` + strconv.Itoa(paramIndex)
 		args = append(args, startDate)
+		paramIndex++
 	}
 
 	if endDate, ok := filters["end_date"]; ok {
-		query += ` AND created_at <= ?`
+		query += ` AND created_at <= $` + strconv.Itoa(paramIndex)
 		args = append(args, endDate)
+		paramIndex++
 	}
 
-	query += ` ORDER BY created_at DESC LIMIT ? OFFSET ?`
+	query += ` ORDER BY created_at DESC LIMIT $` + strconv.Itoa(paramIndex) + ` OFFSET $` + strconv.Itoa(paramIndex+1)
 	args = append(args, limit, offset)
 
 	rows, err := as.db.QueryContext(ctx, query, args...)
@@ -137,13 +145,13 @@ func (as *AuditService) GetAuditLogsByDateRange(ctx context.Context, tenantID st
 // GetAuditSummary generates a summary of audit activities
 func (as *AuditService) GetAuditSummary(ctx context.Context, tenantID string, days int) (map[string]interface{}, error) {
 	query := `
-		SELECT 
+		SELECT
 			action,
 			COUNT(*) as count,
 			SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END) as success_count,
 			SUM(CASE WHEN status = 'failure' THEN 1 ELSE 0 END) as failure_count
 		FROM audit_logs
-		WHERE tenant_id = ? AND created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
+		WHERE tenant_id = $1 AND created_at >= DATE_SUB(NOW(), INTERVAL $2 DAY)
 		GROUP BY action
 		ORDER BY count DESC
 	`
@@ -197,7 +205,7 @@ func (as *AuditService) GetAuditSummary(ctx context.Context, tenantID string, da
 func (as *AuditService) LogSecurityEvent(ctx context.Context, event *models.SecurityEvent) error {
 	query := `
 		INSERT INTO security_events (tenant_id, user_id, event_type, severity, description, ip_address, created_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
 	`
 
 	result, err := as.db.ExecContext(ctx, query,
@@ -225,26 +233,29 @@ func (as *AuditService) GetSecurityEvents(ctx context.Context, tenantID string, 
 	query := `
 		SELECT id, tenant_id, user_id, event_type, severity, description, ip_address, resolved_at, created_at
 		FROM security_events
-		WHERE tenant_id = ?
+		WHERE tenant_id = $1
 	`
 
 	args := []interface{}{tenantID}
+	paramIndex := 2
 
 	if eventType, ok := filters["event_type"]; ok {
-		query += ` AND event_type = ?`
+		query += ` AND event_type = $` + strconv.Itoa(paramIndex)
 		args = append(args, eventType)
+		paramIndex++
 	}
 
 	if severity, ok := filters["severity"]; ok {
-		query += ` AND severity = ?`
+		query += ` AND severity = $` + strconv.Itoa(paramIndex)
 		args = append(args, severity)
+		paramIndex++
 	}
 
 	if unresolved, ok := filters["unresolved"].(bool); ok && unresolved {
 		query += ` AND resolved_at IS NULL`
 	}
 
-	query += ` ORDER BY created_at DESC LIMIT ? OFFSET ?`
+	query += ` ORDER BY created_at DESC LIMIT $` + strconv.Itoa(paramIndex) + ` OFFSET $` + strconv.Itoa(paramIndex+1)
 	args = append(args, limit, offset)
 
 	rows, err := as.db.QueryContext(ctx, query, args...)
@@ -271,8 +282,8 @@ func (as *AuditService) GetSecurityEvents(ctx context.Context, tenantID string, 
 func (as *AuditService) ResolveSecurityEvent(ctx context.Context, tenantID string, eventID int64) error {
 	query := `
 		UPDATE security_events
-		SET resolved_at = ?
-		WHERE id = ? AND tenant_id = ?
+		SET resolved_at = $1
+		WHERE id = $2 AND tenant_id = $3
 	`
 
 	_, err := as.db.ExecContext(ctx, query, time.Now(), eventID, tenantID)
@@ -288,7 +299,7 @@ func (as *AuditService) ResolveSecurityEvent(ctx context.Context, tenantID strin
 func (as *AuditService) ArchiveOldAuditLogs(ctx context.Context, tenantID string, retentionDays int) (int64, error) {
 	query := `
 		DELETE FROM audit_logs
-		WHERE tenant_id = ? AND created_at < DATE_SUB(NOW(), INTERVAL ? DAY)
+		WHERE tenant_id = $1 AND created_at < DATE_SUB(NOW(), INTERVAL $2 DAY)
 	`
 
 	result, err := as.db.ExecContext(ctx, query, tenantID, retentionDays)

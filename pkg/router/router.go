@@ -18,7 +18,7 @@ func SetupRoutesWithServices(
 	agentService *services.AgentService,
 	log *logger.Logger,
 ) *mux.Router {
-	return setupRoutes(authService, nil, passwordResetHandler, agentService, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, log)
+	return setupRoutes(authService, nil, passwordResetHandler, agentService, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, log)
 }
 
 // SetupRoutesWithTenant configures all API routes with tenant service
@@ -29,7 +29,7 @@ func SetupRoutesWithTenant(
 	agentService *services.AgentService,
 	log *logger.Logger,
 ) *mux.Router {
-	return setupRoutes(authService, tenantService, passwordResetHandler, agentService, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, log)
+	return setupRoutes(authService, tenantService, passwordResetHandler, agentService, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, log)
 }
 
 // SetupRoutesWithGamification configures all API routes with gamification features
@@ -41,7 +41,7 @@ func SetupRoutesWithGamification(
 	gamificationService *services.GamificationService,
 	log *logger.Logger,
 ) *mux.Router {
-	return setupRoutes(authService, tenantService, passwordResetHandler, agentService, gamificationService, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, log)
+	return setupRoutes(authService, tenantService, passwordResetHandler, agentService, gamificationService, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, log)
 }
 
 // SetupRoutesWithCoreFeatures configures all API routes with core features and real-time support
@@ -57,7 +57,7 @@ func SetupRoutesWithCoreFeatures(
 	aiOrchestrator *services.AIOrchestrator,
 	log *logger.Logger,
 ) *mux.Router {
-	return setupRoutes(authService, tenantService, passwordResetHandler, agentService, gamificationService, leadService, callService, campaignService, aiOrchestrator, nil, nil, nil, nil, nil, nil, nil, nil, nil, log)
+	return setupRoutes(authService, tenantService, passwordResetHandler, agentService, gamificationService, leadService, callService, campaignService, aiOrchestrator, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, log)
 }
 
 // SetupRoutesWithRealtime configures all API routes with realtime WebSocket support
@@ -79,7 +79,7 @@ func SetupRoutesWithRealtime(
 	customizationService services.TenantCustomizationService,
 	log *logger.Logger,
 ) *mux.Router {
-	return setupRoutes(authService, tenantService, passwordResetHandler, agentService, gamificationService, leadService, callService, campaignService, aiOrchestrator, webSocketHub, leadScoringService, dashboardService, taskService, notificationService, customizationService, nil, nil, nil, log)
+	return setupRoutes(authService, tenantService, passwordResetHandler, agentService, gamificationService, leadService, callService, campaignService, aiOrchestrator, webSocketHub, leadScoringService, dashboardService, taskService, notificationService, customizationService, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, log)
 }
 
 // SetupRoutesWithPhase3C configures all API routes including Phase 3C (Modular Monetization)
@@ -102,9 +102,21 @@ func SetupRoutesWithPhase3C(
 	phase3cServices *services.Phase3CServices,
 	salesService *services.SalesService,
 	realEstateService *services.RealEstateService,
+	civilService *services.CivilService,
+	constructionService *services.ConstructionService,
+	boqService *services.BOQService,
+	hrService *services.HRService,
+	glService *services.GLService,
+	reraComplianceHandler *handlers.RERAComplianceHandler,
+	hrComplianceHandler *handlers.HRComplianceHandler,
+	taxComplianceHandler *handlers.TaxComplianceHandler,
+	financialDashboardHandler *handlers.FinancialDashboardHandler,
+	hrDashboardHandler *handlers.HRDashboardHandler,
+	complianceDashboardHandler *handlers.ComplianceDashboardHandler,
+	salesDashboardHandler *handlers.SalesDashboardHandler,
 	log *logger.Logger,
 ) *mux.Router {
-	return setupRoutes(authService, tenantService, passwordResetHandler, agentService, gamificationService, leadService, callService, campaignService, aiOrchestrator, webSocketHub, leadScoringService, dashboardService, taskService, notificationService, customizationService, phase3cServices, salesService, realEstateService, log)
+	return setupRoutes(authService, tenantService, passwordResetHandler, agentService, gamificationService, leadService, callService, campaignService, aiOrchestrator, webSocketHub, leadScoringService, dashboardService, taskService, notificationService, customizationService, phase3cServices, salesService, realEstateService, civilService, constructionService, boqService, hrService, glService, reraComplianceHandler, hrComplianceHandler, taxComplianceHandler, financialDashboardHandler, hrDashboardHandler, complianceDashboardHandler, salesDashboardHandler, log)
 }
 
 func setupRoutes(
@@ -126,6 +138,18 @@ func setupRoutes(
 	phase3cServices *services.Phase3CServices,
 	salesService *services.SalesService,
 	realEstateService *services.RealEstateService,
+	civilService *services.CivilService,
+	constructionService *services.ConstructionService,
+	boqService *services.BOQService,
+	hrService *services.HRService,
+	glService *services.GLService,
+	reraComplianceHandler *handlers.RERAComplianceHandler,
+	hrComplianceHandler *handlers.HRComplianceHandler,
+	taxComplianceHandler *handlers.TaxComplianceHandler,
+	financialDashboardHandler *handlers.FinancialDashboardHandler,
+	hrDashboardHandler *handlers.HRDashboardHandler,
+	complianceDashboardHandler *handlers.ComplianceDashboardHandler,
+	salesDashboardHandler *handlers.SalesDashboardHandler,
 	log *logger.Logger,
 ) *mux.Router {
 	r := mux.NewRouter()
@@ -638,7 +662,34 @@ func setupRoutes(
 	}
 
 	// ============================================
-	// REAL ESTATE PROPERTY MANAGEMENT ROUTES
+	// CIVIL ENGINEERING ROUTES
+	// ============================================
+	if civilService != nil {
+		handlers.RegisterCivilRoutes(r, civilService)
+	}
+
+	// ============================================
+	// CONSTRUCTION MANAGEMENT ROUTES
+	// ============================================
+
+	if constructionService != nil {
+		handlers.RegisterConstructionRoutes(r, constructionService)
+	}
+
+	// ============================================
+	// BOQ MANAGEMENT ROUTES
+	// ============================================
+	if boqService != nil {
+		handlers.RegisterBOQRoutes(r, boqService)
+	}
+
+	// ============================================
+	// HR & PAYROLL MANAGEMENT ROUTES
+	// ============================================
+	if hrService != nil {
+		handlers.RegisterHRRoutes(r, hrService)
+	}
+
 	// ============================================
 	if realEstateService != nil {
 		realEstateHandler := handlers.NewRealEstateHandler(realEstateService.DB)
@@ -668,6 +719,43 @@ func setupRoutes(
 
 		// Account Ledger
 		realEstateRoutes.HandleFunc("/ledger/{booking_id}", realEstateHandler.GetAccountLedger).Methods("GET")
+	}
+
+	// ============================================
+	// GENERAL LEDGER (GL) ROUTES
+	// ============================================
+	if glService != nil {
+		handlers.RegisterGLRoutes(r, glService)
+	}
+
+	// Compliance Routes (RERA, HR, Tax)
+	if reraComplianceHandler != nil {
+		handlers.RegisterRERARoutes(r, reraComplianceHandler)
+	}
+
+	if hrComplianceHandler != nil {
+		handlers.RegisterHRComplianceRoutes(r, hrComplianceHandler)
+	}
+
+	if taxComplianceHandler != nil {
+		handlers.RegisterTaxComplianceRoutes(r, taxComplianceHandler)
+	}
+
+	// Dashboard Routes
+	if financialDashboardHandler != nil {
+		handlers.RegisterFinancialDashboardRoutes(r, financialDashboardHandler)
+	}
+
+	if hrDashboardHandler != nil {
+		handlers.RegisterHRDashboardRoutes(r, hrDashboardHandler)
+	}
+
+	if complianceDashboardHandler != nil {
+		handlers.RegisterComplianceDashboardRoutes(r, complianceDashboardHandler)
+	}
+
+	if salesDashboardHandler != nil {
+		handlers.RegisterSalesDashboardRoutes(r, salesDashboardHandler)
 	}
 
 	// OPTIONS handler for CORS preflight requests

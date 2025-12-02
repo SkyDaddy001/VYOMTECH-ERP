@@ -42,13 +42,13 @@ export function ModuleMarketplace() {
       case 'free':
         return 'Free'
       case 'per_user':
-        return `$${module.cost_per_user}/user`
+        return `₹${module.cost_per_user}/user`
       case 'per_project':
-        return `$${module.cost_per_project}/project`
+        return `₹${module.cost_per_project}/project`
       case 'per_company':
-        return `$${module.cost_per_company}/company`
+        return `₹${module.cost_per_company}/company`
       case 'flat':
-        return `$${module.base_cost}/month`
+        return `₹${module.base_cost}/month`
       case 'tiered':
         return 'Tiered Pricing'
       default:

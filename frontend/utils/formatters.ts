@@ -57,7 +57,7 @@ export function formatRating(num: number | null, maxRating = 5): string {
 
 export function formatMoney(num: number | null): string {
   if (num === null || num === undefined) return 'N/A'
-  return '$' + num.toLocaleString('en-US', { maximumFractionDigits: 0 })
+  return '₹' + num.toLocaleString('en-US', { maximumFractionDigits: 0 })
 }
 
 // ============================================================================

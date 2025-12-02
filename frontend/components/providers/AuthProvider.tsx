@@ -24,9 +24,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const stored = localStorage.getItem('user')
-        if (stored) {
-          setUser(JSON.parse(stored))
+        const storedUser = localStorage.getItem('user')
+        const storedToken = localStorage.getItem('auth_token')
+
+        if (storedUser && storedToken) {
+          // Restore user from storage
+          const user = JSON.parse(storedUser)
+          setUser(user)
+          console.log('User restored from localStorage')
+          // Note: Token validation with backend happens on first API call via interceptor
+          // If token is invalid, the 401 response will trigger logout
         }
       } catch (err) {
         console.error('Auth check failed:', err)
@@ -46,8 +53,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(response.user)
       localStorage.setItem('user', JSON.stringify(response.user))
     } catch (err: any) {
-      const message = err.response?.data?.message || err.message || 'Login failed'
+      // Handle custom ApiError with userMessage, or fallback to generic message
+      const message = err.userMessage || err.response?.data?.message || err.message || 'Login failed'
       setError(message)
+      console.error('Login error:', message)
       throw new Error(message)
     } finally {
       setLoading(false)
@@ -68,8 +77,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(response.user)
       localStorage.setItem('user', JSON.stringify(response.user))
     } catch (err: any) {
-      const message = err.response?.data?.message || err.message || 'Registration failed'
+      const message = err.userMessage || err.response?.data?.message || err.message || 'Registration failed'
       setError(message)
+      console.error('Register error:', message)
       throw new Error(message)
     } finally {
       setLoading(false)

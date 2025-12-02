@@ -64,12 +64,12 @@ export function BillingPortal() {
         </div>
         <div className="bg-green-50 border border-green-200 rounded-lg p-4">
           <p className="text-gray-600 text-sm">Monthly Charges</p>
-          <p className="text-xl font-bold text-green-600">${charges?.total_amount || '0.00'}</p>
+          <p className="text-xl font-bold text-green-600">₹{charges?.total_amount || '0.00'}</p>
         </div>
         <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
           <p className="text-gray-600 text-sm">Outstanding</p>
           <p className="text-xl font-bold text-orange-600">
-            ${invoices
+            ₹{invoices
               .filter((inv) => inv.status !== 'paid')
               .reduce((sum, inv) => sum + inv.total_amount, 0)
               .toFixed(2)}
@@ -103,7 +103,7 @@ export function BillingPortal() {
                 {invoices.map((invoice: any) => (
                   <tr key={invoice.id} className="border-b hover:bg-gray-50">
                     <td className="px-4 py-3 text-sm font-mono">{invoice.invoice_number}</td>
-                    <td className="px-4 py-3 text-sm font-bold">${invoice.total_amount.toFixed(2)}</td>
+                    <td className="px-4 py-3 text-sm font-bold">₹{invoice.total_amount.toFixed(2)}</td>
                     <td className="px-4 py-3 text-sm">
                       <span className={`px-2 py-1 text-xs font-semibold rounded ${getStatusColor(invoice.status)}`}>
                         {invoice.status}
@@ -153,7 +153,7 @@ export function BillingPortal() {
               <div className="flex justify-between">
                 <span className="text-gray-600">Amount:</span>
                 <span className="font-bold text-lg text-blue-600">
-                  ${selectedInvoice.total_amount.toFixed(2)}
+                  ₹{selectedInvoice.total_amount.toFixed(2)}
                 </span>
               </div>
               <div className="flex justify-between">

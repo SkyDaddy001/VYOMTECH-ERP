@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Client Profiling Form</title>
+  <!-- Replace local Tailwind CSS with Tailwind Play CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    /* Updated color scheme for better visual hierarchy */
+    :root {
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+      --secondary: #f3f4f6;
+      --text-primary: #1f2937;
+      --text-secondary: #4b5563;
+      --border: #e5e7eb;
+      --accent: #eff6ff;
+    }
+
+    body {
+      background: #f9fafb;
+      color: var(--text-primary);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    /* Credit card styled sections */
+    section {
+      background: white;
+      border-radius: 0.75rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.03);
+      border: 1px solid var(--border);
+      padding: 1rem !important;
+      margin-bottom: 1rem;
+      transition: all 0.2s ease;
+      /* Modified dimensions - fixed width but auto height */
+      width: 100%;
+      max-width: 340px;
+      min-height: 200px; /* Minimum height */
+      height: auto;     /* Allow height to grow with content */
+      display: flex;
+      flex-direction: column;
+    }
+
+    section:hover {
+      box-shadow: 0 4px 12px rgba(59,130,246,0.1);
+      border-color: #bfdbfe;
+      transform: translateY(-3px);
+    }
+    
+    /* Card container for flex layout */
+    .cards-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      justify-content: center;
+      align-items: flex-start; /* Align items to the top */
+    }
+
+    /* Compact form elements */
+    .mb-3 {
+      margin-bottom: 0.5rem;
+    }
+
+    /* Improved button styling */
+    .btn {
+      font-size: 0.8rem;
+      padding: 0.35rem;
+      min-height: 2.25rem;
+      border-radius: 0.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      font-weight: 500;
+      border: 1px solid var(--border);
+      background: white;
+      transition: all 0.15s ease;
+    }
+
+    .btn:hover {
+      background: var(--accent);
+      border-color: #bfdbfe;
+      transform: translateY(-1px);
+    }
+
+    .btn.selected, .btn.bg-blue-500 {
+      background: var(--primary);
+      border-color: var(--primary-hover);
+      color: white;
+    }
+
+    .btn.selected:hover, .btn.bg-blue-500:hover {
+      background: var(--primary-hover);
+    }
+
+    /* Better section headings */
+    h2 {
+      font-size: 0.85rem !important;
+      font-weight: 600 !important;
+      color: var(--primary);
+      margin-bottom: 0.5rem !important;
+      border-bottom: 1px solid var(--accent);
+      padding-bottom: 0.5rem;
+    }
+
+    /* Improved range slider styling */
+    input[type="range"] {
+      height: 0.5rem;
+      border-radius: 0.25rem;
+      background: #e2e8f0;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 1.25rem;
+      height: 1.25rem;
+      border-radius: 50%;
+      background: var(--primary);
+      cursor: pointer;
+      border: 2px solid white;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    /* Field label styling */
+    label {
+      font-size: 0.9rem !important;
+      margin-bottom: 0.35rem !important;
+      color: var(--text-secondary);
+      font-weight: 500 !important;
+    }
+
+    /* Smaller text for inputs */
+    .input {
+      font-size: 0.85rem;
+      padding: 0.25rem 0.5rem;
+      border: 1px solid var(--border);
+      border-radius: 0.5rem;
+      transition: all 0.2s ease;
+      width: 100%; /* Make inputs full width */
+      display: block; /* Ensure block display for full width */
+      box-sizing: border-box; /* Include padding in width calculation */
+      margin-bottom: 0.5rem; /* Add some spacing between inputs */
+    }
+
+    textarea.input {
+      height: auto;
+      min-height: 4.5rem; /* Set height for approximately 4 lines of text */
+      resize: vertical; /* Allow vertical resizing only */
+      line-height: 1.2; /* Improve line spacing for readability */
+    }
+
+    .input:focus {
+      outline: none;
+      border-color: #93c5fd;
+      box-shadow: 0 0 0 3px rgba(147, 197, 253, 0.25);
+    }
+    
+    /* Project button styling */
+    .project-btn {
+      padding: 0.5rem;
+      border-radius: 0.5rem;
+      font-size: 0.85rem;
+      font-weight: 500;
+      border: 1px solid var(--border);
+      background: white;
+      transition: all 0.15s ease;
+    }
+    
+    .project-btn:hover {
+      background: var(--accent);
+      border-color: #bfdbfe;
+    }
+    
+    .project-btn.active {
+      background: var(--primary);
+      border-color: var(--primary-hover);
+      color: white;
+    }
+
+    /* Updated summary panel styling for right-hand side display */
+    #summaryWidget {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 380px;
+      height: 100vh;
+      background: white;
+      box-shadow: -2px 0 15px rgba(0,0,0,0.1);
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      transform: translateX(100%);
+      transition: transform 0.3s ease;
+    }
+    
+    #summaryWidget.open {
+      transform: translateX(0);
+    }
+    
+    /* Adjust main content to make space for the sidebar */
+    .main-content {
+      margin-right: 0;
+      transition: margin-right 0.3s ease;
+    }
+    
+    .main-content.sidebar-open {
+      margin-right: 380px;
+    }
+    
+    /* Position the show/hide button */
+    #showSummaryBtn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 50px;
+      height: 50px;
+      z-index: 99;
+    }
+    
+    #hideSummaryBtn {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      z-index: 101;
+      background: none;
+      border: none;
+      font-size: 1.2rem;
+      cursor: pointer;
+      color: var(--text-secondary);
+    }
+    
+    /* Summary content styling */
+    .summary-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 2rem 1.5rem 1rem 1.5rem;
+    }
+
+    /* Scrollable content if needed */
+    .section-content {
+      flex: 1;
+      overflow-y: auto;
+      padding-right: 0.25rem;
+    }
+    
+    .section-content::-webkit-scrollbar {
+      width: 3px;
+    }
+    
+    .section-content::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 3px;
+    }
+
+    /* Update container spacing */
+    .grid {
+      gap: 0.5rem !important;
+    }
+
+    /* Make the sidebar float as well */
+    .lg\:sticky {
+      background: white;
+      border-radius: 1rem;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+      transition: all 0.3s ease;
+    }
+  </style>
+</head>
+<body>
+  <!-- Main content wrapper with class for sidebar adjustment -->
+  <div class="main-content">
+    <div class="container mx-auto p-4">
+      <!-- Credit card sized sections in a flex container -->
+      <div class="cards-container">
+        <!-- Property Details Section -->
+        <section>
+          <h2 class="text-xs font-semibold">🏠 Property Details</h2>
+          <div class="section-content">
+            <div class="mb-2">
+              <label class="block text-xs font-medium text-gray-700 mb-0.5">Preference</label>
+              <div class="grid grid-cols-3 gap-1">
+                <button class="toggle-btn btn" data-group="preference"><i class="fas fa-home"></i><span>House</span></button>
+                <button class="toggle-btn btn" data-group="preference"><i class="fas fa-building"></i><span>Apartment</span></button>
+                <button class="toggle-btn btn" data-group="preference"><i class="fas fa-th-large"></i><span>Plot</span></button>
+              </div>
+            </div>
+            <div class="mb-2">
+              <label class="block text-xs font-medium text-gray-700 mb-0.5">Status</label>
+              <div class="grid grid-cols-3 gap-1">
+                <button class="toggle-btn btn" data-group="status"><i class="fas fa-hammer"></i><span>Under Construction</span></button>
+                <button class="toggle-btn btn" data-group="status"><i class="fas fa-certificate"></i><span>Ready to Move</span></button>
+                <button class="toggle-btn btn" data-group="status"><i class="fas fa-map"></i><span>Prelaunch</span></button>
+              </div>
+            </div>
+            <div class="mb-2">
+              <label class="block text-xs font-medium text-gray-700 mb-0.5">Configuration</label>
+              <div class="grid grid-cols-3 gap-1">
+                <button class="toggle-btn btn" data-group="config"><i class="fas fa-bed"></i><span> 2 BHK</span></button>
+                <button class="toggle-btn btn" data-group="config"><i class="fas fa-bed"></i><span> 3 BHK</span></button>
+                <button class="toggle-btn btn" data-group="config"><i class="fas fa-bed"></i><span> 4 BHK</span></button>
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-700 mb-0.5">Area</label>
+              <div class="flex items-center gap-2">
+                  <input type="range" id="areaRange" min="0" max="2000" step="500" class="w-full h-2">
+                <button type="button" id="clearArea" class="text-xs px-2 py-1 bg-gray-200 rounded hover:bg-gray-300">NA </button>
+              </div>
+              <p id="areaValue" class="text-xs text-gray-600 mt-0.5">NA </p>
+            </div>
+          </div>
+        </section>
+        
+        <!-- Customer Profile Section -->
+        <section>
+          <h2 class="text-xs font-semibold">👤 Customer Profile</h2>
+          <div class="section-content">
+            <div class="mb-2">
+              <label class="block text-xs font-medium text-gray-700 mb-0.5">Budget</label>
+              <div class="flex items-center gap-2">
+                <input type="range" id="budgetSlider" min="0" max="20" step="1" class="w-full h-2">
+                <button type="button" id="clearBudget" class="text-xs px-2 py-1 bg-gray-200 rounded hover:bg-gray-300">NA </button>
+              </div>
+              <p id="budgetValue" class="text-xs text-gray-600 mt-0.5">NA </p>
+            </div>
+            <div class="mb-2">
+              <label class="block text-xs font-medium text-gray-700 mb-0.5">Purpose</label>
+              <div class="grid grid-cols-3 gap-1">
+                <button class="toggle-btn btn" data-group="purpose"><i class="fas fa-chart-line"></i><span>Invest</span></button>
+                <button class="toggle-btn btn" data-group="purpose"><i class="fas fa-house-user"></i><span>Self Occupation</span></button>
+                <button class="toggle-btn btn" data-group="purpose"><i class="fas fa-key"></i><span>Rent</span></button>
+              </div>
+            </div>
+            <div class="mb-2">
+              <label class="block text-xs font-medium text-gray-700 mb-0.5">Occupation</label>
+              <div class="grid grid-cols-3 gap-1">
+                <button class="toggle-btn btn" data-group="occupationType"><i class="fas fa-briefcase"></i>Salaried</button>
+                <button class="toggle-btn btn" data-group="occupationType"><i class="fas fa-chart-pie"></i>Business</button>
+                <button class="toggle-btn btn" data-group="occupationType"><i class="fas fa-tools"></i>Self-Employed</button>
+              </div>
+            </div>
+            <div class="mb-2">
+              <input type="text" class="input" placeholder="Occupation details">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-700 mb-0.5">Funding</label>
+              <div class="grid grid-cols-2 gap-1">
+                <button class="toggle-btn btn" data-group="funding"><i class="fas fa-wallet"></i>Own</button>
+                <button class="toggle-btn btn" data-group="funding"><i class="fas fa-university"></i>Finance</button>
+              </div>
+            </div>
+          </div>
+        </section>
+        
+        <!-- Additional Information Section -->
+        <section>
+          <h2 class="text-xs font-semibold">📝 Additional Information</h2>
+          <div class="section-content">
+            <div class="mb-2">
+              <label class="block text-xs font-medium text-gray-700 mb-0.5">Project</label>
+              <div class="grid grid-cols-2 gap-2 mb-2">
+                <button class="project-btn" data-project="League One">League One</button>
+                <button class="project-btn" data-project="Luxe One">Luxe One</button>
+                <button class="project-btn" data-project="Sky Living">Sky Living</button>
+                <button class="project-btn" data-project="General Inquiry">General</button>
+              </div>
+              <input type="text" class="input" id="projectInput" placeholder="Project name">
+            </div>
+            <div class="mb-2">
+              <textarea class="input" rows="4" placeholder="Other requirements"></textarea>
+            </div>
+            <div>
+              <textarea class="input" rows="4" placeholder="Call summary"></textarea>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <!-- Summary Widget for right side -->
+  <div id="summaryWidget">
+    <button id="hideSummaryBtn" onclick="hideSummary()"><i class="fas fa-times"></i></button>
+    <div class="summary-content">
+      <h3 class="text-base font-semibold mb-2">📋 Summary</h3>
+      <pre id="jsonOutput"></pre>
+      <div class="flex justify-end gap-2 mt-4">
+        <button onclick="resetForm();" class="px-3 py-2 text-white bg-gray-600 rounded hover:bg-gray-700 text-xs flex items-center gap-2">
+          <i class="fas fa-undo text-base"></i><span>Reset</span>
+        </button>
+        <button onclick="copyToClipboard()" class="px-3 py-2 text-white bg-blue-600 rounded hover:bg-blue-700 text-xs flex items-center gap-2">
+          <i class="fas fa-copy text-base"></i><span>Copy</span>
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Show summary button -->
+  <button id="showSummaryBtn" onclick="showSummary()" class="bg-blue-600 text-white rounded-full p-3 shadow-lg hover:bg-blue-700">
+    <i class="fas fa-list"></i>
+  </button>
+  
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+  // Define which groups should be single-select:
+  const singleSelectGroups = new Set([
+    // Example single-select groups if any:
+    // "preference",
+    // "status",
+    // "config",
+    "purpose",
+    "occupationType",
+    "funding"
+  ]);
+  
+  // Toggle button click handler
+  document.querySelectorAll(".toggle-btn").forEach(btn => {
+    btn.classList.add("bg-gray-200", "text-black"); // initial styling
+    
+    btn.addEventListener("click", () => {
+      const group = btn.dataset.group;
+      if (!group) return;
+
+      if (singleSelectGroups.has(group)) {
+        // Single-select logic: deactivate others, activate clicked
+        document.querySelectorAll(`.toggle-btn[data-group="${group}"]`).forEach(sib => {
+          sib.classList.remove("bg-blue-500", "text-white");
+          sib.classList.add("bg-gray-200", "text-black");
+        });
+        btn.classList.add("bg-blue-500", "text-white");
+        btn.classList.remove("bg-gray-200", "text-black");
+      } else {
+        // Multi-select logic: toggle active state individually
+        if (btn.classList.contains("bg-blue-500")) {
+          btn.classList.remove("bg-blue-500", "text-white");
+          btn.classList.add("bg-gray-200", "text-black");
+        } else {
+          btn.classList.add("bg-blue-500", "text-white");
+          btn.classList.remove("bg-gray-200", "text-black");
+        }
+      }
+
+      updateOutput();
+    });
+  });
+
+  // Modified Project button click handler for exclusive "General" selection
+  document.querySelectorAll(".project-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const isGeneral = btn.dataset.project === "General Inquiry";
+      
+      if (isGeneral) {
+        // If General is clicked, deselect all other projects
+        document.querySelectorAll(".project-btn").forEach(otherBtn => {
+          otherBtn.classList.remove("active");
+        });
+        btn.classList.add("active");
+      } else {
+        // If a specific project is clicked
+        // First, deselect General if it's active
+        const generalBtn = document.querySelector('.project-btn[data-project="General Inquiry"]');
+        if (generalBtn) generalBtn.classList.remove("active");
+        
+        // Then toggle the clicked project's active state
+        btn.classList.toggle("active");
+      }
+      
+      // Update project input field with all selected projects
+      const selectedProjects = [];
+      document.querySelectorAll(".project-btn.active").forEach(activeBtn => {
+        selectedProjects.push(activeBtn.dataset.project);
+      });
+      
+      document.getElementById("projectInput").value = selectedProjects.join(", ");
+      
+      // Trigger updateOutput
+      updateOutput();
+    });
+  });
+  
+  // Range inputs and text inputs handlers (same as before)
+  const areaRange = document.getElementById("areaRange");
+  const areaValue = document.getElementById("areaValue");
+  const budgetSlider = document.getElementById("budgetSlider");
+  const budgetValue = document.getElementById("budgetValue");
+  const clearBudget = document.getElementById("clearBudget");
+
+  areaRange.addEventListener("input", () => {
+    areaValue.textContent = `${areaRange.value} Sq. Ft`;
+    updateOutput();
+  });
+
+  // Improved budget slider handler with better intermediate value display
+  budgetSlider.addEventListener("input", function() {
+    window.budgetNotSpecified = false;
+    const value = parseInt(this.value);
+    
+    // Make the budget text more descriptive for all slider positions
+    if (value === 0) {
+      budgetValue.textContent = 'Below 50 Lakhs';
+    } else if (value === 20) {
+      budgetValue.textContent = 'Above 2 Crores';
+    } else {
+      const budget = 40 + (value * 10); // Starts at 50L (40+10) and increases by 10L each step
+      budgetValue.textContent = formatBudget(budget);
+    }
+    updateOutput();
+  });
+
+  // Add formatBudget function definition here to ensure it's available
+  function formatBudget(value) {
+    // Format budget amounts in a more readable way
+    if (value === 90) {
+      // Special case for 90 Lakhs
+      return "₹90 Lakhs to 1 Crore";
+    } else if (value < 100) {
+      // For values below 1 Cr
+      return `₹${value}-${value + 10} Lakhs`;
+    } else {
+      // For values above 1 Cr
+      const lowerCr = (value / 100).toFixed(1);
+      const upperCr = ((value + 10) / 100).toFixed(1);
+      
+      // Remove trailing zeros after decimal point
+      const formattedLower = lowerCr.endsWith('.0') ? lowerCr.replace('.0', '') : lowerCr;
+      const formattedUpper = upperCr.endsWith('.0') ? upperCr.replace('.0', '') : upperCr;
+      
+      return `₹${formattedLower}-${formattedUpper} Crores`;
+    }
+  }
+
+  document.querySelectorAll("input[type=text], textarea").forEach(input => {
+    input.addEventListener("input", updateOutput);
+  });
+
+    // Add event listeners for NA  buttons
+    window.areaNotSpecified = true;
+    window.budgetNotSpecified = true;
+    document.getElementById('clearArea').addEventListener('click', function() {
+      window.areaNotSpecified = true;
+      document.getElementById('areaValue').textContent = 'NA ';
+      updateOutput();
+    });
+    document.getElementById('areaValue').addEventListener('click', function() {
+      if (window.areaNotSpecified) {
+        window.areaNotSpecified = false;
+        document.getElementById('areaValue').textContent = document.getElementById('areaRange').value + ' Sq. Ft';
+        updateOutput();
+      }
+    });
+    document.getElementById('clearBudget').addEventListener('click', function() {
+      window.budgetNotSpecified = true;
+      budgetSlider.value = 0;
+      budgetValue.textContent = 'NA ';
+      updateOutput();
+    });
+    
+    // Copy function
+    window.copyToClipboard = () => {
+      const text = document.getElementById("jsonOutput").textContent;
+      navigator.clipboard.writeText(text);
+      alert("Copied to clipboard!");
+    };
+    
+    // Fixed code for area range event listener
+    document.getElementById('areaRange').addEventListener('input', function() {
+      window.areaNotSpecified = false;
+      document.getElementById('areaValue').textContent = this.value + ' Sq. Ft';
+      updateOutput();
+    });
+  
+  // Compose output function
+  function updateOutput() {
+    function getSelected(group) {
+      const selected = [];
+      document.querySelectorAll(`.toggle-btn[data-group="${group}"]`).forEach(btn => {
+        if (btn.classList.contains("bg-blue-500")) selected.push(btn.textContent.trim());
+      });
+      return selected;
+    }
+
+    // Area and Budget explicit NA logic
+    let areaText;
+    if (window.areaNotSpecified) {
+      areaText = 'NA ';
+    } else {
+      areaText = areaRange.value ? areaRange.value + ' Sq. Ft.' : 'NA ';
+    }
+    
+    let budgetText;
+    if (window.budgetNotSpecified) {
+      budgetText = 'NA ';
+    } else {
+      // Make sure we're getting the budget value correctly
+      budgetText = budgetValue.textContent || 'NA ';
+    }
+
+    // Fix: Use correct selectors for occupationDetails, interestedProject, etc.
+    const occupationDetails = document.querySelector("input[placeholder='Occupation details']")?.value.trim() || "";
+    const interestedProject = document.getElementById("projectInput")?.value.trim() || "";
+    const otherRequirements = document.querySelector("textarea[placeholder='Other requirements']")?.value.trim() || "";
+    const finalNotes = document.querySelector("textarea[placeholder='Call summary']")?.value.trim() || "";
+
+    const notes = [
+      `🏠 Property Details:\n` +
+      `  • House Preference: ${getSelected("preference").join(", ") || "NA "}\n` +
+      `  • Property Status: ${getSelected("status").join(", ") || "NA "}\n` +
+      `  • Configuration: ${getSelected("config").join(", ") || "NA "}\n` +
+      `  • Area Required: ${areaText}`,
+      
+      `👤 Customer Profile:\n` +
+      `  • Budget Range: ${budgetText}\n` +
+      `  • Purpose of Purchase: ${getSelected("purpose").join(", ") || "NA "}\n` +
+      `  • Occupation Type: ${getSelected("occupationType").join(", ") || "NA "}\n` +
+      `  • Occupation Details: ${occupationDetails || "NA "}\n` +
+      `  • Funding Source: ${getSelected("funding").join(", ") || "NA "}`,
+      
+      `📝 Additional Information:\n` +
+      `  • Interested Project: ${interestedProject || "NA "}\n` +
+      `  • Other Requirements: ${otherRequirements || "None"}\n` +
+      `  • Call Summary / Final Notes: ${finalNotes || "None"}`
+    ].join("\n\n");
+    
+    document.getElementById("jsonOutput").textContent = notes;
+    
+    // Show the sidebar when output is updated
+    showSummary();
+  }
+  
+  // Fix sidebar functions
+  function showSummary() {
+    const summaryWidget = document.getElementById('summaryWidget');
+    const mainContent = document.querySelector('.main-content');
+    if (summaryWidget) summaryWidget.classList.add('open');
+    if (mainContent) mainContent.classList.add('sidebar-open');
+  }
+  
+  function hideSummary() {
+    const summaryWidget = document.getElementById('summaryWidget');
+    const mainContent = document.querySelector('.main-content');
+    if (summaryWidget) summaryWidget.classList.remove('open');
+    if (mainContent) mainContent.classList.remove('sidebar-open');
+  }
+  
+  // Reset function
+  window.resetForm = () => {
+    document.querySelectorAll(".toggle-btn").forEach(btn => {
+      btn.classList.remove("bg-blue-500", "text-white");
+      btn.classList.add("bg-gray-200", "text-black");
+    });
+    
+    // Reset project buttons
+    document.querySelectorAll(".project-btn").forEach(btn => {
+      btn.classList.remove("active");
+    });
+    
+    window.areaNotSpecified = true;
+    window.budgetNotSpecified = true;
+    
+    // Reset both the slider and text content
+    areaRange.value = 0;
+    areaValue.textContent = "NA ";
+    
+    budgetSlider.value = 0;
+    budgetValue.textContent = "NA ";
+    
+    document.querySelectorAll("input[type=text], textarea").forEach(input => input.value = "");
+    
+    updateOutput();
+  };
+
+  // Initialize form and show summary
+  resetForm();
+  setTimeout(showSummary, 500); // Show the summary after a short delay
+});
+  </script>
+<!-- <script src="drop3.js"></script> -->
+</body>
+</html>

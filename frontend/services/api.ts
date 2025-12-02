@@ -1,5 +1,18 @@
-import axios, { AxiosInstance } from 'axios'
+import axios, { AxiosInstance, AxiosError } from 'axios'
 import { AuthResponse, LoginRequest, RegisterRequest, User } from '@/types'
+
+// Custom API Error class for better error handling
+export class ApiError extends Error {
+  constructor(
+    public status: number | null,
+    public code: string,
+    public userMessage: string,
+    message: string
+  ) {
+    super(message)
+    this.name = 'ApiError'
+  }
+}
 
 // Get API URL - resolves dynamically at runtime
 const getApiUrl = (): string => {
@@ -36,29 +49,82 @@ class ApiClient {
       this.token = localStorage.getItem('auth_token')
     }
 
-    // Add token to requests
+    // Add token and tenant ID to requests
     this.client.interceptors.request.use((config) => {
       console.log('API Request:', config.method?.toUpperCase(), config.url)
       if (this.token) {
         config.headers.Authorization = `Bearer ${this.token}`
       }
+      
+      // Add X-Tenant-ID header from localStorage
+      if (typeof window !== 'undefined') {
+        const user = localStorage.getItem('user')
+        if (user) {
+          try {
+            const userData = JSON.parse(user)
+            if (userData.tenant_id) {
+              config.headers['X-Tenant-ID'] = userData.tenant_id
+              console.log('Added X-Tenant-ID header:', userData.tenant_id)
+            }
+          } catch (e) {
+            console.warn('Failed to parse user data for tenant ID')
+          }
+        }
+      }
+      
       return config
     })
 
     // Handle errors
     this.client.interceptors.response.use(
       (response) => response,
-      (error) => {
-        console.error('API Error:', error.response?.status, error.message, error.code)
-        if (error.response?.status === 401) {
-          // Token expired, clear storage
+      (error: AxiosError) => {
+        // Distinguish between network errors and HTTP errors
+        if (!error.response) {
+          // Network error or timeout
+          const userMessage = 
+            error.code === 'ECONNABORTED' ? 'Request timeout. Please try again.' :
+            error.code === 'ERR_NETWORK' || error.message === 'Network Error' ? 'Unable to connect to server. Please check your connection and try again.' :
+            error.code === 'ERR_CANCELED' ? 'Request was cancelled.' :
+            'Network error. Please try again.'
+          
+          const apiError = new ApiError(
+            null,
+            error.code || 'NETWORK_ERROR',
+            userMessage,
+            error.message
+          )
+          console.error('Network Error:', error.code, error.message)
+          return Promise.reject(apiError)
+        }
+
+        // HTTP error response
+        const status = error.response.status
+        console.error('HTTP Error:', status, error.response.data)
+
+        if (status === 401) {
+          console.warn('Received 401, clearing auth state')
           localStorage.removeItem('auth_token')
           localStorage.removeItem('user')
-          if (typeof window !== 'undefined') {
-            window.location.href = '/auth/login'
-          }
         }
-        return Promise.reject(error)
+
+        const userMessage = 
+          status === 400 ? 'Invalid request. Please check your input.' :
+          status === 401 ? 'Unauthorized. Please log in again.' :
+          status === 403 ? 'Access denied.' :
+          status === 404 ? 'Resource not found.' :
+          status === 409 ? 'This resource already exists or there is a conflict.' :
+          status === 422 ? 'Validation error. Please check your input.' :
+          status >= 500 ? 'Server error. Please try again later.' :
+          'An error occurred. Please try again.'
+
+        const apiError = new ApiError(
+          status,
+          error.code || `HTTP_${status}`,
+          userMessage,
+          error.message
+        )
+        return Promise.reject(apiError)
       }
     )
   }

@@ -1,236 +1,139 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { useAuth } from '@/hooks/useAuth'
-import { useTenantManagement } from '@/contexts/TenantManagementContext'
-import DashboardLayout from '@/components/layouts/DashboardLayout'
+import { useState, useEffect } from 'react'
+import TenantList from '@/components/modules/Tenants/TenantList'
+import TenantForm from '@/components/modules/Tenants/TenantForm'
+import { Tenant } from '@/types/tenant'
+import { tenantService } from '@/services/tenant.service'
 import toast from 'react-hot-toast'
 
 export default function TenantsPage() {
-  const router = useRouter()
-  const { user } = useAuth()
-  const { userTenants, switchTenant, createTenant, loading } = useTenantManagement()
-  const [showCreateModal, setShowCreateModal] = useState(false)
-  const [formData, setFormData] = useState({
-    name: '',
-    domain: '',
-  })
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [tenants, setTenants] = useState<Tenant[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [showForm, setShowForm] = useState(false)
+  const [editingTenant, setEditingTenant] = useState<Tenant | undefined>()
 
   useEffect(() => {
-    if (!user) {
-      router.push('/auth/login')
-    }
-  }, [user, router])
+    loadTenants()
+  }, [])
 
-  const handleCreateTenant = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    if (!formData.name.trim()) {
-      toast.error('Tenant name is required')
-      return
-    }
-
+  const loadTenants = async () => {
     try {
-      setIsSubmitting(true)
-      await createTenant(formData.name, formData.domain)
-      toast.success('Tenant created successfully!')
-      setFormData({ name: '', domain: '' })
-      setShowCreateModal(false)
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to create tenant')
+      setLoading(true)
+      setError(null)
+      const data = await tenantService.getTenants()
+      setTenants(data)
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to load tenants'
+      setError(errorMsg)
+      toast.error(errorMsg)
+      console.error('Error loading tenants:', err)
     } finally {
-      setIsSubmitting(false)
+      setLoading(false)
     }
   }
 
-  const handleSwitchTenant = (tenantId: string) => {
-    switchTenant(tenantId)
-    toast.success('Switched to tenant')
-    router.push('/dashboard')
+  const handleCreate = async (data: Partial<Tenant>) => {
+    try {
+      await tenantService.createTenant(data)
+      toast.success('Tenant created successfully!')
+      await loadTenants()
+      setShowForm(false)
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to create tenant'
+      toast.error(errorMsg)
+      console.error('Error creating tenant:', err)
+      throw err
+    }
   }
 
-  if (loading) {
-    return (
-      <DashboardLayout>
-        <div className="flex items-center justify-center h-96">
-          <div className="text-center">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-            <p className="mt-4 text-gray-600">Loading tenants...</p>
-          </div>
-        </div>
-      </DashboardLayout>
-    )
+  const handleEdit = async (tenant: Tenant, data: Partial<Tenant>) => {
+    try {
+      await tenantService.updateTenant(tenant.id, data)
+      toast.success('Tenant updated successfully!')
+      await loadTenants()
+      setEditingTenant(undefined)
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to update tenant'
+      toast.error(errorMsg)
+      console.error('Error updating tenant:', err)
+      throw err
+    }
+  }
+
+  const handleDelete = async (tenant: Tenant) => {
+    try {
+      if (confirm('Are you sure you want to delete this tenant?')) {
+        await tenantService.deleteTenant(tenant.id)
+        toast.success('Tenant deleted successfully!')
+        await loadTenants()
+      }
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to delete tenant'
+      toast.error(errorMsg)
+      console.error('Error deleting tenant:', err)
+    }
+  }
+
+  const handleSwitch = async (tenant: Tenant) => {
+    try {
+      await tenantService.switchTenant(tenant.id)
+      toast.success('Switched tenant successfully!')
+      // Optionally redirect or refresh context
+      window.location.reload()
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to switch tenant'
+      toast.error(errorMsg)
+      console.error('Error switching tenant:', err)
+    }
   }
 
   return (
-    <DashboardLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-800">My Tenants</h1>
-            <p className="text-gray-600 mt-2">
-              Manage all tenants you are a member of
-            </p>
-          </div>
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition"
-          >
-            + Create Tenant
-          </button>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Tenants</h1>
+          <p className="mt-2 text-gray-600">Manage your organization's tenants</p>
         </div>
-
-        {/* Tenants Grid */}
-        {userTenants.length === 0 ? (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-8 text-center">
-            <p className="text-gray-600 mb-4">
-              You are not a member of any tenants yet.
-            </p>
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition"
-            >
-              Create Your First Tenant
-            </button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {userTenants.map((tenant) => (
-              <div
-                key={tenant.id}
-                className="bg-white rounded-lg shadow-md hover:shadow-lg transition overflow-hidden border border-gray-200"
-              >
-                <div className="p-6">
-                  {/* Tenant Name */}
-                  <h3 className="text-xl font-bold text-gray-800 mb-2">
-                    {tenant.name}
-                  </h3>
-
-                  {/* Tenant Domain */}
-                  {tenant.domain && (
-                    <p className="text-sm text-gray-600 mb-4">
-                      <span className="font-semibold">Domain:</span> {tenant.domain}
-                    </p>
-                  )}
-
-                  {/* Stats */}
-                  <div className="space-y-3 mb-6 bg-gray-50 p-4 rounded-lg">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Max Users:</span>
-                      <span className="font-semibold text-gray-800">
-                        {tenant.max_users}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Max Concurrent Calls:</span>
-                      <span className="font-semibold text-gray-800">
-                        {tenant.max_concurrent_calls}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">AI Budget:</span>
-                      <span className="font-semibold text-gray-800">
-                        ${tenant.ai_budget_monthly}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Role */}
-                  {tenant.role && (
-                    <div className="mb-4">
-                      <span className="inline-block bg-blue-100 text-blue-800 text-xs font-semibold px-3 py-1 rounded-full">
-                        {tenant.role.charAt(0).toUpperCase() + tenant.role.slice(1)}
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Actions */}
-                  <div className="space-y-2">
-                    <button
-                      onClick={() => handleSwitchTenant(tenant.id)}
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition text-sm"
-                    >
-                      Switch to This Tenant
-                    </button>
-                    <button
-                      onClick={() => router.push(`/dashboard/tenants/${tenant.id}/settings`)}
-                      className="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg transition text-sm"
-                    >
-                      Manage
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+        <button
+          onClick={() => {
+            setEditingTenant(undefined)
+            setShowForm(true)
+          }}
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
+        >
+          + New Tenant
+        </button>
       </div>
 
-      {/* Create Tenant Modal */}
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">
-              Create New Tenant
-            </h2>
-
-            <form onSubmit={handleCreateTenant} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Tenant Name *
-                </label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, name: e.target.value }))
-                  }
-                  placeholder="e.g., Acme Corp"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  disabled={isSubmitting}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Domain (Optional)
-                </label>
-                <input
-                  type="text"
-                  value={formData.domain}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, domain: e.target.value }))
-                  }
-                  placeholder="e.g., acme.callcenter.com"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  disabled={isSubmitting}
-                />
-              </div>
-
-              <div className="flex gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setShowCreateModal(false)}
-                  disabled={isSubmitting}
-                  className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg transition disabled:opacity-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition disabled:opacity-50"
-                >
-                  {isSubmitting ? 'Creating...' : 'Create'}
-                </button>
-              </div>
-            </form>
-          </div>
+      {error && (
+        <div className="rounded-md bg-red-50 p-4">
+          <p className="text-sm font-medium text-red-800">{error}</p>
         </div>
       )}
-    </DashboardLayout>
+
+      <TenantList
+        tenants={tenants}
+        loading={loading}
+        onEdit={(tenant) => {
+          setEditingTenant(tenant)
+          setShowForm(true)
+        }}
+        onDelete={handleDelete}
+        onSwitch={handleSwitch}
+      />
+
+      {showForm && (
+        <TenantForm
+          tenant={editingTenant}
+          onSubmit={editingTenant ? (data) => handleEdit(editingTenant, data) : handleCreate}
+          onCancel={() => {
+            setShowForm(false)
+            setEditingTenant(undefined)
+          }}
+        />
+      )}
+    </div>
   )
 }

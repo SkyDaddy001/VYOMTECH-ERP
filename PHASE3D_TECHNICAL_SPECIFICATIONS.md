@@ -164,7 +164,7 @@ CREATE TABLE transactions (
     company_id UUID NOT NULL,
     user_id UUID,
     amount DECIMAL(15, 2) NOT NULL,
-    currency CHAR(3) DEFAULT 'USD',
+    currency CHAR(3) DEFAULT 'INR',
     status ENUM('pending', 'processing', 'succeeded', 'failed', 'refunded') DEFAULT 'pending',
     payment_method ENUM('stripe', 'paypal', 'bank_transfer') NOT NULL,
     payment_processor_id VARCHAR(100),
@@ -249,7 +249,7 @@ POST /api/v1/payments/create-intent
 Request: {
     "invoice_id": "uuid",
     "amount": 10000,
-    "currency": "USD",
+    "currency": "INR",
     "payment_method_id": "uuid"
 }
 Response: {
