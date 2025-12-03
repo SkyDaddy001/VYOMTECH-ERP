@@ -4,7 +4,7 @@ import "time"
 
 // ConstructionProject represents a construction project
 type ConstructionProject struct {
-	ID                     int64  `gorm:"primaryKey"`
+	ID                     string `gorm:"primaryKey"`
 	TenantID               string `gorm:"index"`
 	ProjectName            string
 	ProjectCode            string `gorm:"uniqueIndex"`
@@ -22,9 +22,9 @@ type ConstructionProject struct {
 
 // BillOfQuantities represents items in the bill of quantities
 type BillOfQuantities struct {
-	ID              int64  `gorm:"primaryKey"`
+	ID              string `gorm:"primaryKey"`
 	TenantID        string `gorm:"index"`
-	ProjectID       int64
+	ProjectID       string
 	BOQNumber       string
 	ItemDescription string
 	Unit            string
@@ -39,9 +39,9 @@ type BillOfQuantities struct {
 
 // ProgressTracking represents project progress records
 type ProgressTracking struct {
-	ID                int64  `gorm:"primaryKey"`
+	ID                string `gorm:"primaryKey"`
 	TenantID          string `gorm:"index"`
-	ProjectID         int64
+	ProjectID         string
 	Date              time.Time
 	ActivityDesc      string `gorm:"type:text"`
 	QuantityCompleted float64
@@ -56,10 +56,10 @@ type ProgressTracking struct {
 
 // QualityControl represents quality control inspections
 type QualityControl struct {
-	ID               int64  `gorm:"primaryKey"`
+	ID               string `gorm:"primaryKey"`
 	TenantID         string `gorm:"index"`
-	ProjectID        int64
-	BOQItemID        int64
+	ProjectID        string
+	BOQItemID        string
 	InspectionDate   time.Time
 	InspectorName    string
 	QualityStatus    string // passed, failed, partial, pending
@@ -72,9 +72,9 @@ type QualityControl struct {
 
 // ConstructionEquipment represents equipment used in construction
 type ConstructionEquipment struct {
-	ID             int64  `gorm:"primaryKey"`
+	ID             string `gorm:"primaryKey"`
 	TenantID       string `gorm:"index"`
-	ProjectID      int64
+	ProjectID      string
 	EquipmentName  string
 	EquipmentType  string
 	SerialNumber   string

@@ -34,7 +34,7 @@ type BOQImportResult struct {
 }
 
 // ImportBOQFromExcel imports BOQ items from Excel file
-func (s *BOQService) ImportBOQFromExcel(tenantID string, projectID int64, filePath string) (*BOQImportResult, error) {
+func (s *BOQService) ImportBOQFromExcel(tenantID string, projectID string, filePath string) (*BOQImportResult, error) {
 	result := &BOQImportResult{
 		Errors: []string{},
 	}
@@ -79,7 +79,7 @@ func (s *BOQService) ImportBOQFromExcel(tenantID string, projectID int64, filePa
 		}
 
 		// Check if BOQ already exists
-		var id int64
+		var id string
 		checkErr := s.DB.QueryRow(
 			"SELECT id FROM bill_of_quantities WHERE tenant_id = ? AND project_id = ? AND item_description = ? AND deleted_at IS NULL",
 			tenantID, projectID, boqItem.ItemDescription,
@@ -132,7 +132,7 @@ func (s *BOQService) ImportBOQFromExcel(tenantID string, projectID int64, filePa
 }
 
 // ExportBOQToExcel exports BOQ items to Excel file
-func (s *BOQService) ExportBOQToExcel(tenantID string, projectID int64, outputPath string) error {
+func (s *BOQService) ExportBOQToExcel(tenantID string, projectID string, outputPath string) error {
 	// Fetch BOQ items
 	rows, err := s.DB.Query(
 		"SELECT boq_number, item_description, unit, quantity, unit_rate, total_amount, category, status, created_at FROM bill_of_quantities WHERE tenant_id = ? AND project_id = ? AND deleted_at IS NULL ORDER BY created_at",
@@ -193,7 +193,7 @@ func (s *BOQService) ExportBOQToExcel(tenantID string, projectID int64, outputPa
 }
 
 // GetBOQItems retrieves BOQ items for a project
-func (s *BOQService) GetBOQItems(tenantID string, projectID int64, limit int, offset int) ([]models.BillOfQuantities, int64, error) {
+func (s *BOQService) GetBOQItems(tenantID string, projectID string, limit int, offset int) ([]models.BillOfQuantities, int64, error) {
 	// Count total
 	var total int64
 	err := s.DB.QueryRow(
@@ -229,7 +229,7 @@ func (s *BOQService) GetBOQItems(tenantID string, projectID int64, limit int, of
 }
 
 // UpdateBOQItem updates a BOQ item
-func (s *BOQService) UpdateBOQItem(tenantID string, boqID int64, quantity, unitRate float64) error {
+func (s *BOQService) UpdateBOQItem(tenantID string, boqID string, quantity, unitRate float64) error {
 	totalAmount := quantity * unitRate
 	_, err := s.DB.Exec(
 		"UPDATE bill_of_quantities SET quantity = ?, unit_rate = ?, total_amount = ?, updated_at = NOW() WHERE id = ? AND tenant_id = ?",
@@ -239,7 +239,7 @@ func (s *BOQService) UpdateBOQItem(tenantID string, boqID int64, quantity, unitR
 }
 
 // DeleteBOQItem soft-deletes a BOQ item
-func (s *BOQService) DeleteBOQItem(tenantID string, boqID int64) error {
+func (s *BOQService) DeleteBOQItem(tenantID string, boqID string) error {
 	_, err := s.DB.Exec(
 		"UPDATE bill_of_quantities SET deleted_at = NOW() WHERE id = ? AND tenant_id = ?",
 		boqID, tenantID,
@@ -256,7 +256,7 @@ func parseHeaders(headerRow []string) map[string]int {
 	return headerMap
 }
 
-func parseBOQRow(row []string, headerMap map[string]int, tenantID string, projectID int64) (*models.BillOfQuantities, error) {
+func parseBOQRow(row []string, headerMap map[string]int, tenantID string, projectID string) (*models.BillOfQuantities, error) {
 	boq := &models.BillOfQuantities{
 		TenantID:  tenantID,
 		ProjectID: projectID,

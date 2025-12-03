@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import LoginForm from '@/components/auth/LoginForm'
+import { DemoCredentials } from '@/app/demo-credentials'
 import toast from 'react-hot-toast'
 
 export default function LoginPage() {
@@ -24,10 +25,17 @@ export default function LoginPage() {
     }
   }
 
+  const handleSelectDemoCredential = (email: string, password: string) => {
+    handleLogin(email, password)
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 px-4">
       <div className="w-full max-w-md">
         <LoginForm onSubmit={handleLogin} loading={loading} apiError={error} />
+        <div className="mt-8">
+          <DemoCredentials onSelectCredential={handleSelectDemoCredential} />
+        </div>
       </div>
     </div>
   )

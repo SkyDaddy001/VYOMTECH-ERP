@@ -2,7 +2,50 @@
 
 **Last Updated:** December 3, 2025  
 **API Version:** v1  
-**Base URL:** `http://localhost:8080/api/v1`
+**Base URL:** `http://localhost:8080`  
+**Status:** ✅ Fully Operational with Demo Data
+
+---
+
+## 🚀 Quick Start
+
+### Demo Credentials (Pre-loaded)
+
+**Master Admin:**
+```
+Email: master.admin@vyomtech.com
+Password: demo123
+Role: System Administrator
+Tenant: demo_vyomtech_001
+```
+
+**Demo Agents (Call Center):**
+```
+AGENT001: rajesh@demo.vyomtech.com / demo123 (Customer Support, Sales)
+AGENT002: priya@demo.vyomtech.com / demo123 (Technical Support, Billing)
+AGENT003: arun@demo.vyomtech.com / demo123 (Sales, Lead Management)
+AGENT004: neha@demo.vyomtech.com / demo123 (Customer Support)
+```
+
+**Demo Partners:**
+```
+Partner Admin 1: demo@vyomtech.com / demo123
+Partner Admin 2: channel@demo.vyomtech.com / demo123
+Partner Admin 3: vendor@demo.vyomtech.com / demo123
+Partner Admin 4: customer@demo.vyomtech.com / demo123
+```
+
+### Quick Test
+
+```bash
+# Login
+curl -X POST http://localhost:8080/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"master.admin@vyomtech.com","password":"demo123"}'
+
+# Get 4 Demo Agents
+curl -H "Authorization: Bearer <token>" http://localhost:8080/api/v1/agents
+```
 
 ---
 
@@ -25,6 +68,30 @@ All API requests require a valid JWT token in the `Authorization` header:
 
 ```http
 Authorization: Bearer <jwt_token>
+```
+
+### Login Endpoint
+
+**POST** `/api/v1/auth/login`
+
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"master.admin@vyomtech.com","password":"demo123"}'
+```
+
+**Response:**
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": 1,
+    "email": "master.admin@vyomtech.com",
+    "role": "admin",
+    "tenant_id": "demo_vyomtech_001"
+  },
+  "message": "Login successful"
+}
 ```
 
 ### OAuth2 Support
@@ -177,6 +244,136 @@ Authorization: Bearer <jwt_token>
 GET /api/v1/auth/me
 Authorization: Bearer <jwt_token>
 X-Tenant-ID: tenant_uuid
+```
+
+---
+
+### Agent Management Endpoints
+
+#### Get All Agents
+
+**GET** `/api/v1/agents`
+
+Retrieve all agents for the authenticated user's tenant. The system currently has **4 demo agents pre-loaded**.
+
+```http
+GET /api/v1/agents
+Authorization: Bearer <jwt_token>
+```
+
+**Response:** `200 OK`
+```json
+{
+  "agents": [
+    {
+      "id": "87a5642a-d060-11f0-8809-eefa9b14f7af",
+      "tenant_id": "demo_vyomtech_001",
+      "agent_code": "AGENT001",
+      "first_name": "Rajesh",
+      "last_name": "Kumar",
+      "email": "rajesh@demo.vyomtech.com",
+      "phone": "+91-9876543210",
+      "status": "available",
+      "agent_type": "inbound",
+      "skills": ["Customer Support", "Sales"],
+      "max_concurrent_calls": 5,
+      "available": true,
+      "created_at": "2025-12-03T15:55:45Z",
+      "updated_at": "2025-12-03T15:55:45Z"
+    },
+    {
+      "id": "87a5bed2-d060-11f0-8809-eefa9b14f7af",
+      "tenant_id": "demo_vyomtech_001",
+      "agent_code": "AGENT002",
+      "first_name": "Priya",
+      "last_name": "Singh",
+      "email": "priya@demo.vyomtech.com",
+      "phone": "+91-8765432109",
+      "status": "available",
+      "agent_type": "inbound",
+      "skills": ["Technical Support", "Billing"],
+      "max_concurrent_calls": 5,
+      "available": true,
+      "created_at": "2025-12-03T15:55:45Z",
+      "updated_at": "2025-12-03T15:55:45Z"
+    }
+  ],
+  "count": 4
+}
+```
+
+#### Get Agent by ID
+
+**GET** `/api/v1/agents/{agentId}`
+
+Retrieve a specific agent by their UUID.
+
+```http
+GET /api/v1/agents/87a5642a-d060-11f0-8809-eefa9b14f7af
+Authorization: Bearer <jwt_token>
+```
+
+#### Get Available Agents
+
+**GET** `/api/v1/agents/available`
+
+Retrieve only agents currently available for call assignments.
+
+```http
+GET /api/v1/agents/available
+Authorization: Bearer <jwt_token>
+```
+
+#### Get Agent Statistics
+
+**GET** `/api/v1/agents/stats`
+
+Retrieve aggregate statistics about agents in the tenant.
+
+```http
+GET /api/v1/agents/stats
+Authorization: Bearer <jwt_token>
+```
+
+**Response:** `200 OK`
+```json
+{
+  "online_agents": 3,
+  "busy_agents": 1,
+  "total_agents": 4
+}
+```
+
+#### Update Agent Status
+
+**PUT** `/api/v1/agents/{agentId}/status`
+
+Update an agent's status (available, busy, offline, etc).
+
+```http
+PUT /api/v1/agents/87a5642a-d060-11f0-8809-eefa9b14f7af/status
+Authorization: Bearer <jwt_token>
+Content-Type: application/json
+
+{
+  "status": "busy"
+}
+```
+
+#### Update Agent Availability
+
+**PUT** `/api/v1/agents/{agentId}/availability`
+
+Update an agent's availability flag.
+
+```http
+PUT /api/v1/agents/87a5642a-d060-11f0-8809-eefa9b14f7af/availability
+Authorization: Bearer <jwt_token>
+Content-Type: application/json
+
+{
+  "available": false
+}
 ```
 
 ---
@@ -1149,6 +1346,61 @@ orders = client.sales.list(page=1, per_page=50, status='pending')
 
 ---
 
+## Demo Data Status
+
+The VYOMTECH ERP system comes pre-populated with comprehensive demo data for testing and development purposes.
+
+### ✅ Data Verification (As of December 3, 2025)
+
+| Entity | Count | Status | Details |
+|--------|-------|--------|---------|
+| **Users/Agents** | 9 | ✅ Complete | 1 Master Admin + 4 Call Center Agents + 4 Partner Admins |
+| **Call Center Agents** | 4 | ✅ Active | AGENT001-004 with assigned skills and phone numbers |
+| **Sales Leads** | 5 | ✅ Loaded | Ready for assignment and conversion tracking |
+| **Marketing Campaigns** | 4 | ✅ Planned | Summer Drive, Real Estate Expo, Digital, Corporate |
+| **Partners** | 4 | ✅ Configured | Portal, Channel, Vendor, Customer organization types |
+| **Construction Projects** | 4 | ✅ Setup | Skyrise, Tech Park, Plot Development, Green Spaces |
+| **Tenant** | 1 | ✅ Active | demo_vyomtech_001 (Multi-tenant isolation enabled) |
+
+### Demo Data Endpoints Status
+
+```
+✅ GET /api/v1/agents              → Returns 4 agents with skills
+✅ GET /api/v1/gamification/stats  → Agent performance metrics
+✅ GET /api/v1/campaigns           → 4 marketing campaigns
+✅ GET /api/v1/sales/leads         → 5 leads ready for follow-up
+✅ GET /api/v1/partners            → 4 partner organizations
+✅ GET /health                     → System health check
+```
+
+### Testing with Demo Data
+
+All endpoints can be tested immediately using the provided demo credentials:
+
+**Master Admin Access:**
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"master.admin@vyomtech.com","password":"demo123"}'
+```
+
+**View All Demo Agents:**
+```bash
+TOKEN="<from_login_response>"
+curl -H "Authorization: Bearer $TOKEN" http://localhost:8080/api/v1/agents
+```
+
+### Demo Data Reset
+
+The demo data automatically resets every 30 days or can be manually triggered via the admin panel. The reset process:
+1. Clears all demo tenant data
+2. Reinitializes 9 users
+3. Creates 4 agents with full profiles
+4. Populates 5 demo leads
+5. Sets up 4 campaigns and 4 projects
+
+---
+
 ## Support & Resources
 
 - **Documentation:** https://docs.vyomtech.com
@@ -1156,6 +1408,7 @@ orders = client.sales.list(page=1, per_page=50, status='pending')
 - **Support Email:** support@vyomtech.com
 - **Community Forum:** https://community.vyomtech.com
 - **GitHub Issues:** https://github.com/vyomtech/erp-sdk/issues
+- **Demo Environment:** http://localhost:8080 (local development)
 
 ---
 
@@ -1163,7 +1416,7 @@ orders = client.sales.list(page=1, per_page=50, status='pending')
 
 | Version | Released | Changes |
 |---------|----------|---------|
-| v1.5.0 | 2025-12-03 | Multi-channel communication, WebRTC support |
+| v1.5.0 | 2025-12-03 | Multi-channel communication, WebRTC support, Agent Management with Skills |
 | v1.4.0 | 2025-11-15 | Fixed assets & depreciation, cost centers |
 | v1.3.0 | 2025-10-20 | Bank reconciliation, payment enhancements |
 | v1.2.0 | 2025-09-10 | Click-to-call system, AI call center |
@@ -1174,3 +1427,4 @@ orders = client.sales.list(page=1, per_page=50, status='pending')
 
 **Last Updated:** December 3, 2025  
 **Maintained By:** VYOM Tech Development Team
+**Demo Environment Status:** 🟢 Operational and Fully Functional

@@ -705,3 +705,335 @@ export const aiService = {
     return apiClient.get('/api/v1/ai/providers')
   },
 }
+
+// ============================================================================
+// DASHBOARD SERVICES - Phase 6: Real Data Integration
+// ============================================================================
+
+// Financial Dashboard Service
+export const financialDashboardService = {
+  async getProfitAndLoss(startDate?: Date, endDate?: Date) {
+    const params = new URLSearchParams()
+    if (startDate) params.append('start_date', startDate.toISOString())
+    if (endDate) params.append('end_date', endDate.toISOString())
+    return apiClient.post('/api/v1/dashboard/profit-and-loss', {
+      start_date: startDate,
+      end_date: endDate,
+    })
+  },
+
+  async getBalanceSheet(asOfDate?: Date) {
+    return apiClient.post('/api/v1/dashboard/balance-sheet', {
+      as_of_date: asOfDate,
+    })
+  },
+
+  async getCashFlow(startDate?: Date, endDate?: Date) {
+    return apiClient.post('/api/v1/dashboard/cash-flow', {
+      start_date: startDate,
+      end_date: endDate,
+    })
+  },
+
+  async getFinancialRatios() {
+    return apiClient.get('/api/v1/dashboard/ratios')
+  },
+}
+
+// Sales Dashboard Service
+export const salesDashboardService = {
+  async getSalesOverview(startDate?: Date, endDate?: Date) {
+    const params = new URLSearchParams()
+    if (startDate) params.append('start_date', startDate.toISOString())
+    if (endDate) params.append('end_date', endDate.toISOString())
+    return apiClient.get(`/api/v1/dashboard/sales/overview${params.size > 0 ? '?' + params : ''}`)
+  },
+
+  async getPipelineAnalysis() {
+    return apiClient.get('/api/v1/dashboard/sales/pipeline')
+  },
+
+  async getSalesMetrics(startDate?: Date, endDate?: Date) {
+    const params = new URLSearchParams()
+    if (startDate) params.append('start_date', startDate.toISOString())
+    if (endDate) params.append('end_date', endDate.toISOString())
+    return apiClient.get(`/api/v1/dashboard/sales/metrics${params.size > 0 ? '?' + params : ''}`)
+  },
+
+  async getInvoiceStatus() {
+    return apiClient.get('/api/v1/dashboard/sales/invoice-status')
+  },
+
+  async getSalesForecast() {
+    return apiClient.get('/api/v1/dashboard/sales/forecast')
+  },
+
+  async getCompetitionAnalysis() {
+    return apiClient.get('/api/v1/dashboard/sales/competition')
+  },
+
+  async getTopCustomers(limit: number = 10) {
+    const params = new URLSearchParams()
+    params.append('limit', limit.toString())
+    return apiClient.get(`/api/v1/dashboard/sales/top-customers?${params}`)
+  },
+}
+
+// HR Dashboard Service
+export const hrDashboardService = {
+  async getHROverview() {
+    return apiClient.get('/api/v1/dashboard/hr/overview')
+  },
+
+  async getPayrollSummary(startDate?: Date, endDate?: Date) {
+    return apiClient.post('/api/v1/dashboard/hr/payroll', {
+      start_date: startDate,
+      end_date: endDate,
+    })
+  },
+
+  async getAttendanceDashboard(month?: Date) {
+    return apiClient.post('/api/v1/dashboard/hr/attendance', {
+      month: month || new Date(),
+    })
+  },
+
+  async getLeaveDashboard() {
+    return apiClient.get('/api/v1/dashboard/hr/leaves')
+  },
+
+  async getComplianceDashboard() {
+    return apiClient.get('/api/v1/dashboard/hr/compliance')
+  },
+
+  async getHeadcountByDepartment() {
+    return apiClient.get('/api/v1/dashboard/hr/headcount')
+  },
+
+  async getPerformanceMetrics() {
+    return apiClient.get('/api/v1/dashboard/hr/performance')
+  },
+}
+
+// Purchase Dashboard Service
+export const purchaseDashboardService = {
+  async getPurchaseSummary() {
+    return apiClient.get('/api/v1/purchase/summary')
+  },
+
+  async getVendorList(page: number = 1, limit: number = 50) {
+    const params = new URLSearchParams()
+    params.append('page', page.toString())
+    params.append('limit', limit.toString())
+    return apiClient.get(`/api/v1/purchase/vendors?${params}`)
+  },
+
+  async getVendorScorecard() {
+    return apiClient.get('/api/v1/purchase/vendors/scorecard')
+  },
+
+  async getPOStatus() {
+    return apiClient.get('/api/v1/purchase/po-status')
+  },
+
+  async getCostAnalysis() {
+    return apiClient.get('/api/v1/purchase/cost-analysis')
+  },
+}
+
+// Project Management Dashboard Service
+export const projectDashboardService = {
+  async getProjectSummary() {
+    return apiClient.get('/api/v1/projects/summary')
+  },
+
+  async getProjectList(page: number = 1, limit: number = 50) {
+    const params = new URLSearchParams()
+    params.append('page', page.toString())
+    params.append('limit', limit.toString())
+    return apiClient.get(`/api/v1/projects/list?${params}`)
+  },
+
+  async getProjectPortfolio() {
+    return apiClient.get('/api/v1/projects/portfolio')
+  },
+
+  async getProjectTimeline(projectId?: string) {
+    const url = projectId 
+      ? `/api/v1/projects/${projectId}/timeline`
+      : '/api/v1/projects/timeline'
+    return apiClient.get(url)
+  },
+
+  async getProjectStats() {
+    return apiClient.get('/api/v1/projects/stats')
+  },
+}
+
+// Pre-Sales (Opportunities) Dashboard Service
+export const prealesDashboardService = {
+  async getSalesPipeline() {
+    return apiClient.get('/api/v1/sales/pipeline')
+  },
+
+  async getOpportunities(stage?: string, page: number = 1, limit: number = 50) {
+    const params = new URLSearchParams()
+    if (stage) params.append('stage', stage)
+    params.append('page', page.toString())
+    params.append('limit', limit.toString())
+    return apiClient.get(`/api/v1/sales/opportunities?${params}`)
+  },
+
+  async getTopDeals(limit: number = 10) {
+    const params = new URLSearchParams()
+    params.append('limit', limit.toString())
+    return apiClient.get(`/api/v1/sales/top-deals?${params}`)
+  },
+
+  async getConversionMetrics() {
+    return apiClient.get('/api/v1/sales/conversion-metrics')
+  },
+}
+
+// Inventory Dashboard Service
+export const inventoryDashboardService = {
+  async getInventorySummary() {
+    return apiClient.get('/api/v1/inventory/summary')
+  },
+
+  async getWarehouseDistribution() {
+    return apiClient.get('/api/v1/inventory/warehouses')
+  },
+
+  async getRealEstateSummary() {
+    return apiClient.get('/api/v1/real-estate/summary')
+  },
+
+  async getRealEstateProperties(page: number = 1, limit: number = 50) {
+    const params = new URLSearchParams()
+    params.append('page', page.toString())
+    params.append('limit', limit.toString())
+    return apiClient.get(`/api/v1/real-estate/properties?${params}`)
+  },
+
+  async getInventoryByWarehouse(warehouseId?: string) {
+    const url = warehouseId
+      ? `/api/v1/inventory/warehouse/${warehouseId}`
+      : '/api/v1/inventory/by-warehouse'
+    return apiClient.get(url)
+  },
+}
+
+// Gamification Dashboard Service
+export const gamificationDashboardService = {
+  async getGamificationOverview() {
+    return apiClient.get('/api/v1/dashboard/gamification/overview')
+  },
+
+  async getLeaderboard(limit: number = 100, page: number = 1) {
+    const params = new URLSearchParams()
+    params.append('limit', limit.toString())
+    params.append('page', page.toString())
+    return apiClient.get(`/api/v1/gamification-advanced/leaderboard?${params}`)
+  },
+
+  async getUserChallenges(userId?: string) {
+    const url = userId
+      ? `/api/v1/gamification-advanced/user/${userId}/challenges`
+      : '/api/v1/gamification-advanced/challenges'
+    return apiClient.get(url)
+  },
+
+  async getRewardsShop(page: number = 1, limit: number = 50) {
+    const params = new URLSearchParams()
+    params.append('page', page.toString())
+    params.append('limit', limit.toString())
+    return apiClient.get(`/api/v1/gamification-advanced/rewards?${params}`)
+  },
+
+  async getEngagementAnalytics() {
+    return apiClient.get('/api/v1/gamification-advanced/stats')
+  },
+}
+
+// Construction Dashboard Service
+export const constructionDashboardService = {
+  async getConstructionProjects(page: number = 1, limit: number = 50) {
+    const params = new URLSearchParams()
+    params.append('page', page.toString())
+    params.append('limit', limit.toString())
+    return apiClient.get(`/api/v1/construction/projects?${params}`)
+  },
+
+  async getBoqSummary() {
+    return apiClient.get('/api/v1/boq/summary')
+  },
+
+  async getProjectTimeline(projectId: string) {
+    return apiClient.get(`/api/v1/construction/projects/${projectId}/timeline`)
+  },
+
+  async getSafetyMetrics() {
+    return apiClient.get('/api/v1/construction/safety')
+  },
+
+  async getWorkerAllocation() {
+    return apiClient.get('/api/v1/construction/workers')
+  },
+}
+
+// General Ledger (Accounting) Service
+export const generalLedgerService = {
+  async getLedgerEntries(
+    accountCode: string,
+    startDate?: Date,
+    endDate?: Date,
+    page: number = 1,
+    limit: number = 100
+  ) {
+    const params = new URLSearchParams()
+    params.append('account_code', accountCode)
+    if (startDate) params.append('start_date', startDate.toISOString())
+    if (endDate) params.append('end_date', endDate.toISOString())
+    params.append('page', page.toString())
+    params.append('limit', limit.toString())
+    return apiClient.get(`/api/v1/gl/entries?${params}`)
+  },
+
+  async getVouchers(type?: string, startDate?: Date, endDate?: Date, page: number = 1, limit: number = 50) {
+    const params = new URLSearchParams()
+    if (type) params.append('type', type)
+    if (startDate) params.append('start_date', startDate.toISOString())
+    if (endDate) params.append('end_date', endDate.toISOString())
+    params.append('page', page.toString())
+    params.append('limit', limit.toString())
+    return apiClient.get(`/api/v1/gl/vouchers?${params}`)
+  },
+
+  async getTrialBalance(asOfDate?: Date) {
+    const params = new URLSearchParams()
+    if (asOfDate) params.append('as_of_date', asOfDate.toISOString())
+    return apiClient.get(`/api/v1/gl/trial-balance${params.size > 0 ? '?' + params : ''}`)
+  },
+
+  async getReceiptVouchers(page: number = 1, limit: number = 50) {
+    const params = new URLSearchParams()
+    params.append('page', page.toString())
+    params.append('limit', limit.toString())
+    return apiClient.get(`/api/v1/gl/receipt-vouchers?${params}`)
+  },
+
+  async getPaymentVouchers(page: number = 1, limit: number = 50) {
+    const params = new URLSearchParams()
+    params.append('page', page.toString())
+    params.append('limit', limit.toString())
+    return apiClient.get(`/api/v1/gl/payment-vouchers?${params}`)
+  },
+
+  async getJournalVouchers(page: number = 1, limit: number = 50) {
+    const params = new URLSearchParams()
+    params.append('page', page.toString())
+    params.append('limit', limit.toString())
+    return apiClient.get(`/api/v1/gl/journal-vouchers?${params}`)
+  },
+}

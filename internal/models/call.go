@@ -4,10 +4,10 @@ import "time"
 
 // Call represents a phone or video call
 type Call struct {
-	ID              int64      `json:"id" db:"id"`
+	ID              string     `json:"id" db:"id"`
 	TenantID        string     `json:"tenant_id" db:"tenant_id"`
-	LeadID          int64      `json:"lead_id" db:"lead_id"`
-	AgentID         int64      `json:"agent_id" db:"agent_id"`
+	LeadID          string     `json:"lead_id" db:"lead_id"`
+	AgentID         string     `json:"agent_id" db:"agent_id"`
 	Status          string     `json:"status" db:"status"` // initiated, ringing, active, ended
 	DurationSeconds int        `json:"duration_seconds" db:"duration_seconds"`
 	RecordingURL    string     `json:"recording_url" db:"recording_url"`
@@ -23,8 +23,8 @@ type Call struct {
 type CallFilter struct {
 	Status  string
 	Outcome string
-	AgentID int64
-	LeadID  int64
+	AgentID string
+	LeadID  string
 	Limit   int
 	Offset  int
 }

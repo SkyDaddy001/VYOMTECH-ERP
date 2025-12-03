@@ -107,9 +107,20 @@ func (s *AuthService) Login(ctx context.Context, email, password string) (string
 	}
 
 	// Verify password
+	hashPrefix := user.Password
+	if len(user.Password) > 10 {
+		hashPrefix = user.Password[:10]
+	}
+	s.logger.Info("DEBUG: Attempting password verification",
+		"email", email,
+		"retrieved_hash_len", len(user.Password),
+		"hash_prefix", hashPrefix,
+		"password_len", len(password))
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
+		s.logger.Warn("DEBUG: Password comparison failed", "email", email, "error", err)
 		return "", errors.New("invalid credentials")
 	}
+	s.logger.Info("DEBUG: Password comparison succeeded", "email", email)
 
 	// Generate JWT token
 	token, err := s.jwtManager.GenerateToken(user.ID, user.Email, user.Role, user.TenantID)

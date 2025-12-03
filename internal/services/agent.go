@@ -22,19 +22,17 @@ func NewAgentService(db *sql.DB, logger *logger.Logger) *AgentService {
 	}
 }
 
-func (s *AgentService) GetAgent(ctx context.Context, agentID int) (*models.Agent, error) {
+func (s *AgentService) GetAgent(ctx context.Context, agentID string) (*models.Agent, error) {
 	var agent models.Agent
-	var skillsJSON string
+	var skillsJSON sql.NullString
 
 	err := s.db.QueryRowContext(ctx, `
-		SELECT user_id, status, availability, skills, max_concurrent_calls, 
-		       current_calls, total_calls, avg_handle_time, satisfaction_score, 
-		       last_active, tenant_id
-		FROM agent WHERE user_id = ?
+		SELECT id, tenant_id, agent_code, first_name, last_name, email, phone, status, agent_type, skills, available, created_at, updated_at
+		FROM agent WHERE id = ?
 	`, agentID).Scan(
-		&agent.UserID, &agent.Status, &agent.Availability, &skillsJSON,
-		&agent.MaxConcurrentCalls, &agent.CurrentCalls, &agent.TotalCalls,
-		&agent.AvgHandleTime, &agent.SatisfactionScore, &agent.LastActive, &agent.TenantID,
+		&agent.ID, &agent.TenantID, &agent.AgentCode, &agent.FirstName, &agent.LastName,
+		&agent.Email, &agent.Phone, &agent.Status, &agent.AgentType, &skillsJSON,
+		&agent.Available, &agent.CreatedAt, &agent.UpdatedAt,
 	)
 
 	if err != nil {
@@ -45,8 +43,8 @@ func (s *AgentService) GetAgent(ctx context.Context, agentID int) (*models.Agent
 	}
 
 	// Parse skills JSON
-	if skillsJSON != "" {
-		err = json.Unmarshal([]byte(skillsJSON), &agent.Skills)
+	if skillsJSON.Valid && skillsJSON.String != "" {
+		err = json.Unmarshal([]byte(skillsJSON.String), &agent.Skills)
 		if err != nil {
 			s.logger.Warn("Failed to unmarshal agent skills", "error", err)
 		}
@@ -57,11 +55,9 @@ func (s *AgentService) GetAgent(ctx context.Context, agentID int) (*models.Agent
 
 func (s *AgentService) GetAgentsByTenant(ctx context.Context, tenantID string) ([]models.Agent, error) {
 	rows, err := s.db.QueryContext(ctx, `
-		SELECT user_id, status, availability, skills, max_concurrent_calls,
-		       current_calls, total_calls, avg_handle_time, satisfaction_score,
-		       last_active, tenant_id
+		SELECT id, tenant_id, agent_code, first_name, last_name, email, phone, status, agent_type, skills, available, created_at, updated_at
 		FROM agent WHERE tenant_id = ?
-		ORDER BY last_active DESC
+		ORDER BY created_at DESC
 	`, tenantID)
 
 	if err != nil {
@@ -72,20 +68,25 @@ func (s *AgentService) GetAgentsByTenant(ctx context.Context, tenantID string) (
 	var agents []models.Agent
 	for rows.Next() {
 		var agent models.Agent
-		var skillsJSON string
+		var skillsJSON sql.NullString
+		var id, createdAt, updatedAt sql.NullString
 
 		err = rows.Scan(
-			&agent.UserID, &agent.Status, &agent.Availability, &skillsJSON,
-			&agent.MaxConcurrentCalls, &agent.CurrentCalls, &agent.TotalCalls,
-			&agent.AvgHandleTime, &agent.SatisfactionScore, &agent.LastActive, &agent.TenantID,
+			&id, &agent.TenantID, &agent.AgentCode, &agent.FirstName, &agent.LastName,
+			&agent.Email, &agent.Phone, &agent.Status, &agent.AgentType, &skillsJSON,
+			&agent.Available, &createdAt, &updatedAt,
 		)
 		if err != nil {
 			s.logger.Error("Failed to scan agent row", "error", err)
 			continue
 		}
 
-		if skillsJSON != "" {
-			err = json.Unmarshal([]byte(skillsJSON), &agent.Skills)
+		if id.Valid {
+			agent.ID = id.String
+		}
+
+		if skillsJSON.Valid && skillsJSON.String != "" {
+			err = json.Unmarshal([]byte(skillsJSON.String), &agent.Skills)
 			if err != nil {
 				s.logger.Warn("Failed to unmarshal agent skills", "error", err)
 			}
@@ -97,45 +98,42 @@ func (s *AgentService) GetAgentsByTenant(ctx context.Context, tenantID string) (
 	return agents, rows.Err()
 }
 
-func (s *AgentService) UpdateAgentAvailability(ctx context.Context, agentID int, availability string) error {
+func (s *AgentService) UpdateAgentAvailability(ctx context.Context, agentID string, availability string) error {
 	_, err := s.db.ExecContext(ctx, `
 		UPDATE agent 
-		SET availability = ?, last_active = NOW() 
-		WHERE user_id = ?
+		SET available = CASE WHEN ? = 'available' THEN TRUE ELSE FALSE END, updated_at = NOW() 
+		WHERE id = ?
 	`, availability, agentID)
 
 	if err != nil {
 		return fmt.Errorf("failed to update agent availability: %w", err)
 	}
 
-	s.logger.WithUser(agentID).Info("Agent availability updated", "availability", availability)
+	s.logger.Info("Agent availability updated", "availability", availability)
 	return nil
 }
 
-func (s *AgentService) UpdateAgentStatus(ctx context.Context, agentID int, status string) error {
+func (s *AgentService) UpdateAgentStatus(ctx context.Context, agentID string, status string) error {
 	_, err := s.db.ExecContext(ctx, `
 		UPDATE agent 
 		SET status = ?, updated_at = NOW() 
-		WHERE user_id = ?
+		WHERE id = ?
 	`, status, agentID)
 
 	if err != nil {
 		return fmt.Errorf("failed to update agent status: %w", err)
 	}
 
-	s.logger.WithUser(agentID).Info("Agent status updated", "status", status)
+	s.logger.Info("Agent status updated", "status", status)
 	return nil
 }
 
 func (s *AgentService) GetAvailableAgents(ctx context.Context, tenantID string) ([]models.Agent, error) {
 	rows, err := s.db.QueryContext(ctx, `
-		SELECT user_id, status, availability, skills, max_concurrent_calls,
-		       current_calls, total_calls, avg_handle_time, satisfaction_score,
-		       last_active, tenant_id
+		SELECT id, tenant_id, agent_code, first_name, last_name, email, phone, status, agent_type, skills, available, created_at, updated_at
 		FROM agent 
-		WHERE tenant_id = ? AND status = 'active' AND availability = 'online'
-		      AND current_calls < max_concurrent_calls
-		ORDER BY satisfaction_score DESC
+		WHERE tenant_id = ? AND status = 'available' AND available = TRUE
+		ORDER BY created_at DESC
 	`, tenantID)
 
 	if err != nil {
@@ -146,20 +144,20 @@ func (s *AgentService) GetAvailableAgents(ctx context.Context, tenantID string) 
 	var agents []models.Agent
 	for rows.Next() {
 		var agent models.Agent
-		var skillsJSON string
+		var skillsJSON sql.NullString
 
 		err = rows.Scan(
-			&agent.UserID, &agent.Status, &agent.Availability, &skillsJSON,
-			&agent.MaxConcurrentCalls, &agent.CurrentCalls, &agent.TotalCalls,
-			&agent.AvgHandleTime, &agent.SatisfactionScore, &agent.LastActive, &agent.TenantID,
+			&agent.ID, &agent.TenantID, &agent.AgentCode, &agent.FirstName, &agent.LastName,
+			&agent.Email, &agent.Phone, &agent.Status, &agent.AgentType, &skillsJSON,
+			&agent.Available, &agent.CreatedAt, &agent.UpdatedAt,
 		)
 		if err != nil {
 			s.logger.Error("Failed to scan agent row", "error", err)
 			continue
 		}
 
-		if skillsJSON != "" {
-			err = json.Unmarshal([]byte(skillsJSON), &agent.Skills)
+		if skillsJSON.Valid && skillsJSON.String != "" {
+			err = json.Unmarshal([]byte(skillsJSON.String), &agent.Skills)
 			if err != nil {
 				s.logger.Warn("Failed to unmarshal agent skills", "error", err)
 			}
@@ -171,31 +169,15 @@ func (s *AgentService) GetAvailableAgents(ctx context.Context, tenantID string) 
 	return agents, rows.Err()
 }
 
-func (s *AgentService) IncrementAgentCallCount(ctx context.Context, agentID int) error {
-	_, err := s.db.ExecContext(ctx, `
-		UPDATE agent 
-		SET current_calls = current_calls + 1, total_calls = total_calls + 1
-		WHERE user_id = ?
-	`, agentID)
-
-	if err != nil {
-		return fmt.Errorf("failed to increment agent call count: %w", err)
-	}
-
+func (s *AgentService) IncrementAgentCallCount(ctx context.Context, agentID string) error {
+	// This feature is not supported in the current schema
+	// Keeping for backward compatibility
 	return nil
 }
 
-func (s *AgentService) DecrementAgentCallCount(ctx context.Context, agentID int) error {
-	_, err := s.db.ExecContext(ctx, `
-		UPDATE agent 
-		SET current_calls = GREATEST(0, current_calls - 1)
-		WHERE user_id = ?
-	`, agentID)
-
-	if err != nil {
-		return fmt.Errorf("failed to decrement agent call count: %w", err)
-	}
-
+func (s *AgentService) DecrementAgentCallCount(ctx context.Context, agentID string) error {
+	// This feature is not supported in the current schema
+	// Keeping for backward compatibility
 	return nil
 }
 
@@ -205,29 +187,21 @@ func (s *AgentService) GetAgentStats(ctx context.Context, tenantID string) (*mod
 	// Get counts for different availability statuses
 	err := s.db.QueryRowContext(ctx, `
 		SELECT 
-			SUM(CASE WHEN availability = 'online' THEN 1 ELSE 0 END) as online_agents,
-			SUM(CASE WHEN availability = 'busy' THEN 1 ELSE 0 END) as busy_agents,
+			SUM(CASE WHEN status = 'available' THEN 1 ELSE 0 END) as online_agents,
+			SUM(CASE WHEN status = 'busy' THEN 1 ELSE 0 END) as busy_agents,
 			COUNT(*) as total_agents
-		FROM agent WHERE tenant_id = ? AND status = 'active'
+		FROM agent WHERE tenant_id = ?
 	`, tenantID).Scan(&stats.OnlineAgents, &stats.BusyAgents, &stats.TotalAgents)
 
-	if err != nil {
+	if err != nil && err != sql.ErrNoRows {
 		return nil, fmt.Errorf("failed to get agent stats: %w", err)
 	}
 
 	return &stats, nil
 }
 
-func (s *AgentService) UpdateAgentStats(ctx context.Context, agentID int, avgHandleTime float64, satisfactionScore float64) error {
-	_, err := s.db.ExecContext(ctx, `
-		UPDATE agent 
-		SET avg_handle_time = ?, satisfaction_score = ?, last_active = NOW()
-		WHERE user_id = ?
-	`, avgHandleTime, satisfactionScore, agentID)
-
-	if err != nil {
-		return fmt.Errorf("failed to update agent stats: %w", err)
-	}
-
+func (s *AgentService) UpdateAgentStats(ctx context.Context, agentID string, avgHandleTime float64, satisfactionScore float64) error {
+	// This feature is not supported in the current schema
+	// Keeping for backward compatibility
 	return nil
 }

@@ -33,15 +33,15 @@ func RegisterBOQRoutes(router *mux.Router, service *services.BOQService) {
 }
 
 type ImportBOQResponse struct {
-	TotalRows       int      `json:"total_rows"`
-	SuccessCount    int      `json:"success_count"`
-	FailureCount    int      `json:"failure_count"`
-	CreatedBOQs     int      `json:"created_boqs"`
-	UpdatedBOQs     int      `json:"updated_boqs"`
-	DuplicateCount  int      `json:"duplicate_count"`
-	TotalAmountINR  float64  `json:"total_amount_inr"`
-	Currency        string   `json:"currency"`
-	Errors          []string `json:"errors,omitempty"`
+	TotalRows      int      `json:"total_rows"`
+	SuccessCount   int      `json:"success_count"`
+	FailureCount   int      `json:"failure_count"`
+	CreatedBOQs    int      `json:"created_boqs"`
+	UpdatedBOQs    int      `json:"updated_boqs"`
+	DuplicateCount int      `json:"duplicate_count"`
+	TotalAmountINR float64  `json:"total_amount_inr"`
+	Currency       string   `json:"currency"`
+	Errors         []string `json:"errors,omitempty"`
 }
 
 func (h *BOQHandler) ImportBOQ(w http.ResponseWriter, r *http.Request) {
@@ -52,13 +52,13 @@ func (h *BOQHandler) ImportBOQ(w http.ResponseWriter, r *http.Request) {
 	}
 
 	projectIDStr := r.URL.Query().Get("project_id")
-	projectID, err := strconv.ParseInt(projectIDStr, 10, 64)
-	if err != nil {
+	projectID := projectIDStr
+	if projectID == "" {
 		http.Error(w, "Invalid project_id", http.StatusBadRequest)
 		return
 	}
 
-	err = r.ParseMultipartForm(50 << 20)
+	err := r.ParseMultipartForm(50 << 20)
 	if err != nil {
 		http.Error(w, "Failed to parse form", http.StatusBadRequest)
 		return
@@ -77,7 +77,7 @@ func (h *BOQHandler) ImportBOQ(w http.ResponseWriter, r *http.Request) {
 	}
 
 	tempDir := os.TempDir()
-	tempPath := filepath.Join(tempDir, fmt.Sprintf("boq_%d_%s.xlsx", projectID, time.Now().Format("20060102150405")))
+	tempPath := filepath.Join(tempDir, fmt.Sprintf("boq_%s_%s.xlsx", projectID, time.Now().Format("20060102150405")))
 	tempFile, err := os.Create(tempPath)
 	if err != nil {
 		http.Error(w, "Failed to create temporary file", http.StatusInternalServerError)
@@ -123,17 +123,17 @@ func (h *BOQHandler) ExportBOQ(w http.ResponseWriter, r *http.Request) {
 	}
 
 	projectIDStr := r.URL.Query().Get("project_id")
-	projectID, err := strconv.ParseInt(projectIDStr, 10, 64)
-	if err != nil {
+	projectID := projectIDStr
+	if projectID == "" {
 		http.Error(w, "Invalid project_id", http.StatusBadRequest)
 		return
 	}
 
 	tempDir := os.TempDir()
-	tempPath := filepath.Join(tempDir, fmt.Sprintf("boq_export_%d_%s.xlsx", projectID, time.Now().Format("20060102150405")))
+	tempPath := filepath.Join(tempDir, fmt.Sprintf("boq_export_%s_%s.xlsx", projectID, time.Now().Format("20060102150405")))
 	defer os.Remove(tempPath)
 
-	err = h.service.ExportBOQToExcel(tenantID, projectID, tempPath)
+	err := h.service.ExportBOQToExcel(tenantID, projectID, tempPath)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Export failed: %v", err), http.StatusInternalServerError)
 		return
@@ -146,7 +146,7 @@ func (h *BOQHandler) ExportBOQ(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=BOQ_Project_%d.xlsx", projectID))
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=BOQ_Project_%s.xlsx", projectID))
 	w.Header().Set("Content-Length", fmt.Sprintf("%d", len(fileData)))
 	w.WriteHeader(http.StatusOK)
 	w.Write(fileData)
@@ -160,8 +160,8 @@ func (h *BOQHandler) ListBOQItems(w http.ResponseWriter, r *http.Request) {
 	}
 
 	projectIDStr := r.URL.Query().Get("project_id")
-	projectID, err := strconv.ParseInt(projectIDStr, 10, 64)
-	if err != nil {
+	projectID := projectIDStr
+	if projectID == "" {
 		http.Error(w, "Invalid project_id", http.StatusBadRequest)
 		return
 	}
@@ -202,8 +202,8 @@ func (h *BOQHandler) UpdateBOQItem(w http.ResponseWriter, r *http.Request) {
 	}
 
 	boqIDStr := r.URL.Query().Get("id")
-	boqID, err := strconv.ParseInt(boqIDStr, 10, 64)
-	if err != nil {
+	boqID := boqIDStr
+	if boqID == "" {
 		http.Error(w, "Invalid BOQ ID", http.StatusBadRequest)
 		return
 	}
@@ -217,7 +217,7 @@ func (h *BOQHandler) UpdateBOQItem(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.service.UpdateBOQItem(tenantID, boqID, req.Quantity, req.UnitRate)
+	err := h.service.UpdateBOQItem(tenantID, boqID, req.Quantity, req.UnitRate)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to update: %v", err), http.StatusInternalServerError)
 		return
@@ -235,13 +235,13 @@ func (h *BOQHandler) DeleteBOQItem(w http.ResponseWriter, r *http.Request) {
 	}
 
 	boqIDStr := r.URL.Query().Get("id")
-	boqID, err := strconv.ParseInt(boqIDStr, 10, 64)
-	if err != nil {
+	boqID := boqIDStr
+	if boqID == "" {
 		http.Error(w, "Invalid BOQ ID", http.StatusBadRequest)
 		return
 	}
 
-	err = h.service.DeleteBOQItem(tenantID, boqID)
+	err := h.service.DeleteBOQItem(tenantID, boqID)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to delete: %v", err), http.StatusInternalServerError)
 		return

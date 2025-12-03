@@ -8,8 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
-
 	"vyomtech-backend/internal/models"
 	"vyomtech-backend/internal/services"
 )
@@ -409,14 +407,4 @@ type ErrorResponseHelper struct {
 	Error   string `json:"error"`
 	Status  int    `json:"status"`
 	TraceID string `json:"trace_id"`
-}
-
-func (h *MultiChannelCommunicationHandler) sendError(w http.ResponseWriter, statusCode int, message string) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(statusCode)
-	json.NewEncoder(w).Encode(ErrorResponseHelper{
-		Error:   message,
-		Status:  statusCode,
-		TraceID: uuid.New().String(),
-	})
 }

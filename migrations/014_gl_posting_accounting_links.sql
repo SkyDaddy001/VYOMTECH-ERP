@@ -146,7 +146,7 @@ CREATE TABLE IF NOT EXISTS `sales_gl_posting` (
 CREATE TABLE IF NOT EXISTS `construction_gl_posting` (
     `id` VARCHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
-    `boq_id` VARCHAR(36) NOT NULL,
+    `boq_id` BIGINT NOT NULL,
     `journal_entry_id` VARCHAR(36),
     `posting_date` DATE,
     `posting_status` VARCHAR(50) DEFAULT 'pending',

@@ -52,6 +52,14 @@ func main() {
 		cancel()
 	}
 
+	// Initialize and start demo reset scheduler
+	demoResetService := services.NewDemoResetService(dbConn, log)
+	if err := demoResetService.ResetDemoData(); err != nil {
+		log.Warn("Initial demo data reset failed", "error", err)
+	}
+	demoResetService.StartScheduler()
+	log.Info("Demo reset scheduler started - will reset every 30 days")
+
 	// Initialize JWT manager
 	jwtManager := auth.NewJWTManager(cfg.JWT.Secret, cfg.JWT.Expiration)
 

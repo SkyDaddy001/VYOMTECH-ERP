@@ -3,8 +3,8 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/gorilla/mux"
 
@@ -196,8 +196,8 @@ func NewAgentHandler(agentService *services.AgentService, logger *logger.Logger)
 // GetAgent retrieves a specific agent
 func (h *AgentHandler) GetAgent(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	agentID, err := strconv.Atoi(vars["id"])
-	if err != nil {
+	agentID := vars["id"]
+	if agentID == "" {
 		http.Error(w, "Invalid agent ID", http.StatusBadRequest)
 		return
 	}
@@ -241,11 +241,13 @@ func (h *AgentHandler) GetAgentsByTenant(w http.ResponseWriter, r *http.Request)
 
 // UpdateAgentAvailability updates agent availability status
 func (h *AgentHandler) UpdateAgentAvailability(w http.ResponseWriter, r *http.Request) {
-	userID, ok := r.Context().Value(middleware.UserIDKey).(int)
+	userIDVal, ok := r.Context().Value(middleware.UserIDKey).(int)
 	if !ok {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
+
+	userID := fmt.Sprintf("%d", userIDVal)
 
 	var req map[string]string
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

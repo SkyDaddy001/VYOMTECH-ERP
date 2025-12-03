@@ -55,12 +55,11 @@ func (s *ProjectManagementService) CreateCustomerProfile(tenantID string, req *m
 		 booking_source, life_certificate, customer_status, booking_date, welcome_date, allotment_date, agreement_date,
 		 registration_date, handover_date, noc_received_date, rate_per_sqft, composite_guideline_value, car_parking_type,
 		 maintenance_charges, other_works_charges, corpus_charges, eb_deposit, notes, created_by, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19,
-		 $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36, $37, $38,
-		 $39, $40, $41, $42, $43, $44, $45, $46, $47, $48, $49, $50, $51, $52, $53, $54, $55, $56, $57,
-		 $58, $59, $60, $61, $62, $63, $64, $65, $66, $67, $68, $69, $70, $71, $72, $73, $74, $75, $76,
-		 $77, $78, $79, $80, $81, $82, $83, $84, $85, $86, $87, $88, $89)
-		RETURNING id, created_at, updated_at`
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+		 ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+		 ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+		 ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+		 ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	err := s.DB.QueryRow(query,
 		req.ID, req.TenantID, req.CustomerCode, req.UnitID, req.FirstName, req.MiddleName, req.LastName,
@@ -114,7 +113,7 @@ func (s *ProjectManagementService) GetCustomerProfile(tenantID, customerID strin
 		rate_per_sqft, composite_guideline_value, car_parking_type, maintenance_charges, other_works_charges, corpus_charges, eb_deposit,
 		notes, created_by, created_at, updated_at, deleted_at
 		FROM property_customer_profile 
-		WHERE id = $1 AND tenant_id = $2`
+		WHERE id = ? AND tenant_id = ?`
 
 	customer := &models.PropertyCustomerProfile{}
 	err := s.DB.QueryRow(query, customerID, tenantID).Scan(
@@ -167,9 +166,8 @@ func (s *ProjectManagementService) CreateAreaStatement(tenantID string, req *mod
 		 parking_area_sqft, parking_area_sqm, common_area_sqft, common_area_sqm,
 		 alloted_to, key_holder, percentage_allocation, noc_taken, noc_date, noc_document_url,
 		 area_type, description, active, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19,
-		 $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36, $37, $38, $39, $40, $41, $42)
-		RETURNING id, created_at, updated_at`
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+		 ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	nocDate := (*time.Time)(nil)
 	if req.NOCDate != "" {
@@ -261,18 +259,18 @@ func (s *ProjectManagementService) UpdateCostSheet(tenantID string, req *models.
 		 apartment_cost_excluding_govt, actual_sold_price_excluding_govt,
 		 gst_applicable, gst_percentage, gst_amount, grand_total, club_membership,
 		 registration_charge, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16,
-		 $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32,
-		 $33, $34, $35)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+		 ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+		 ?, ?, ?)
 		ON DUPLICATE KEY UPDATE
-		sbua = $4, rate_per_sqft = $5, car_parking_cost = $6, plc = $7,
-		other_charges_1 = $11, other_charges_1_name = $12, other_charges_1_type = $13,
-		other_charges_2 = $14, other_charges_2_name = $15, other_charges_2_type = $16,
-		other_charges_3 = $17, other_charges_3_name = $18, other_charges_3_type = $19,
-		other_charges_4 = $20, other_charges_4_name = $21, other_charges_4_type = $22,
-		other_charges_5 = $23, other_charges_5_name = $24, other_charges_5_type = $25,
-		gst_applicable = $28, gst_percentage = $29, gst_amount = $30, grand_total = $31,
-		updated_at = $35`
+		sbua = ?, rate_per_sqft = ?, car_parking_cost = ?, plc = ?,
+		other_charges_1 = ?, other_charges_1_name = ?, other_charges_1_type = ?,
+		other_charges_2 = ?, other_charges_2_name = ?, other_charges_2_type = ?,
+		other_charges_3 = ?, other_charges_3_name = ?, other_charges_3_type = ?,
+		other_charges_4 = ?, other_charges_4_name = ?, other_charges_4_type = ?,
+		other_charges_5 = ?, other_charges_5_name = ?, other_charges_5_type = ?,
+		gst_applicable = ?, gst_percentage = ?, gst_amount = ?, grand_total = ?,
+		updated_at = ?`
 
 	_, err := s.DB.Exec(query,
 		tenantID, req.UnitID, req.BlockName, req.SBUA, req.RatePerSqft, req.CarParkingCost, req.PLC,
@@ -307,8 +305,7 @@ func (s *ProjectManagementService) CreateProjectCostConfiguration(tenantID strin
 		(id, tenant_id, project_id, config_name, config_type, charge_type, charge_amount,
 		 display_order, is_mandatory, applicable_for_unit_type, description, active,
 		 created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
-		RETURNING id, created_at, updated_at`
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	config := &models.ProjectCostConfiguration{
 		ID:                    id,
@@ -362,9 +359,8 @@ func (s *ProjectManagementService) CreateBankFinancing(tenantID string, req *mod
 		 total_disbursed_amount, disbursement_status, remaining_disbursement,
 		 total_collection_from_unit, collection_status, total_commitment, outstanding_amount,
 		 noc_required, active, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16,
-		 $17, $18, $19, $20, $21, $22, $23, $24)
-		RETURNING id, created_at, updated_at`
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+		 ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	financing := &models.PropertyBankFinancing{
 		ID:                    id,
@@ -427,8 +423,7 @@ func (s *ProjectManagementService) CreateDisbursementSchedule(tenantID string, r
 		(id, tenant_id, financing_id, unit_id, customer_id, disbursement_no,
 		 expected_disbursement_date, expected_disbursement_amount, disbursement_percentage,
 		 linked_milestone_id, milestone_stage, disbursement_status, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
-		RETURNING id, created_at, updated_at`
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	schedule := &models.PropertyDisbursementSchedule{
 		ID:                         id,
@@ -484,8 +479,7 @@ func (s *ProjectManagementService) CreatePaymentStage(tenantID string, req *mode
 		(id, tenant_id, project_id, unit_id, customer_id, stage_name, stage_number,
 		 stage_percentage, stage_due_amount, apartment_cost, amount_due, amount_pending,
 		 collection_status, due_date, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
-		RETURNING id, created_at, updated_at`
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	stage := &models.PropertyPaymentStage{
 		ID:               id,
@@ -532,10 +526,10 @@ func (s *ProjectManagementService) UpdatePaymentStageCollection(tenantID, stageI
 	now := time.Now()
 
 	query := `UPDATE property_payment_stage 
-		SET amount_received = $1, amount_pending = GREATEST(0, amount_due - $1),
-		 payment_received_date = $2, payment_mode = $3, reference_no = $4,
-		 collection_status = $5, updated_at = $6
-		WHERE id = $7 AND tenant_id = $8`
+		SET amount_received = ?, amount_pending = GREATEST(0, amount_due - ?),
+		 payment_received_date = ?, payment_mode = ?, reference_no = ?,
+		 collection_status = ?, updated_at = ?
+		WHERE id = ? AND tenant_id = ?`
 
 	_, err := s.DB.Exec(query,
 		req.AmountReceived, paymentDate, req.PaymentMode, req.ReferenceNo,
@@ -559,7 +553,7 @@ func (s *ProjectManagementService) ListCustomerProfiles(tenantID string, limit, 
 		company_name, designation, pan_number, aadhar_number, customer_type, customer_status, booking_date, agreement_date,
 		rate_per_sqft, car_parking_type, loan_required, sales_executive_id, sales_executive_name, created_at, updated_at
 		FROM property_customer_profile 
-		WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3`
+		WHERE tenant_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?`
 
 	rows, err := s.DB.Query(query, tenantID, limit, offset)
 	if err != nil {
@@ -581,7 +575,7 @@ func (s *ProjectManagementService) ListCustomerProfiles(tenantID string, limit, 
 
 	// Get count
 	var count int
-	countQuery := `SELECT COUNT(*) FROM property_customer_profile WHERE tenant_id = $1`
+	countQuery := `SELECT COUNT(*) FROM property_customer_profile WHERE tenant_id = ?`
 	s.DB.QueryRow(countQuery, tenantID).Scan(&count)
 
 	return customers, count, nil
@@ -593,7 +587,7 @@ func (s *ProjectManagementService) GetAreaStatement(tenantID, unitID string) (*m
 		rera_carpet_area_sqft, sbua_sqft, alloted_to, key_holder, percentage_allocation,
 		noc_taken, active, created_at, updated_at
 		FROM property_unit_area_statement 
-		WHERE unit_id = $1 AND tenant_id = $2 AND active = 1`
+		WHERE unit_id = ? AND tenant_id = ? AND active = 1`
 
 	statement := &models.PropertyUnitAreaStatement{}
 	err := s.DB.QueryRow(query, unitID, tenantID).Scan(
@@ -619,8 +613,8 @@ func (s *ProjectManagementService) ListAreaStatements(tenantID, projectID string
 	query := `SELECT id, tenant_id, project_id, unit_id, apt_no, floor, unit_type, facing,
 		rera_carpet_area_sqft, sbua_sqft, alloted_to, created_at
 		FROM property_unit_area_statement 
-		WHERE tenant_id = $1 AND project_id = $2 AND active = 1
-		ORDER BY apt_no DESC LIMIT $3 OFFSET $4`
+		WHERE tenant_id = ? AND project_id = ? AND active = 1
+		ORDER BY apt_no DESC LIMIT ? OFFSET ?`
 
 	rows, err := s.DB.Query(query, tenantID, projectID, limit, offset)
 	if err != nil {
@@ -639,7 +633,7 @@ func (s *ProjectManagementService) ListAreaStatements(tenantID, projectID string
 	}
 
 	var count int
-	countQuery := `SELECT COUNT(*) FROM property_unit_area_statement WHERE tenant_id = $1 AND project_id = $2 AND active = 1`
+	countQuery := `SELECT COUNT(*) FROM property_unit_area_statement WHERE tenant_id = ? AND project_id = ? AND active = 1`
 	s.DB.QueryRow(countQuery, tenantID, projectID).Scan(&count)
 
 	return statements, count, nil
@@ -651,7 +645,7 @@ func (s *ProjectManagementService) GetBankFinancing(tenantID, financingID string
 		sanctioned_amount, total_disbursed_amount, remaining_disbursement, total_collection_from_unit,
 		disbursement_status, collection_status, outstanding_amount, noc_received, created_at, updated_at
 		FROM property_bank_financing 
-		WHERE id = $1 AND tenant_id = $2`
+		WHERE id = ? AND tenant_id = ?`
 
 	financing := &models.PropertyBankFinancing{}
 	err := s.DB.QueryRow(query, financingID, tenantID).Scan(
@@ -677,7 +671,7 @@ func (s *ProjectManagementService) ListPaymentStages(tenantID, unitID string) ([
 	query := `SELECT id, tenant_id, stage_name, stage_number, stage_percentage, stage_due_amount,
 		amount_due, amount_received, amount_pending, collection_status, due_date
 		FROM property_payment_stage 
-		WHERE tenant_id = $1 AND unit_id = $2
+		WHERE tenant_id = ? AND unit_id = ?
 		ORDER BY stage_number ASC`
 
 	rows, err := s.DB.Query(query, tenantID, unitID)
@@ -708,31 +702,31 @@ func (s *ProjectManagementService) UpdateCustomerProfile(tenantID, customerID st
 	now := time.Now()
 
 	query := `UPDATE property_customer_profile 
-		SET first_name = $1, middle_name = $2, last_name = $3, email = $4, phone_primary = $5,
-		 phone_secondary = $6, alternate_phone = $7, company_name = $8, designation = $9,
-		 pan_number = $10, aadhar_number = $11, pan_copy_url = $12, aadhar_copy_url = $13,
-		 poa_document_no = $14, care_of = $15, communication_address_line1 = $16, communication_address_line2 = $17,
-		 communication_city = $18, communication_state = $19, communication_country = $20, communication_zip = $21,
-		 permanent_address_line1 = $22, permanent_address_line2 = $23, permanent_city = $24, permanent_state = $25,
-		 permanent_country = $26, permanent_zip = $27, profession = $28, employer_name = $29, employment_type = $30,
-		 monthly_income = $31, customer_type = $32,
-		 co_applicant_1_name = $33, co_applicant_1_number = $34, co_applicant_1_alternate_number = $35, co_applicant_1_email = $36,
-		 co_applicant_1_communication_address = $37, co_applicant_1_permanent_address = $38, co_applicant_1_aadhar = $39, co_applicant_1_pan = $40,
-		 co_applicant_1_care_of = $41, co_applicant_1_relation = $42,
-		 co_applicant_2_name = $43, co_applicant_2_number = $44, co_applicant_2_alternate_number = $45, co_applicant_2_email = $46,
-		 co_applicant_2_communication_address = $47, co_applicant_2_permanent_address = $48, co_applicant_2_aadhar = $49, co_applicant_2_pan = $50,
-		 co_applicant_2_care_of = $51, co_applicant_2_relation = $52,
-		 co_applicant_3_name = $53, co_applicant_3_number = $54, co_applicant_3_alternate_number = $55, co_applicant_3_email = $56,
-		 co_applicant_3_communication_address = $57, co_applicant_3_permanent_address = $58, co_applicant_3_aadhar = $59, co_applicant_3_pan = $60,
-		 co_applicant_3_care_of = $61, co_applicant_3_relation = $62,
-		 loan_required = $63, loan_amount = $64, loan_sanction_date = $65, bank_name = $66, bank_branch = $67,
-		 bank_contact_person = $68, bank_contact_number = $69, connector_code_number = $70, lead_id = $71,
-		 sales_executive_id = $72, sales_executive_name = $73, sales_head_id = $74, sales_head_name = $75,
-		 booking_source = $76, life_certificate = $77, customer_status = $78, booking_date = $79, welcome_date = $80,
-		 allotment_date = $81, agreement_date = $82, registration_date = $83, handover_date = $84, noc_received_date = $85,
-		 rate_per_sqft = $86, composite_guideline_value = $87, car_parking_type = $88, maintenance_charges = $89,
-		 other_works_charges = $90, corpus_charges = $91, eb_deposit = $92, notes = $93, updated_at = $94
-		WHERE id = $95 AND tenant_id = $96`
+		SET first_name = ?, middle_name = ?, last_name = ?, email = ?, phone_primary = ?,
+		 phone_secondary = ?, alternate_phone = ?, company_name = ?, designation = ?,
+		 pan_number = ?, aadhar_number = ?, pan_copy_url = ?, aadhar_copy_url = ?,
+		 poa_document_no = ?, care_of = ?, communication_address_line1 = ?, communication_address_line2 = ?,
+		 communication_city = ?, communication_state = ?, communication_country = ?, communication_zip = ?,
+		 permanent_address_line1 = ?, permanent_address_line2 = ?, permanent_city = ?, permanent_state = ?,
+		 permanent_country = ?, permanent_zip = ?, profession = ?, employer_name = ?, employment_type = ?,
+		 monthly_income = ?, customer_type = ?,
+		 co_applicant_1_name = ?, co_applicant_1_number = ?, co_applicant_1_alternate_number = ?, co_applicant_1_email = ?,
+		 co_applicant_1_communication_address = ?, co_applicant_1_permanent_address = ?, co_applicant_1_aadhar = ?, co_applicant_1_pan = ?,
+		 co_applicant_1_care_of = ?, co_applicant_1_relation = ?,
+		 co_applicant_2_name = ?, co_applicant_2_number = ?, co_applicant_2_alternate_number = ?, co_applicant_2_email = ?,
+		 co_applicant_2_communication_address = ?, co_applicant_2_permanent_address = ?, co_applicant_2_aadhar = ?, co_applicant_2_pan = ?,
+		 co_applicant_2_care_of = ?, co_applicant_2_relation = ?,
+		 co_applicant_3_name = ?, co_applicant_3_number = ?, co_applicant_3_alternate_number = ?, co_applicant_3_email = ?,
+		 co_applicant_3_communication_address = ?, co_applicant_3_permanent_address = ?, co_applicant_3_aadhar = ?, co_applicant_3_pan = ?,
+		 co_applicant_3_care_of = ?, co_applicant_3_relation = ?,
+		 loan_required = ?, loan_amount = ?, loan_sanction_date = ?, bank_name = ?, bank_branch = ?,
+		 bank_contact_person = ?, bank_contact_number = ?, connector_code_number = ?, lead_id = ?,
+		 sales_executive_id = ?, sales_executive_name = ?, sales_head_id = ?, sales_head_name = ?,
+		 booking_source = ?, life_certificate = ?, customer_status = ?, booking_date = ?, welcome_date = ?,
+		 allotment_date = ?, agreement_date = ?, registration_date = ?, handover_date = ?, noc_received_date = ?,
+		 rate_per_sqft = ?, composite_guideline_value = ?, car_parking_type = ?, maintenance_charges = ?,
+		 other_works_charges = ?, corpus_charges = ?, eb_deposit = ?, notes = ?, updated_at = ?
+		WHERE id = ? AND tenant_id = ?`
 
 	_, err := s.DB.Exec(query,
 		req.FirstName, req.MiddleName, req.LastName, req.Email, req.PhonePrimary,
@@ -773,8 +767,8 @@ func (s *ProjectManagementService) UpdateBankFinancing(tenantID, financingID str
 	now := time.Now()
 
 	query := `UPDATE property_bank_financing 
-		SET bank_name = $1, sanctioned_amount = $2, total_commitment = $3, updated_at = $4
-		WHERE id = $5 AND tenant_id = $6`
+		SET bank_name = ?, sanctioned_amount = ?, total_commitment = ?, updated_at = ?
+		WHERE id = ? AND tenant_id = ?`
 
 	_, err := s.DB.Exec(query,
 		req.BankName, req.SanctionedAmount, req.TotalCommitment, now, financingID, tenantID,
@@ -791,8 +785,8 @@ func (s *ProjectManagementService) UpdateBankFinancing(tenantID, financingID str
 func (s *ProjectManagementService) DeleteAreaStatement(tenantID, unitID string) error {
 	now := time.Now()
 
-	query := `UPDATE property_unit_area_statement SET active = 0, updated_at = $1
-		WHERE unit_id = $2 AND tenant_id = $3`
+	query := `UPDATE property_unit_area_statement SET active = 0, updated_at = ?
+		WHERE unit_id = ? AND tenant_id = ?`
 
 	_, err := s.DB.Exec(query, now, unitID, tenantID)
 	if err != nil {
@@ -811,7 +805,7 @@ func (s *ProjectManagementService) CalculateCostBreakdown(tenantID, unitID strin
 	query := `SELECT sbua, rate_per_sqft, car_parking_cost, plc, statutory_approval_charge,
 		legal_documentation_charge, amenities_equipment_charge, other_charges_1, other_charges_2,
 		other_charges_3, other_charges_4, other_charges_5, gst_percentage, grand_total
-		FROM unit_cost_sheet WHERE unit_id = $1 AND tenant_id = $2`
+		FROM unit_cost_sheet WHERE unit_id = ? AND tenant_id = ?`
 
 	var sbua, ratePerSqft, carParkingCost, plc, statutoryCharge, legalCharge, amenitiesCharge sql.NullFloat64
 	var oc1, oc2, oc3, oc4, oc5, gstPct, grandTotal sql.NullFloat64
@@ -855,24 +849,24 @@ func (s *ProjectManagementService) GetProjectSummary(tenantID, projectID string)
 	// Total units
 	var totalUnits int
 	s.DB.QueryRow(`SELECT COUNT(*) FROM property_unit_area_statement 
-		WHERE tenant_id = $1 AND project_id = $2 AND active = 1`, tenantID, projectID).Scan(&totalUnits)
+		WHERE tenant_id = ? AND project_id = ? AND active = 1`, tenantID, projectID).Scan(&totalUnits)
 
 	// Total sanctioned amount
 	var totalSanctioned, totalDisbursed, totalCollected sql.NullFloat64
 	s.DB.QueryRow(`SELECT SUM(sanctioned_amount), SUM(total_disbursed_amount), SUM(total_collection_from_unit)
-		FROM property_bank_financing WHERE tenant_id = $1 AND project_id = $2`,
+		FROM property_bank_financing WHERE tenant_id = ? AND project_id = ?`,
 		tenantID, projectID).Scan(&totalSanctioned, &totalDisbursed, &totalCollected)
 
 	// Collection status breakdown
 	var pendingCount, partialCount, completedCount int
 	s.DB.QueryRow(`SELECT COUNT(*) FROM property_payment_stage 
-		WHERE tenant_id = $1 AND project_id = $2 AND collection_status = 'PENDING'`,
+		WHERE tenant_id = ? AND project_id = ? AND collection_status = 'PENDING'`,
 		tenantID, projectID).Scan(&pendingCount)
 	s.DB.QueryRow(`SELECT COUNT(*) FROM property_payment_stage 
-		WHERE tenant_id = $1 AND project_id = $2 AND collection_status = 'PARTIAL'`,
+		WHERE tenant_id = ? AND project_id = ? AND collection_status = 'PARTIAL'`,
 		tenantID, projectID).Scan(&partialCount)
 	s.DB.QueryRow(`SELECT COUNT(*) FROM property_payment_stage 
-		WHERE tenant_id = $1 AND project_id = $2 AND collection_status = 'COMPLETED'`,
+		WHERE tenant_id = ? AND project_id = ? AND collection_status = 'COMPLETED'`,
 		tenantID, projectID).Scan(&completedCount)
 
 	summary["total_units"] = totalUnits

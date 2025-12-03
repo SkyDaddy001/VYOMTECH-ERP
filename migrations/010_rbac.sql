@@ -66,7 +66,7 @@ CREATE TABLE IF NOT EXISTS `role_permission` (
 CREATE TABLE IF NOT EXISTS `user_role` (
     `id` VARCHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
-    `user_id` VARCHAR(36) NOT NULL,
+    `user_id` INT NOT NULL,
     `role_id` VARCHAR(36) NOT NULL,
     `assigned_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `assigned_by` VARCHAR(36),
@@ -104,7 +104,7 @@ CREATE TABLE IF NOT EXISTS `resource` (
 CREATE TABLE IF NOT EXISTS `access_log` (
     `id` VARCHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
-    `user_id` VARCHAR(36),
+    `user_id` INT,
     `resource_id` VARCHAR(36),
     `action` VARCHAR(50),
     `status` VARCHAR(50),

@@ -312,7 +312,7 @@ CREATE TABLE call_priority_queue (
     call_attempt_count INT DEFAULT 0,
     last_call_time TIMESTAMP NULL,
     next_call_time TIMESTAMP NULL,
-    call_result ENUM('CONNECTED', 'VOICEMAIL', 'DISCONNECTED', 'NO_ANSWER', 'BUSY', 'INVALID', 'DO_NOT_CALL') DEFAULT 'PENDING',
+    call_result ENUM('CONNECTED', 'VOICEMAIL', 'DISCONNECTED', 'NO_ANSWER', 'BUSY', 'INVALID', 'DO_NOT_CALL') DEFAULT 'NO_ANSWER',
     call_notes TEXT,
     call_duration_seconds INT DEFAULT 0,
     is_callback TINYINT(1) DEFAULT 0,

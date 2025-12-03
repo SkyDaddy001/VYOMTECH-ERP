@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS `analytics` (
 CREATE TABLE IF NOT EXISTS `dashboard_widget` (
     `id` VARCHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
-    `user_id` VARCHAR(36),
+    `user_id` INT,
     `widget_type` VARCHAR(50),
     `widget_title` VARCHAR(255),
     `metric_id` VARCHAR(36),
@@ -154,7 +154,7 @@ CREATE TABLE IF NOT EXISTS `gamification_achievement` (
 CREATE TABLE IF NOT EXISTS `user_gamification` (
     `id` VARCHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
-    `user_id` VARCHAR(36) NOT NULL,
+    `user_id` INT NOT NULL,
     `total_points` INT DEFAULT 0,
     `current_level_id` VARCHAR(36),
     `badges_earned` JSON,
@@ -174,7 +174,7 @@ CREATE TABLE IF NOT EXISTS `user_gamification` (
 CREATE TABLE IF NOT EXISTS `leaderboard` (
     `id` VARCHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
-    `user_id` VARCHAR(36) NOT NULL,
+    `user_id` INT NOT NULL,
     `rank` INT,
     `points` INT,
     `period` VARCHAR(50),

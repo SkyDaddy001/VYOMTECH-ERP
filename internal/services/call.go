@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"vyomtech-backend/internal/models"
+
+	"github.com/google/uuid"
 )
 
 // CallService handles all call-related operations
@@ -23,30 +25,29 @@ func NewCallService(db *sql.DB) *CallService {
 
 // CreateCall creates a new call record
 func (cs *CallService) CreateCall(ctx context.Context, call *models.Call) error {
+	// Generate UUID if not provided
+	if call.ID == "" {
+		call.ID = uuid.New().String()
+	}
+
 	query := `
-		INSERT INTO call (tenant_id, lead_id, agent_id, status, duration_seconds, recording_url, notes, outcome, started_at, ended_at, created_at, updated_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+		INSERT INTO call (id, tenant_id, lead_id, agent_id, status, duration_seconds, recording_url, notes, outcome, started_at, ended_at, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
 	`
 
-	result, err := cs.db.ExecContext(ctx, query,
-		call.TenantID, call.LeadID, call.AgentID, call.Status, call.DurationSeconds,
+	_, err := cs.db.ExecContext(ctx, query,
+		call.ID, call.TenantID, call.LeadID, call.AgentID, call.Status, call.DurationSeconds,
 		call.RecordingURL, call.Notes, call.Outcome, call.StartedAt, call.EndedAt,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create call: %w", err)
 	}
 
-	id, err := result.LastInsertId()
-	if err != nil {
-		return fmt.Errorf("failed to get call id: %w", err)
-	}
-
-	call.ID = id
 	return nil
 }
 
 // GetCall retrieves a call by ID
-func (cs *CallService) GetCall(ctx context.Context, id int64, tenantID string) (*models.Call, error) {
+func (cs *CallService) GetCall(ctx context.Context, id string, tenantID string) (*models.Call, error) {
 	query := `
 		SELECT id, tenant_id, lead_id, agent_id, status, duration_seconds, recording_url, notes, outcome, started_at, ended_at, created_at, updated_at
 		FROM call
@@ -97,7 +98,7 @@ func (cs *CallService) UpdateCall(ctx context.Context, call *models.Call) error 
 }
 
 // EndCall marks a call as ended
-func (cs *CallService) EndCall(ctx context.Context, id int64, tenantID string, outcome string, duration int) error {
+func (cs *CallService) EndCall(ctx context.Context, id string, tenantID string, outcome string, duration int) error {
 	now := time.Now()
 	query := `
 		UPDATE call
@@ -105,7 +106,7 @@ func (cs *CallService) EndCall(ctx context.Context, id int64, tenantID string, o
 		WHERE id = ? AND tenant_id = ?
 	`
 
-	result, err := cs.db.ExecContext(ctx, query, outcome, duration, &now, id, tenantID)
+	result, err := cs.db.ExecContext(ctx, query, outcome, duration, now, id, tenantID)
 	if err != nil {
 		return fmt.Errorf("failed to end call: %w", err)
 	}
@@ -139,11 +140,11 @@ func (cs *CallService) GetCalls(ctx context.Context, tenantID string, filter *mo
 		query += " AND outcome = ?"
 		args = append(args, filter.Outcome)
 	}
-	if filter.AgentID > 0 {
+	if filter.AgentID != "" {
 		query += " AND agent_id = ?"
 		args = append(args, filter.AgentID)
 	}
-	if filter.LeadID > 0 {
+	if filter.LeadID != "" {
 		query += " AND lead_id = ?"
 		args = append(args, filter.LeadID)
 	}

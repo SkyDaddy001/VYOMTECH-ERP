@@ -3,7 +3,6 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
-	"strconv"
 	"time"
 
 	"vyomtech-backend/internal/models"
@@ -27,8 +26,8 @@ func NewCallHandler(callService *services.CallService, logger *logger.Logger) *C
 
 // CreateCallRequest is the request body for creating a call
 type CreateCallRequest struct {
-	LeadID       int64  `json:"lead_id"`
-	AgentID      int64  `json:"agent_id"`
+	LeadID       string `json:"lead_id"`
+	AgentID      string `json:"agent_id"`
 	Status       string `json:"status,omitempty"`
 	RecordingURL string `json:"recording_url,omitempty"`
 	Notes        string `json:"notes,omitempty"`
@@ -59,18 +58,6 @@ func (ch *CallHandler) GetCalls(w http.ResponseWriter, r *http.Request) {
 		Offset:  0,
 	}
 
-	if limit := r.URL.Query().Get("limit"); limit != "" {
-		if parsed, err := strconv.Atoi(limit); err == nil && parsed > 0 {
-			filter.Limit = parsed
-		}
-	}
-
-	if offset := r.URL.Query().Get("offset"); offset != "" {
-		if parsed, err := strconv.Atoi(offset); err == nil && parsed >= 0 {
-			filter.Offset = parsed
-		}
-	}
-
 	calls, err := ch.callService.GetCalls(ctx, tenantID, filter)
 	if err != nil {
 		ch.logger.Error("Failed to get calls", "error", err)
@@ -99,15 +86,9 @@ func (ch *CallHandler) GetCall(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := strconv.ParseInt(callID, 10, 64)
+	call, err := ch.callService.GetCall(ctx, callID, tenantID)
 	if err != nil {
-		http.Error(w, "invalid call id", http.StatusBadRequest)
-		return
-	}
-
-	call, err := ch.callService.GetCall(ctx, id, tenantID)
-	if err != nil {
-		ch.logger.Error("Failed to get call", "callID", id, "error", err)
+		ch.logger.Error("Failed to get call", "callID", callID, "error", err)
 		http.Error(w, "call not found", http.StatusNotFound)
 		return
 	}
@@ -120,7 +101,7 @@ func (ch *CallHandler) GetCall(w http.ResponseWriter, r *http.Request) {
 // POST /api/v1/calls
 func (ch *CallHandler) CreateCall(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	userID, ok := ctx.Value("userID").(int64)
+	userID, ok := ctx.Value("userID").(string)
 	if !ok {
 		ch.logger.Error("Failed to extract user ID from context")
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
@@ -140,7 +121,7 @@ func (ch *CallHandler) CreateCall(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if req.LeadID == 0 || req.AgentID == 0 {
+	if req.LeadID == "" || req.AgentID == "" {
 		http.Error(w, "lead_id and agent_id are required", http.StatusBadRequest)
 		return
 	}
@@ -176,7 +157,7 @@ func (ch *CallHandler) CreateCall(w http.ResponseWriter, r *http.Request) {
 // POST /api/v1/calls/{id}/end
 func (ch *CallHandler) EndCall(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	userID, ok := ctx.Value("userID").(int64)
+	userID, ok := ctx.Value("userID").(string)
 	if !ok {
 		ch.logger.Error("Failed to extract user ID from context")
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
@@ -196,12 +177,6 @@ func (ch *CallHandler) EndCall(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := strconv.ParseInt(callID, 10, 64)
-	if err != nil {
-		http.Error(w, "invalid call id", http.StatusBadRequest)
-		return
-	}
-
 	var req EndCallRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid request body", http.StatusBadRequest)
@@ -213,8 +188,8 @@ func (ch *CallHandler) EndCall(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := ch.callService.EndCall(ctx, id, tenantID, req.Outcome, req.Duration); err != nil {
-		ch.logger.Error("Failed to end call", "callID", id, "userID", userID, "error", err)
+	if err := ch.callService.EndCall(ctx, callID, tenantID, req.Outcome, req.Duration); err != nil {
+		ch.logger.Error("Failed to end call", "callID", callID, "userID", userID, "error", err)
 		http.Error(w, "call not found", http.StatusNotFound)
 		return
 	}

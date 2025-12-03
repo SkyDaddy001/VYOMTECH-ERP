@@ -30,7 +30,7 @@ func NewAuditService(db *sql.DB, log *logger.Logger) *AuditService {
 func (as *AuditService) LogAction(ctx context.Context, log *models.AuditLog) error {
 	query := `
 		INSERT INTO audit_logs (tenant_id, user_id, action, resource, details, ip_address, user_agent, status, created_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`
 
 	result, err := as.db.ExecContext(ctx, query,
@@ -58,7 +58,7 @@ func (as *AuditService) GetAuditLogs(ctx context.Context, tenantID string, filte
 	query := `
 		SELECT id, tenant_id, user_id, action, resource, details, ip_address, user_agent, status, created_at
 		FROM audit_logs
-		WHERE tenant_id = $1
+		WHERE tenant_id = ?
 	`
 
 	args := []interface{}{tenantID}
@@ -151,7 +151,7 @@ func (as *AuditService) GetAuditSummary(ctx context.Context, tenantID string, da
 			SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END) as success_count,
 			SUM(CASE WHEN status = 'failure' THEN 1 ELSE 0 END) as failure_count
 		FROM audit_logs
-		WHERE tenant_id = $1 AND created_at >= DATE_SUB(NOW(), INTERVAL $2 DAY)
+		WHERE tenant_id = ? AND created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
 		GROUP BY action
 		ORDER BY count DESC
 	`
@@ -205,7 +205,7 @@ func (as *AuditService) GetAuditSummary(ctx context.Context, tenantID string, da
 func (as *AuditService) LogSecurityEvent(ctx context.Context, event *models.SecurityEvent) error {
 	query := `
 		INSERT INTO security_events (tenant_id, user_id, event_type, severity, description, ip_address, created_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		VALUES (?, ?, ?, ?, ?, ?, ?)
 	`
 
 	result, err := as.db.ExecContext(ctx, query,
@@ -233,7 +233,7 @@ func (as *AuditService) GetSecurityEvents(ctx context.Context, tenantID string, 
 	query := `
 		SELECT id, tenant_id, user_id, event_type, severity, description, ip_address, resolved_at, created_at
 		FROM security_events
-		WHERE tenant_id = $1
+		WHERE tenant_id = ?
 	`
 
 	args := []interface{}{tenantID}
@@ -282,8 +282,8 @@ func (as *AuditService) GetSecurityEvents(ctx context.Context, tenantID string, 
 func (as *AuditService) ResolveSecurityEvent(ctx context.Context, tenantID string, eventID int64) error {
 	query := `
 		UPDATE security_events
-		SET resolved_at = $1
-		WHERE id = $2 AND tenant_id = $3
+		SET resolved_at = ?
+		WHERE id = ? AND tenant_id = ?
 	`
 
 	_, err := as.db.ExecContext(ctx, query, time.Now(), eventID, tenantID)
@@ -299,7 +299,7 @@ func (as *AuditService) ResolveSecurityEvent(ctx context.Context, tenantID strin
 func (as *AuditService) ArchiveOldAuditLogs(ctx context.Context, tenantID string, retentionDays int) (int64, error) {
 	query := `
 		DELETE FROM audit_logs
-		WHERE tenant_id = $1 AND created_at < DATE_SUB(NOW(), INTERVAL $2 DAY)
+		WHERE tenant_id = ? AND created_at < DATE_SUB(NOW(), INTERVAL ? DAY)
 	`
 
 	result, err := as.db.ExecContext(ctx, query, tenantID, retentionDays)

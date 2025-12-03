@@ -16,22 +16,9 @@ func TestCreateCustomerProfile(t *testing.T) {
 	}
 
 	profile := &models.PropertyCustomerProfile{
-		CustomerCode:      "CUST001",
-		FirstName:         "John",
-		MiddleName:        "Doe",
-		LastName:          "Smith",
-		Email:             "john@example.com",
-		PhonePrimary:      "9876543210",
-		CompanyName:       "ABC Corp",
-		Designation:       "Manager",
-		PANNumber:         "ABCDE1234F",
-		AadharNumber:      "1234-5678-9012",
-		CommunicationCity: "Delhi",
-		PermanentCity:     "Delhi",
-		Profession:        "IT",
-		EmployerName:      "TechCorp",
-		EmploymentType:    "SALARIED",
-		MonthlyIncome:     100000.00,
+		CustomerCode: "CUST001",
+		FirstName:    "John",
+		Email:        "john@example.com",
 	}
 
 	assert.NotNil(t, service)
@@ -55,9 +42,7 @@ func TestUpdateCustomerProfile(t *testing.T) {
 	}
 
 	updatedProfile := &models.PropertyCustomerProfile{
-		FirstName:     "Jane",
-		Email:         "jane@example.com",
-		MonthlyIncome: 150000.00,
+		FirstName: "Jane",
 	}
 
 	assert.NotNil(t, service)
@@ -221,6 +206,7 @@ func TestFieldValidation(t *testing.T) {
 
 	assert.Equal(t, "", profile.FirstName)
 	assert.NotEmpty(t, profile.Email)
+	assert.Equal(t, "12345", profile.PhonePrimary)
 }
 
 // TestMoneyFieldHandling tests monetary field handling
@@ -265,6 +251,9 @@ func TestCoApplicantHandling(t *testing.T) {
 	assert.Equal(t, "CoApp1", profile.CoApplicant1Name)
 	assert.Equal(t, "CoApp2", profile.CoApplicant2Name)
 	assert.Equal(t, "CoApp3", profile.CoApplicant3Name)
+	assert.Equal(t, "SPOUSE", profile.CoApplicant1Relation)
+	assert.Equal(t, "CHILD", profile.CoApplicant2Relation)
+	assert.Equal(t, "PARENT", profile.CoApplicant3Relation)
 }
 
 // TestAddressFieldHandling tests address field handling
@@ -285,7 +274,17 @@ func TestAddressFieldHandling(t *testing.T) {
 	}
 
 	assert.Equal(t, "123 Main St", profile.CommunicationAddressLine1)
+	assert.Equal(t, "Apt 4B", profile.CommunicationAddressLine2)
+	assert.Equal(t, "New York", profile.CommunicationCity)
+	assert.Equal(t, "NY", profile.CommunicationState)
+	assert.Equal(t, "USA", profile.CommunicationCountry)
+	assert.Equal(t, "10001", profile.CommunicationZip)
 	assert.Equal(t, "456 Oak Ave", profile.PermanentAddressLine1)
+	assert.Equal(t, "Suite 200", profile.PermanentAddressLine2)
+	assert.Equal(t, "Los Angeles", profile.PermanentCity)
+	assert.Equal(t, "CA", profile.PermanentState)
+	assert.Equal(t, "USA", profile.PermanentCountry)
+	assert.Equal(t, "90001", profile.PermanentZip)
 }
 
 // TestBooleanFieldHandling tests boolean field handling
@@ -313,7 +312,9 @@ func TestStringFieldHandling(t *testing.T) {
 	}
 
 	assert.Equal(t, "John", profile.FirstName)
-	assert.NotEmpty(t, profile.CompanyName)
+	assert.Equal(t, "Michael", profile.MiddleName)
+	assert.Equal(t, "Smith", profile.LastName)
+	assert.Equal(t, "Tech Corp", profile.CompanyName)
 }
 
 // TestNilFieldHandling tests nil field handling
@@ -356,6 +357,8 @@ func BenchmarkAreaStatementCreation(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = areaStmt
+		// Use all fields to prevent unused write warnings
+		_ = areaStmt.ProjectID + areaStmt.UnitID
+		_ = areaStmt.RERACarPetAreaSqft + areaStmt.CarPetAreaWithBalconySqft + areaStmt.PlinthAreaSqft + areaStmt.SBUASqft
 	}
 }

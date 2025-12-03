@@ -193,9 +193,10 @@ func (s *WebRTCService) UpdateCallStatus(tenantID, callID, status string) error 
 		"updated_at":  now,
 	}
 
-	if status == "IN_PROGRESS" {
+	switch status {
+	case "IN_PROGRESS":
 		update["started_at"] = now
-	} else if status == "ENDED" {
+	case "ENDED":
 		update["ended_at"] = now
 	}
 
@@ -282,15 +283,16 @@ func (s *MeetingRoomService) GrantRoomAccess(tenantID, roomID, userID, accessTyp
 	}
 
 	// Set permissions based on access type
-	if accessType == "OWNER" || accessType == "MODERATOR" {
+	switch accessType {
+	case "OWNER", "MODERATOR":
 		access.CanMuteOthers = 1
 		access.CanRemoveParticipants = 1
 		access.CanRecord = 1
 		access.CanShareScreen = 1
-	} else if accessType == "PRESENTER" {
+	case "PRESENTER":
 		access.CanShareScreen = 1
 		access.CanRecord = 1
-	} else {
+	default:
 		access.CanShareScreen = 1
 	}
 
@@ -517,11 +519,10 @@ func (s *AutoDialerService) UpdateCallResult(tenantID, queueCallID, callResult, 
 	}
 
 	// Determine queue status based on result
-	if callResult == "CONNECTED" {
+	switch callResult {
+	case "CONNECTED", "VOICEMAIL":
 		update["queue_status"] = "COMPLETED"
-	} else if callResult == "VOICEMAIL" {
-		update["queue_status"] = "COMPLETED"
-	} else {
+	default:
 		update["queue_status"] = "FAILED"
 	}
 
