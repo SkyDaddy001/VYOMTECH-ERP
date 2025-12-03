@@ -5,10 +5,10 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"multi-tenant-ai-callcenter/internal/handlers"
-	"multi-tenant-ai-callcenter/internal/middleware"
-	"multi-tenant-ai-callcenter/internal/services"
-	"multi-tenant-ai-callcenter/pkg/logger"
+	"vyomtech-backend/internal/handlers"
+	"vyomtech-backend/internal/middleware"
+	"vyomtech-backend/internal/services"
+	"vyomtech-backend/pkg/logger"
 )
 
 // SetupRoutesWithServices configures all API routes with basic services
@@ -721,6 +721,46 @@ func setupRoutes(
 		realEstateRoutes.HandleFunc("/ledger/{booking_id}", realEstateHandler.GetAccountLedger).Methods("GET")
 	}
 
+	// ============================================
+	// PROJECT MANAGEMENT ROUTES
+	// ============================================
+	if realEstateService != nil {
+		projectMgmtService := services.NewProjectManagementService(realEstateService.DB)
+		projectMgmtHandler := handlers.NewProjectManagementHandler(projectMgmtService, realEstateService.DB)
+		projectMgmtRoutes := v1.PathPrefix("/project-management").Subrouter()
+		projectMgmtRoutes.Use(middleware.AuthMiddleware(authService, log))
+		projectMgmtRoutes.Use(middleware.TenantIsolationMiddleware(log))
+
+		// Customer Profile endpoints
+		projectMgmtRoutes.HandleFunc("/customers", projectMgmtHandler.CreateCustomerProfile).Methods("POST")
+		projectMgmtRoutes.HandleFunc("/customers/{id}", projectMgmtHandler.GetCustomerProfile).Methods("GET")
+
+		// Area Statement endpoints
+		projectMgmtRoutes.HandleFunc("/area-statements", projectMgmtHandler.CreateAreaStatement).Methods("POST")
+
+		// Cost Sheet endpoints
+		projectMgmtRoutes.HandleFunc("/cost-sheets", projectMgmtHandler.UpdateCostSheet).Methods("POST")
+
+		// Cost Configuration endpoints
+		projectMgmtRoutes.HandleFunc("/cost-configurations", projectMgmtHandler.CreateProjectCostConfiguration).Methods("POST")
+
+		// Bank Financing endpoints
+		projectMgmtRoutes.HandleFunc("/bank-financing", projectMgmtHandler.CreateBankFinancing).Methods("POST")
+
+		// Disbursement Schedule endpoints
+		projectMgmtRoutes.HandleFunc("/disbursement-schedule", projectMgmtHandler.CreateDisbursementSchedule).Methods("POST")
+		projectMgmtRoutes.HandleFunc("/disbursement/{id}", projectMgmtHandler.UpdateDisbursement).Methods("PUT")
+
+		// Payment Stage endpoints
+		projectMgmtRoutes.HandleFunc("/payment-stages", projectMgmtHandler.CreatePaymentStage).Methods("POST")
+		projectMgmtRoutes.HandleFunc("/payment-stages/{id}/collection", projectMgmtHandler.RecordPaymentCollection).Methods("PUT")
+
+		// Reporting endpoints
+		projectMgmtRoutes.HandleFunc("/reports/bank-financing", projectMgmtHandler.GetBankFinancingReport).Methods("GET")
+		projectMgmtRoutes.HandleFunc("/reports/payment-stages", projectMgmtHandler.GetPaymentStageReport).Methods("GET")
+	}
+
+	// ============================================
 	// ============================================
 	// GENERAL LEDGER (GL) ROUTES
 	// ============================================

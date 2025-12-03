@@ -12,7 +12,7 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"multi-tenant-ai-callcenter/internal/services"
+	"vyomtech-backend/internal/services"
 )
 
 type BOQHandler struct {

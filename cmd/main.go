@@ -10,13 +10,13 @@ import (
 
 	"github.com/joho/godotenv"
 
-	"multi-tenant-ai-callcenter/internal/config"
-	"multi-tenant-ai-callcenter/internal/db"
-	"multi-tenant-ai-callcenter/internal/handlers"
-	"multi-tenant-ai-callcenter/internal/services"
-	"multi-tenant-ai-callcenter/pkg/auth"
-	"multi-tenant-ai-callcenter/pkg/logger"
-	"multi-tenant-ai-callcenter/pkg/router"
+	"vyomtech-backend/internal/config"
+	"vyomtech-backend/internal/db"
+	"vyomtech-backend/internal/handlers"
+	"vyomtech-backend/internal/services"
+	"vyomtech-backend/pkg/auth"
+	"vyomtech-backend/pkg/logger"
+	"vyomtech-backend/pkg/router"
 )
 
 func main() {
@@ -41,6 +41,16 @@ func main() {
 		os.Exit(1)
 	}
 	defer dbConn.Close()
+
+	// Seed demo users if in development mode
+	if os.Getenv("APP_ENV") != "production" {
+		seeder := services.NewDemoUserSeeder(dbConn, log)
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		if err := seeder.SeedDemoUsers(ctx); err != nil {
+			log.Warn("Failed to seed demo users", "error", err)
+		}
+		cancel()
+	}
 
 	// Initialize JWT manager
 	jwtManager := auth.NewJWTManager(cfg.JWT.Secret, cfg.JWT.Expiration)

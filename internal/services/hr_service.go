@@ -6,7 +6,7 @@ import (
 	"log"
 	"time"
 
-	"multi-tenant-ai-callcenter/internal/models"
+	"vyomtech-backend/internal/models"
 )
 
 // HRService handles HR and Payroll operations

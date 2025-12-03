@@ -9,9 +9,9 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
-	"multi-tenant-ai-callcenter/internal/models"
-	"multi-tenant-ai-callcenter/pkg/auth"
-	"multi-tenant-ai-callcenter/pkg/logger"
+	"vyomtech-backend/internal/models"
+	"vyomtech-backend/pkg/auth"
+	"vyomtech-backend/pkg/logger"
 )
 
 type AuthService struct {

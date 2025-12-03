@@ -8,7 +8,7 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	"multi-tenant-ai-callcenter/pkg/logger"
+	"vyomtech-backend/pkg/logger"
 )
 
 // WebSocketMessage represents a message sent over WebSocket

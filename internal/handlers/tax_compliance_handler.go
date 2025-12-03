@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"time"
 
-	"multi-tenant-ai-callcenter/internal/middleware"
-	"multi-tenant-ai-callcenter/internal/services"
+	"vyomtech-backend/internal/middleware"
+	"vyomtech-backend/internal/services"
 
 	"github.com/gorilla/mux"
 )

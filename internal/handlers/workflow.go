@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"multi-tenant-ai-callcenter/internal/models"
-	"multi-tenant-ai-callcenter/internal/services"
+	"vyomtech-backend/internal/models"
+	"vyomtech-backend/internal/services"
 
 	"github.com/gorilla/mux"
 )

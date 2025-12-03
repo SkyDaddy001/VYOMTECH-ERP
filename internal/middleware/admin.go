@@ -3,7 +3,7 @@ package middleware
 import (
 	"net/http"
 
-	"multi-tenant-ai-callcenter/pkg/logger"
+	"vyomtech-backend/pkg/logger"
 )
 
 // AdminMiddleware validates that the user has admin role

@@ -3,7 +3,7 @@ package services
 import (
 	"database/sql"
 
-	"multi-tenant-ai-callcenter/pkg/logger"
+	"vyomtech-backend/pkg/logger"
 )
 
 // Phase3CServices contains all Phase 3C (Modular Monetization) services

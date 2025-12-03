@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"multi-tenant-ai-callcenter/internal/services"
-	"multi-tenant-ai-callcenter/pkg/logger"
+	"vyomtech-backend/internal/services"
+	"vyomtech-backend/pkg/logger"
 )
 
 type TenantHandler struct {
@@ -240,10 +240,28 @@ func (h *TenantHandler) RemoveTenantMember(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	// In production, you'd look up the user ID by email
-	// This is a simplified implementation - you need to implement email-to-ID lookup
-	h.logger.Warn("Member removal requires email-to-ID lookup implementation", "email", email)
-	http.Error(w, "Member removal not fully implemented", http.StatusNotImplemented)
+	// Get user ID by email
+	memberUserID, err := h.tenantService.GetUserIDByEmail(ctx, email)
+	if err != nil {
+		h.logger.Warn("Failed to find user by email", "email", email, "error", err)
+		http.Error(w, "User not found", http.StatusNotFound)
+		return
+	}
+
+	// Remove the member
+	err = h.tenantService.RemoveTenantMember(ctx, tenantID, memberUserID)
+	if err != nil {
+		h.logger.Error("Failed to remove tenant member", "error", err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"message": "Member removed successfully",
+		"email":   email,
+	})
 }
 
 // GetUserTenants gets all tenants for the current user

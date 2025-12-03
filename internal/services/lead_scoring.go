@@ -7,8 +7,8 @@ import (
 	"math"
 	"time"
 
-	"multi-tenant-ai-callcenter/internal/models"
-	"multi-tenant-ai-callcenter/pkg/logger"
+	"vyomtech-backend/internal/models"
+	"vyomtech-backend/pkg/logger"
 )
 
 type LeadScoringService struct {

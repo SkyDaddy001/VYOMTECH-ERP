@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"net/smtp"
 
-	"multi-tenant-ai-callcenter/internal/config"
-	"multi-tenant-ai-callcenter/pkg/logger"
+	"vyomtech-backend/internal/config"
+	"vyomtech-backend/pkg/logger"
 )
 
 type EmailService struct {

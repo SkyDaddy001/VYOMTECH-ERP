@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strings"
 
-	"multi-tenant-ai-callcenter/internal/services"
-	"multi-tenant-ai-callcenter/pkg/logger"
+	"vyomtech-backend/internal/services"
+	"vyomtech-backend/pkg/logger"
 )
 
 const (

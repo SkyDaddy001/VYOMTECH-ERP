@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	"multi-tenant-ai-callcenter/internal/models"
+	"vyomtech-backend/internal/models"
 )
 
 // CampaignService handles all campaign-related operations

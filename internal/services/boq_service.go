@@ -9,7 +9,7 @@ import (
 
 	"github.com/xuri/excelize/v2"
 
-	"multi-tenant-ai-callcenter/internal/models"
+	"vyomtech-backend/internal/models"
 )
 
 type BOQService struct {

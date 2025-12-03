@@ -9,8 +9,8 @@ import (
 
 	"github.com/google/uuid"
 
-	"multi-tenant-ai-callcenter/internal/models"
-	"multi-tenant-ai-callcenter/pkg/logger"
+	"vyomtech-backend/internal/models"
+	"vyomtech-backend/pkg/logger"
 )
 
 type TenantService struct {
@@ -363,6 +363,21 @@ func (s *TenantService) GetTenantAdminCount(ctx context.Context, tenantID string
 		return 0, fmt.Errorf("database error: %w", err)
 	}
 	return count, nil
+}
+
+// GetUserIDByEmail returns the user ID for a given email
+func (s *TenantService) GetUserIDByEmail(ctx context.Context, email string) (int64, error) {
+	var userID int64
+	err := s.db.QueryRowContext(ctx,
+		"SELECT id FROM `user` WHERE email = ?",
+		email).Scan(&userID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return 0, errors.New("user not found")
+		}
+		return 0, fmt.Errorf("database error: %w", err)
+	}
+	return userID, nil
 }
 
 // GetUserTenants returns all tenants a user is a member of

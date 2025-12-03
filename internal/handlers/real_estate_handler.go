@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"multi-tenant-ai-callcenter/internal/middleware"
-	"multi-tenant-ai-callcenter/internal/models"
+	"vyomtech-backend/internal/middleware"
+	"vyomtech-backend/internal/models"
 	"net/http"
 
 	"github.com/gorilla/mux"

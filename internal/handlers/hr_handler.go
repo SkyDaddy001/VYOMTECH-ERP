@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"time"
 
-	"multi-tenant-ai-callcenter/internal/models"
-	"multi-tenant-ai-callcenter/internal/services"
+	"vyomtech-backend/internal/models"
+	"vyomtech-backend/internal/services"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"

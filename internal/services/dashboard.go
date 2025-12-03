@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"time"
 
-	"multi-tenant-ai-callcenter/pkg/logger"
+	"vyomtech-backend/pkg/logger"
 )
 
 type DashboardService struct {

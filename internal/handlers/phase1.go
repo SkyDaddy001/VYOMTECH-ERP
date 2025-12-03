@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"strconv"
 
-	"multi-tenant-ai-callcenter/internal/models"
-	"multi-tenant-ai-callcenter/internal/services"
-	"multi-tenant-ai-callcenter/pkg/logger"
+	"vyomtech-backend/internal/models"
+	"vyomtech-backend/internal/services"
+	"vyomtech-backend/pkg/logger"
 
 	"github.com/gorilla/mux"
 )

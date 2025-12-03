@@ -7,8 +7,8 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 
-	"multi-tenant-ai-callcenter/internal/config"
-	"multi-tenant-ai-callcenter/pkg/logger"
+	"vyomtech-backend/internal/config"
+	"vyomtech-backend/pkg/logger"
 )
 
 func NewDatabaseConnection(cfg *config.DatabaseConfig, logger *logger.Logger) (*sql.DB, error) {

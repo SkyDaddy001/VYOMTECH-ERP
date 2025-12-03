@@ -4,7 +4,7 @@ import (
     "encoding/json"
     "net/http"
 
-    "multi-tenant-ai-callcenter/internal/services"
+    "vyomtech-backend/internal/services"
 )
 
 type PasswordResetHandler struct {

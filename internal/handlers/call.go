@@ -6,9 +6,9 @@ import (
 	"strconv"
 	"time"
 
-	"multi-tenant-ai-callcenter/internal/models"
-	"multi-tenant-ai-callcenter/internal/services"
-	"multi-tenant-ai-callcenter/pkg/logger"
+	"vyomtech-backend/internal/models"
+	"vyomtech-backend/internal/services"
+	"vyomtech-backend/pkg/logger"
 )
 
 // CallHandler handles call-related HTTP requests

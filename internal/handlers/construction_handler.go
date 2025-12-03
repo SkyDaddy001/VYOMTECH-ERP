@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"multi-tenant-ai-callcenter/internal/services"
+	"vyomtech-backend/internal/services"
 
 	"github.com/gorilla/mux"
 )

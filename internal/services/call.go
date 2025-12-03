@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"multi-tenant-ai-callcenter/internal/models"
+	"vyomtech-backend/internal/models"
 )
 
 // CallService handles all call-related operations

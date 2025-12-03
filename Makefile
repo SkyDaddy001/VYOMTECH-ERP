@@ -83,14 +83,14 @@ format:
 # Docker
 docker-build:
 	@echo "Building Docker image..."
-	docker build -t multi-tenant-ai-callcenter:latest .
+	docker build -t vyomtech-backend:latest .
 	@echo "Docker image built successfully"
 
 docker-run: docker-build
 	@echo "Running Docker container..."
 	docker run -p 8080:8080 \
 		--env-file .env \
-		multi-tenant-ai-callcenter:latest
+		vyomtech-backend:latest
 
 # Database
 migrate:

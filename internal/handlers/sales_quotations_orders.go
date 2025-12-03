@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"multi-tenant-ai-callcenter/internal/models"
+	"vyomtech-backend/internal/models"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"

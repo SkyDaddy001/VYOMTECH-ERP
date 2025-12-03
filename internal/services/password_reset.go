@@ -8,7 +8,7 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
-	"multi-tenant-ai-callcenter/pkg/logger"
+	"vyomtech-backend/pkg/logger"
 )
 
 type PasswordResetService struct {

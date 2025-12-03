@@ -1,0 +1,51 @@
+MIGRATION DEPENDENCY TREE
+========================
+
+FOUNDATION LAYER (Must run first):
+001_initial_schema.sql         - Core: tenants, users, organizations, auth, config
+002_civil_schema.sql           - Depends: 001
+003_multi_tenant_users.sql     - Depends: 001 (alters user table)
+004_construction_schema.sql    - Depends: 001
+005_create_team_table.sql      - Depends: 001
+
+GAMIFICATION LAYER:
+006_gamification_schema.sql    - Depends: 001
+007_gamification_system.sql    - Depends: 006
+
+MONETIZATION & FEATURES:
+008_modular_monetization_schema.sql - Depends: 001
+009_phase1_features.sql        - Depends: 001, 003, 005
+010_scheduled_tasks_schema.sql - Depends: 001
+011_phase2_tasks_notifications.sql - Depends: 001, 010
+
+ACCOUNTING & FINANCIAL:
+013_accounts_gl_schema.sql     - Depends: 001, 003
+014_purchase_module_schema.sql - Depends: 013
+015_sales_module_schema.sql    - Depends: 013
+
+HR & COMPLIANCE:
+016_hr_compliance_labour_laws.sql - Depends: 001, 003
+017_tax_compliance_income_tax_gst.sql - Depends: 013
+018_hr_payroll_schema.sql      - Depends: 016
+
+REAL ESTATE:
+017_real_estate_property_management.sql - Depends: 001
+
+CUSTOMIZATION & REFERENCE:
+012_sample_data.sql            - Depends: 002, 004, 009 (inserting into these tables)
+013_tenant_customization.sql   - Depends: 001, 003, 011
+015_project_collection_accounts_rera.sql - Depends: 001, 013, 014
+016_milestone_tracking_and_reporting.sql - Depends: 001, 009
+021_comprehensive_customization.sql - Depends: 001, 003
+021a_roles_permissions.sql     - Depends: 001, 003
+022_external_partner_system.sql - Depends: 001, 003
+023_partner_sources_and_credit_policies.sql - Depends: 022
+024_sample_partner_logins.sql  - Depends: 022, 023
+
+ANALYTICS & WORKFLOWS:
+030_phase3_analytics.sql       - Depends: 001, 009, 011, 013
+031_phase3_workflows.sql       - Depends: 001, 022
+
+TEST DATA:
+020_comprehensive_test_data.sql - Depends: All previous (at end)
+
