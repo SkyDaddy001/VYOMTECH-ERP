@@ -17,6 +17,8 @@ services:
       - ./migrations/003_construction_schema.sql:/docker-entrypoint-initdb.d/03-construction.sql
       - ./migrations/004_gamification_schema.sql:/docker-entrypoint-initdb.d/04-gamification.sql
       - ./migrations/005_scheduled_tasks_schema.sql:/docker-entrypoint-initdb.d/05-scheduled-tasks.sql
+      - ./migrations/006_indexes.sql:/docker-entrypoint-initdb.d/06-indexes.sql
+      
       - mysql_data:/var/lib/mysql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]

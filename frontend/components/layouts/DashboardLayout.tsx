@@ -22,14 +22,28 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const menuItems = [
     { href: '/dashboard', label: 'Overview', icon: '📊' },
-    { href: '/dashboard/hr', label: 'HR & Payroll', icon: '👨‍💼' },
     { href: '/dashboard/sales', label: 'Sales', icon: '📈' },
+    { href: '/dashboard/presales', label: 'Pre-Sales', icon: '🎯' },
+    { href: '/dashboard/leads', label: 'Leads', icon: '🔍' },
     { href: '/dashboard/accounts', label: 'Finance', icon: '💰' },
+    { href: '/dashboard/ledgers', label: 'Ledgers', icon: '📑' },
     { href: '/dashboard/purchase', label: 'Purchase', icon: '📦' },
-    { href: '/dashboard/real-estate', label: 'Real Estate', icon: '🏢' },
+    { href: '/dashboard/hr', label: 'HR', icon: '👨‍💼' },
+    { href: '/dashboard/projects', label: 'Projects', icon: '📌' },
     { href: '/dashboard/construction', label: 'Construction', icon: '🏗️' },
+    { href: '/dashboard/real-estate', label: 'Real Estate', icon: '🏢' },
+    { href: '/dashboard/civil', label: 'Civil', icon: '🏛️' },
+    { href: '/dashboard/units', label: 'Units', icon: '🏠' },
+    { href: '/dashboard/bookings', label: 'Bookings', icon: '📅' },
+    { href: '/dashboard/marketing', label: 'Marketing', icon: '📣' },
+    { href: '/dashboard/campaigns', label: 'Campaigns', icon: '🎪' },
     { href: '/dashboard/workflows', label: 'Workflows', icon: '⚙️' },
     { href: '/dashboard/reports', label: 'Reports', icon: '📋' },
+    { href: '/dashboard/users', label: 'Users', icon: '👥' },
+    { href: '/dashboard/tenants', label: 'Tenants', icon: '🏢' },
+    { href: '/dashboard/company', label: 'Company', icon: '🏛️' },
+    { href: '/dashboard/agents', label: 'Agents', icon: '📞' },
+    { href: '/dashboard/calls', label: 'Calls', icon: '☎️' },
   ]
 
   return (
@@ -98,6 +112,20 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             </div>
           </div>
         </header>
+
+        {/* Quick Shortcuts Bar */}
+        <div className="bg-white border-b border-gray-200 px-6 py-3 hidden md:block">
+          <div className="flex items-center gap-2 overflow-x-auto">
+            <span className="text-xs font-semibold text-gray-600 whitespace-nowrap">Quick Links:</span>
+            <Link href="/dashboard/sales" className="px-3 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs rounded transition whitespace-nowrap">📈 Sales</Link>
+            <Link href="/dashboard/leads" className="px-3 py-1 bg-green-50 hover:bg-green-100 text-green-700 text-xs rounded transition whitespace-nowrap">🔍 Leads</Link>
+            <Link href="/dashboard/calls" className="px-3 py-1 bg-purple-50 hover:bg-purple-100 text-purple-700 text-xs rounded transition whitespace-nowrap">☎️ Calls</Link>
+            <Link href="/dashboard/projects" className="px-3 py-1 bg-orange-50 hover:bg-orange-100 text-orange-700 text-xs rounded transition whitespace-nowrap">📌 Projects</Link>
+            <Link href="/dashboard/users" className="px-3 py-1 bg-red-50 hover:bg-red-100 text-red-700 text-xs rounded transition whitespace-nowrap">👥 Users</Link>
+            <Link href="/dashboard/reports" className="px-3 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs rounded transition whitespace-nowrap">📋 Reports</Link>
+            <Link href="/dashboard/workflows" className="px-3 py-1 bg-cyan-50 hover:bg-cyan-100 text-cyan-700 text-xs rounded transition whitespace-nowrap">⚙️ Workflows</Link>
+          </div>
+        </div>
 
         {/* Content Area - Mobile First */}
         <main className="flex-1 overflow-auto p-4 md:p-6 bg-gray-50">

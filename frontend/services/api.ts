@@ -14,6 +14,25 @@ export class ApiError extends Error {
   }
 }
 
+// Auth event emitter for handling 401 responses
+class AuthEventEmitter {
+  private listeners: Set<(event: string, data?: any) => void> = new Set()
+
+  on(callback: (event: string, data?: any) => void) {
+    this.listeners.add(callback)
+  }
+
+  off(callback: (event: string, data?: any) => void) {
+    this.listeners.delete(callback)
+  }
+
+  emit(event: string, data?: any) {
+    this.listeners.forEach(listener => listener(event, data))
+  }
+}
+
+export const authEventEmitter = new AuthEventEmitter()
+
 // Get API URL - resolves dynamically at runtime
 const getApiUrl = (): string => {
   const configuredUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
@@ -103,9 +122,11 @@ class ApiClient {
         console.error('HTTP Error:', status, error.response.data)
 
         if (status === 401) {
-          console.warn('Received 401, clearing auth state')
+          console.warn('Received 401, clearing auth state and emitting logout event')
           localStorage.removeItem('auth_token')
           localStorage.removeItem('user')
+          // Emit auth logout event to be caught by AuthProvider
+          authEventEmitter.emit('logout', { reason: 'unauthorized' })
         }
 
         const userMessage = 

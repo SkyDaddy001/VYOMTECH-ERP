@@ -2,7 +2,7 @@
 
 import React, { createContext, useEffect, useState, ReactNode } from 'react'
 import { User } from '@/types'
-import { authService } from '@/services/api'
+import { authService, authEventEmitter } from '@/services/api'
 
 export interface AuthContextType {
   user: User | null
@@ -43,6 +43,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     checkAuth()
+  }, [])
+
+  // Listen for auth events (e.g., 401 unauthorized)
+  useEffect(() => {
+    const handleAuthEvent = (event: string, data?: any) => {
+      if (event === 'logout') {
+        console.log('Auth event: logout triggered', data)
+        // Silently clear user state to trigger redirect in layout
+        setUser(null)
+        setError(data?.reason === 'unauthorized' ? 'Your session has expired. Please log in again.' : null)
+      }
+    }
+
+    authEventEmitter.on(handleAuthEvent)
+    return () => authEventEmitter.off(handleAuthEvent)
   }, [])
 
   const login = async (email: string, password: string) => {
