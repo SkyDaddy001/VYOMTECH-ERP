@@ -1,95 +1,129 @@
 'use client'
 
-import { useState } from 'react'
-import { SectionCard } from '@/components/ui/section-card'
-import { StatCard } from '@/components/ui/stat-card'
-
-interface Campaign {
-  id: string
-  name: string
-  status: 'planned' | 'active' | 'completed' | 'paused'
-  startDate: string
-  endDate: string
-  budget: number
-  spent: number
-  leads: number
-  conversions: number
-}
+import { Sidebar } from '@/components/layout/sidebar'
+import { Header } from '@/components/layout/header'
+import { useCampaigns } from '@/hooks/use-dashboard'
+import { formatCurrency, formatDate } from '@/lib/utils'
+import { FiPlus, FiEdit2, FiTrash2 } from 'react-icons/fi'
 
 export default function CampaignsPage() {
-  const [campaigns] = useState<Campaign[]>([
-    { id: '1', name: 'Q4 Email Campaign', status: 'active', startDate: '2025-10-01', endDate: '2025-12-31', budget: 50000, spent: 35000, leads: 450, conversions: 35 },
-    { id: '2', name: 'Product Launch - Feb 2026', status: 'planned', startDate: '2026-02-01', endDate: '2026-02-28', budget: 75000, spent: 0, leads: 0, conversions: 0 },
-    { id: '3', name: 'Referral Program Q3', status: 'completed', startDate: '2025-07-01', endDate: '2025-09-30', budget: 30000, spent: 28500, leads: 320, conversions: 48 },
-    { id: '4', name: 'Social Media Campaign', status: 'active', startDate: '2025-11-01', endDate: '2025-11-30', budget: 40000, spent: 12000, leads: 280, conversions: 18 },
-  ])
+  const { campaigns, loading } = useCampaigns()
 
-  const stats = [
-    { label: 'Total Campaigns', value: campaigns.length, icon: '🎯' },
-    { label: 'Active Now', value: campaigns.filter(c => c.status === 'active').length, icon: '▶️' },
-    { label: 'Total Leads', value: campaigns.reduce((sum, c) => sum + c.leads, 0), icon: '📋' },
-    { label: 'Total Conversions', value: campaigns.reduce((sum, c) => sum + c.conversions, 0), icon: '✅' },
-  ]
-
-  const statusColors = {
-    'planned': 'bg-gray-100 text-gray-800',
-    'active': 'bg-green-100 text-green-800',
-    'completed': 'bg-blue-100 text-blue-800',
-    'paused': 'bg-yellow-100 text-yellow-800',
+  const getStatusColor = (status: string) => {
+    const colors: Record<string, string> = {
+      active: 'bg-green-100 text-green-800',
+      draft: 'bg-gray-100 text-gray-800',
+      completed: 'bg-blue-100 text-blue-800',
+      paused: 'bg-yellow-100 text-yellow-800',
+    }
+    return colors[status?.toLowerCase()] || 'bg-gray-100 text-gray-800'
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-purple-600 to-purple-800 rounded-lg p-6 text-white">
-        <h1 className="text-3xl font-bold">Campaigns</h1>
-        <p className="text-purple-100 mt-2">Create and manage marketing campaigns</p>
-      </div>
-
-      {/* KPIs */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat, i) => (
-          <StatCard key={i} label={stat.label} value={stat.value} icon={stat.icon} />
-        ))}
-      </div>
-
-      {/* Campaigns List */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {campaigns.map((campaign) => (
-          <SectionCard key={campaign.id} title={campaign.name} action={
-            <span className={`text-xs font-medium px-2 py-1 rounded ${statusColors[campaign.status]}`}>
-              {campaign.status.charAt(0).toUpperCase() + campaign.status.slice(1)}
-            </span>
-          }>
-            <div className="space-y-3">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Period:</span>
-                <span className="font-medium">{campaign.startDate} to {campaign.endDate}</span>
+    <div className="flex h-screen bg-gray-50">
+      <Sidebar />
+      <div className="flex-1 flex flex-col lg:ml-64">
+        <Header />
+        <main className="flex-1 overflow-auto pt-20 pb-6">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            {/* Page Header */}
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">Campaigns</h1>
+                <p className="text-gray-600 mt-2">
+                  Create and manage marketing campaigns
+                </p>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Budget Spent:</span>
-                <span className="font-medium">${campaign.spent.toLocaleString()} / ${campaign.budget.toLocaleString()}</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${(campaign.spent / campaign.budget) * 100}%` }} />
-              </div>
-              <div className="grid grid-cols-3 gap-2 pt-2">
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-gray-900">{campaign.leads}</p>
-                  <p className="text-xs text-gray-600">Leads</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-gray-900">{campaign.conversions}</p>
-                  <p className="text-xs text-gray-600">Conversions</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-gray-900">{campaign.leads > 0 ? ((campaign.conversions / campaign.leads) * 100).toFixed(1) : 0}%</p>
-                  <p className="text-xs text-gray-600">Conversion</p>
-                </div>
-              </div>
+              <button className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+                <FiPlus size={20} />
+                New Campaign
+              </button>
             </div>
-          </SectionCard>
-        ))}
+
+            {/* Campaigns Grid */}
+            {loading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[...Array(6)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="bg-white rounded-lg shadow h-80 animate-pulse"
+                  ></div>
+                ))}
+              </div>
+            ) : campaigns.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-gray-500">No campaigns found</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {campaigns.map((campaign: any) => (
+                  <div
+                    key={campaign.id}
+                    className="bg-white rounded-lg shadow hover:shadow-lg transition p-6"
+                  >
+                    <div className="flex items-start justify-between mb-4">
+                      <h3 className="text-lg font-semibold text-gray-900 flex-1">
+                        {campaign.name}
+                      </h3>
+                      <span
+                        className={`px-2 py-1 rounded text-xs font-semibold ${getStatusColor(
+                          campaign.status
+                        )}`}
+                      >
+                        {campaign.status}
+                      </span>
+                    </div>
+
+                    <div className="space-y-4 mb-6">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Budget</span>
+                        <span className="font-semibold text-gray-900">
+                          {formatCurrency(campaign.budget)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Spent</span>
+                        <span className="font-semibold text-gray-900">
+                          {formatCurrency(campaign.spent)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Leads</span>
+                        <span className="font-semibold text-gray-900">
+                          {campaign.leads}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">ROI</span>
+                        <span className="font-semibold text-green-600">
+                          {campaign.roi}%
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="border-t pt-4 mb-4">
+                      <p className="text-xs text-gray-500 mb-2">Duration</p>
+                      <p className="text-sm text-gray-600">
+                        {formatDate(campaign.startDate)} to{' '}
+                        {formatDate(campaign.endDate)}
+                      </p>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <button className="flex-1 flex items-center justify-center gap-2 py-2 px-3 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 transition text-sm font-medium">
+                        <FiEdit2 size={16} />
+                        Edit
+                      </button>
+                      <button className="py-2 px-3 bg-red-50 text-red-600 rounded hover:bg-red-100 transition">
+                        <FiTrash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </main>
       </div>
     </div>
   )

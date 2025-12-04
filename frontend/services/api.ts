@@ -299,6 +299,77 @@ export const tenantService = {
   },
 }
 
+// Admin Service - Tenant Management
+export const adminTenantService = {
+  async listTenants() {
+    return apiClient.get('/api/v1/tenants')
+  },
+
+  async getTenant(tenantId: string) {
+    return apiClient.get(`/api/v1/tenants/${tenantId}`)
+  },
+
+  async createTenant(data: {
+    name: string
+    domain: string
+    status?: string
+    max_users?: number
+    max_concurrent_calls?: number
+    ai_budget_monthly?: number
+  }) {
+    return apiClient.post('/api/v1/tenants', data)
+  },
+
+  async updateTenant(tenantId: string, data: any) {
+    return apiClient.put(`/api/v1/tenants/${tenantId}`, data)
+  },
+
+  async deleteTenant(tenantId: string) {
+    return apiClient.delete(`/api/v1/tenants/${tenantId}`)
+  },
+
+  async getTenantUsers(tenantId: string) {
+    return apiClient.get(`/api/v1/tenants/${tenantId}/users`)
+  },
+}
+
+// Admin Service - User Management
+export const adminUserService = {
+  async listUsers() {
+    return apiClient.get('/api/v1/users')
+  },
+
+  async getUser(userId: number | string) {
+    return apiClient.get(`/api/v1/users/${userId}`)
+  },
+
+  async createUser(data: {
+    email: string
+    password: string
+    name?: string
+    role: string
+    tenant_id: string
+  }) {
+    return apiClient.post('/api/v1/users', data)
+  },
+
+  async updateUser(userId: number | string, data: any) {
+    return apiClient.put(`/api/v1/users/${userId}`, data)
+  },
+
+  async deleteUser(userId: number | string) {
+    return apiClient.delete(`/api/v1/users/${userId}`)
+  },
+
+  async updateUserRole(userId: number | string, role: string) {
+    return apiClient.put(`/api/v1/users/${userId}/role`, { role })
+  },
+
+  async resetPassword(userId: number | string, newPassword: string) {
+    return apiClient.post(`/api/v1/users/${userId}/reset-password`, { password: newPassword })
+  },
+}
+
 // Lead Service - Feature: Lead Management
 export const leadService = {
   async listLeads(page?: number, limit?: number) {

@@ -1,41 +1,34 @@
-import type { Metadata, Viewport } from 'next'
-import './globals.css'
-import { ToasterProvider } from '@/components/providers/ToasterProvider'
-import { AuthProvider } from '@/components/providers/AuthProvider'
-import { TenantWrapper } from '@/components/providers/TenantProvider'
-import { TenantManagementProvider } from '@/contexts/TenantManagementContext'
+import type { Metadata } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
+import "./globals.css";
 
-// Enable caching for this layout
-export const dynamic = 'force-dynamic'
-export const revalidate = 3600 // Revalidate every hour
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
 
 export const metadata: Metadata = {
-  title: 'AI Call Center',
-  description: 'Multi-Tenant AI Call Center Management System',
-}
-
-export const viewport: Viewport = {
-  width: 'device-width',
-  initialScale: 1,
-}
+  title: "VYOMTECH ERP - AI Call Center",
+  description: "Multi-tenant AI-powered call center and ERP system",
+};
 
 export default function RootLayout({
   children,
-}: {
-  children: React.ReactNode
-}) {
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
     <html lang="en">
-      <body>
-        <AuthProvider>
-          <TenantWrapper>
-            <TenantManagementProvider>
-              <ToasterProvider />
-              {children}
-            </TenantManagementProvider>
-          </TenantWrapper>
-        </AuthProvider>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50`}
+      >
+        {children}
       </body>
     </html>
-  )
+  );
 }

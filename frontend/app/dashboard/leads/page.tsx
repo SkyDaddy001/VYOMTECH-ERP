@@ -1,92 +1,130 @@
 'use client'
 
-import { useState } from 'react'
-import { SectionCard } from '@/components/ui/section-card'
-import { StatCard } from '@/components/ui/stat-card'
-
-interface Lead {
-  id: string
-  name: string
-  email: string
-  phone: string
-  company: string
-  status: 'new' | 'contacted' | 'qualified' | 'converted'
-  source: string
-  value: number
-}
+import { Sidebar } from '@/components/layout/sidebar'
+import { Header } from '@/components/layout/header'
+import { useLeads } from '@/hooks/use-dashboard'
+import { formatDate } from '@/lib/utils'
+import { FiPlus, FiFilter } from 'react-icons/fi'
 
 export default function LeadsPage() {
-  const [leads] = useState<Lead[]>([
-    { id: '1', name: 'John Smith', email: 'john@company.com', phone: '555-1234', company: 'Tech Corp', status: 'qualified', source: 'Website', value: 50000 },
-    { id: '2', name: 'Sarah Jones', email: 'sarah@enterprise.com', phone: '555-5678', company: 'Enterprise Ltd', status: 'contacted', source: 'LinkedIn', value: 75000 },
-    { id: '3', name: 'Mike Brown', email: 'mike@startup.io', phone: '555-9012', company: 'Startup Inc', status: 'new', source: 'Referral', value: 30000 },
-    { id: '4', name: 'Lisa Wong', email: 'lisa@global.com', phone: '555-3456', company: 'Global Solutions', status: 'converted', source: 'Event', value: 120000 },
-  ])
+  const { leads, loading } = useLeads()
 
-  const stats = [
-    { label: 'Total Leads', value: leads.length, icon: '📋', trend: 'up' as const, trendValue: '12 this month' },
-    { label: 'Qualified', value: leads.filter(l => l.status === 'qualified').length, icon: '✅', trend: 'up' as const, trendValue: '3 new' },
-    { label: 'Converted', value: leads.filter(l => l.status === 'converted').length, icon: '🎯', trend: 'up' as const, trendValue: '2 this week' },
-    { label: 'Avg Deal Value', value: '$44.2K', icon: '💰', trend: 'up' as const, trendValue: '+8%' },
-  ]
-
-  const statusColors = {
-    'new': 'bg-blue-100 text-blue-800',
-    'contacted': 'bg-yellow-100 text-yellow-800',
-    'qualified': 'bg-green-100 text-green-800',
-    'converted': 'bg-purple-100 text-purple-800',
+  const getStatusColor = (status: string) => {
+    const colors: Record<string, string> = {
+      new: 'bg-blue-100 text-blue-800',
+      qualified: 'bg-green-100 text-green-800',
+      contacted: 'bg-yellow-100 text-yellow-800',
+      converted: 'bg-purple-100 text-purple-800',
+      lost: 'bg-red-100 text-red-800',
+    }
+    return colors[status?.toLowerCase()] || 'bg-gray-100 text-gray-800'
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg p-6 text-white">
-        <h1 className="text-3xl font-bold">Leads Management</h1>
-        <p className="text-blue-100 mt-2">Track and manage sales leads throughout the pipeline</p>
-      </div>
+    <div className="flex h-screen bg-gray-50">
+      <Sidebar />
+      <div className="flex-1 flex flex-col lg:ml-64">
+        <Header />
+        <main className="flex-1 overflow-auto pt-20 pb-6">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            {/* Page Header */}
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">Leads</h1>
+                <p className="text-gray-600 mt-2">
+                  Manage and track all your leads
+                </p>
+              </div>
+              <button className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+                <FiPlus size={20} />
+                New Lead
+              </button>
+            </div>
 
-      {/* KPIs */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat, i) => (
-          <StatCard key={i} label={stat.label} value={stat.value} icon={stat.icon} trend={stat.trend} trendValue={stat.trendValue} />
-        ))}
-      </div>
+            {/* Filters */}
+            <div className="mb-6">
+              <button className="flex items-center gap-2 text-gray-600 hover:text-gray-900">
+                <FiFilter size={18} />
+                Filters
+              </button>
+            </div>
 
-      {/* Leads Table */}
-      <SectionCard title="Active Leads" action={<button className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">+ New Lead</button>}>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b">
-              <tr>
-                <th className="px-4 py-2 text-left font-medium text-gray-700">Lead Name</th>
-                <th className="px-4 py-2 text-left font-medium text-gray-700">Company</th>
-                <th className="px-4 py-2 text-left font-medium text-gray-700">Email</th>
-                <th className="px-4 py-2 text-left font-medium text-gray-700">Phone</th>
-                <th className="px-4 py-2 text-left font-medium text-gray-700">Source</th>
-                <th className="px-4 py-2 text-left font-medium text-gray-700">Status</th>
-                <th className="px-4 py-2 text-left font-medium text-gray-700">Value</th>
-              </tr>
-            </thead>
-            <tbody>
-              {leads.map((lead) => (
-                <tr key={lead.id} className="border-b hover:bg-gray-50">
-                  <td className="px-4 py-3 font-medium text-gray-900">{lead.name}</td>
-                  <td className="px-4 py-3 text-gray-600">{lead.company}</td>
-                  <td className="px-4 py-3 text-gray-600">{lead.email}</td>
-                  <td className="px-4 py-3 text-gray-600">{lead.phone}</td>
-                  <td className="px-4 py-3 text-gray-600">{lead.source}</td>
-                  <td className="px-4 py-3">
-                    <span className={`text-xs font-medium px-2 py-1 rounded ${statusColors[lead.status]}`}>
-                      {lead.status.charAt(0).toUpperCase() + lead.status.slice(1)}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 font-semibold text-gray-900">${(lead.value / 1000).toFixed(0)}K</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </SectionCard>
+            {/* Leads Table */}
+            <div className="bg-white rounded-lg shadow overflow-hidden">
+              {loading ? (
+                <div className="p-8 text-center text-gray-500">Loading leads...</div>
+              ) : leads.length === 0 ? (
+                <div className="p-8 text-center text-gray-500">No leads found</div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-50 border-b border-gray-200">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
+                          Name
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
+                          Email
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
+                          Phone
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
+                          Score
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
+                          Status
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
+                          Date
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {leads.map((lead: any) => (
+                        <tr key={lead.id} className="hover:bg-gray-50 transition">
+                          <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                            {lead.name}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-600">
+                            {lead.email}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-600">
+                            {lead.phone}
+                          </td>
+                          <td className="px-6 py-4 text-sm">
+                            <div className="flex items-center gap-2">
+                              <div className="flex-1 w-16 bg-gray-200 rounded-full h-2">
+                                <div
+                                  className="bg-blue-600 h-2 rounded-full"
+                                  style={{ width: `${lead.score}%` }}
+                                ></div>
+                              </div>
+                              <span className="text-gray-600">{lead.score}</span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-sm">
+                            <span
+                              className={`px-2 py-1 rounded-full text-xs font-semibold ${getStatusColor(
+                                lead.status
+                              )}`}
+                            >
+                              {lead.status}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-600">
+                            {formatDate(lead.createdAt)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        </main>
+      </div>
     </div>
   )
 }
