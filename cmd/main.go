@@ -109,6 +109,9 @@ func main() {
 	// GL (General Ledger) Service
 	glService := services.NewGLService(dbConn)
 
+	// RBAC Service for permission checking
+	rbacService := services.NewRBACService(dbConn, log)
+
 	// Compliance Services (RERA, HR, Tax)
 	reraComplianceService := services.NewRERAComplianceService(dbConn)
 	hrComplianceService := services.NewHRComplianceService(dbConn)
@@ -129,7 +132,7 @@ func main() {
 	salesDashboardHandler := handlers.NewSalesDashboardHandler(salesService)
 
 	// Setup router with all services
-	r := router.SetupRoutesWithPhase3C(authService, tenantService, passwordResetHandler, agentService, gamificationService, leadService, callService, campaignService, aiOrchestrator, webSocketHub, leadScoringService, dashboardService, taskService, notificationService, tenantCustomizationService, phase3cServices, salesService, realEstateService, civilService, constructionService, boqService, hrService, glService, reraComplianceHandler, hrComplianceHandler, taxComplianceHandler, financialDashboardHandler, hrDashboardHandler, complianceDashboardHandler, salesDashboardHandler, log)
+	r := router.SetupRoutesWithPhase3C(authService, tenantService, passwordResetHandler, agentService, gamificationService, leadService, callService, campaignService, aiOrchestrator, webSocketHub, leadScoringService, dashboardService, taskService, notificationService, tenantCustomizationService, phase3cServices, salesService, realEstateService, civilService, constructionService, boqService, hrService, glService, rbacService, reraComplianceHandler, hrComplianceHandler, taxComplianceHandler, financialDashboardHandler, hrDashboardHandler, complianceDashboardHandler, salesDashboardHandler, log)
 
 	// Create HTTP server
 	server := &http.Server{

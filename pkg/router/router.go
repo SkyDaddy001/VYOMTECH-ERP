@@ -18,7 +18,7 @@ func SetupRoutesWithServices(
 	agentService *services.AgentService,
 	log *logger.Logger,
 ) *mux.Router {
-	return setupRoutes(authService, nil, passwordResetHandler, agentService, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, log)
+	return setupRoutes(authService, nil, passwordResetHandler, agentService, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, log)
 }
 
 // SetupRoutesWithTenant configures all API routes with tenant service
@@ -29,7 +29,7 @@ func SetupRoutesWithTenant(
 	agentService *services.AgentService,
 	log *logger.Logger,
 ) *mux.Router {
-	return setupRoutes(authService, tenantService, passwordResetHandler, agentService, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, log)
+	return setupRoutes(authService, tenantService, passwordResetHandler, agentService, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, log)
 }
 
 // SetupRoutesWithGamification configures all API routes with gamification features
@@ -41,7 +41,7 @@ func SetupRoutesWithGamification(
 	gamificationService *services.GamificationService,
 	log *logger.Logger,
 ) *mux.Router {
-	return setupRoutes(authService, tenantService, passwordResetHandler, agentService, gamificationService, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, log)
+	return setupRoutes(authService, tenantService, passwordResetHandler, agentService, gamificationService, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, log)
 }
 
 // SetupRoutesWithCoreFeatures configures all API routes with core features and real-time support
@@ -57,7 +57,7 @@ func SetupRoutesWithCoreFeatures(
 	aiOrchestrator *services.AIOrchestrator,
 	log *logger.Logger,
 ) *mux.Router {
-	return setupRoutes(authService, tenantService, passwordResetHandler, agentService, gamificationService, leadService, callService, campaignService, aiOrchestrator, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, log)
+	return setupRoutes(authService, tenantService, passwordResetHandler, agentService, gamificationService, leadService, callService, campaignService, aiOrchestrator, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, log)
 }
 
 // SetupRoutesWithRealtime configures all API routes with realtime WebSocket support
@@ -79,7 +79,7 @@ func SetupRoutesWithRealtime(
 	customizationService services.TenantCustomizationService,
 	log *logger.Logger,
 ) *mux.Router {
-	return setupRoutes(authService, tenantService, passwordResetHandler, agentService, gamificationService, leadService, callService, campaignService, aiOrchestrator, webSocketHub, leadScoringService, dashboardService, taskService, notificationService, customizationService, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, log)
+	return setupRoutes(authService, tenantService, passwordResetHandler, agentService, gamificationService, leadService, callService, campaignService, aiOrchestrator, webSocketHub, leadScoringService, dashboardService, taskService, notificationService, customizationService, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, log)
 }
 
 // SetupRoutesWithPhase3C configures all API routes including Phase 3C (Modular Monetization)
@@ -107,6 +107,7 @@ func SetupRoutesWithPhase3C(
 	boqService *services.BOQService,
 	hrService *services.HRService,
 	glService *services.GLService,
+	rbacService *services.RBACService,
 	reraComplianceHandler *handlers.RERAComplianceHandler,
 	hrComplianceHandler *handlers.HRComplianceHandler,
 	taxComplianceHandler *handlers.TaxComplianceHandler,
@@ -116,7 +117,7 @@ func SetupRoutesWithPhase3C(
 	salesDashboardHandler *handlers.SalesDashboardHandler,
 	log *logger.Logger,
 ) *mux.Router {
-	return setupRoutes(authService, tenantService, passwordResetHandler, agentService, gamificationService, leadService, callService, campaignService, aiOrchestrator, webSocketHub, leadScoringService, dashboardService, taskService, notificationService, customizationService, phase3cServices, salesService, realEstateService, civilService, constructionService, boqService, hrService, glService, reraComplianceHandler, hrComplianceHandler, taxComplianceHandler, financialDashboardHandler, hrDashboardHandler, complianceDashboardHandler, salesDashboardHandler, log)
+	return setupRoutes(authService, tenantService, passwordResetHandler, agentService, gamificationService, leadService, callService, campaignService, aiOrchestrator, webSocketHub, leadScoringService, dashboardService, taskService, notificationService, customizationService, phase3cServices, salesService, realEstateService, civilService, constructionService, boqService, hrService, glService, rbacService, reraComplianceHandler, hrComplianceHandler, taxComplianceHandler, financialDashboardHandler, hrDashboardHandler, complianceDashboardHandler, salesDashboardHandler, log)
 }
 
 func setupRoutes(
@@ -143,6 +144,7 @@ func setupRoutes(
 	boqService *services.BOQService,
 	hrService *services.HRService,
 	glService *services.GLService,
+	rbacService *services.RBACService,
 	reraComplianceHandler *handlers.RERAComplianceHandler,
 	hrComplianceHandler *handlers.HRComplianceHandler,
 	taxComplianceHandler *handlers.TaxComplianceHandler,
@@ -516,6 +518,11 @@ func setupRoutes(
 		moduleRoutes := v1.PathPrefix("/modules").Subrouter()
 		moduleRoutes.Use(middleware.AuthMiddleware(authService, log))
 		moduleRoutes.Use(middleware.TenantIsolationMiddleware(log))
+		moduleRoutes.Use(middleware.PermissionBasedAccessMiddleware(
+			rbacService,
+			[]string{"admin", "manager"},
+			log,
+		))
 		moduleRoutes.HandleFunc("/register", moduleHandler.RegisterModule).Methods("POST")
 		moduleRoutes.HandleFunc("", moduleHandler.ListModules).Methods("GET")
 		moduleRoutes.HandleFunc("/subscribe", moduleHandler.SubscribeToModule).Methods("POST")
@@ -527,6 +534,11 @@ func setupRoutes(
 		companyRoutes := v1.PathPrefix("/companies").Subrouter()
 		companyRoutes.Use(middleware.AuthMiddleware(authService, log))
 		companyRoutes.Use(middleware.TenantIsolationMiddleware(log))
+		companyRoutes.Use(middleware.PermissionBasedAccessMiddleware(
+			rbacService,
+			[]string{"admin", "manager"},
+			log,
+		))
 		companyRoutes.HandleFunc("", companyHandler.CreateCompany).Methods("POST")
 		companyRoutes.HandleFunc("", companyHandler.ListCompanies).Methods("GET")
 		companyRoutes.HandleFunc("/{id}", companyHandler.GetCompany).Methods("GET")
@@ -544,6 +556,11 @@ func setupRoutes(
 		billingRoutes := v1.PathPrefix("/billing").Subrouter()
 		billingRoutes.Use(middleware.AuthMiddleware(authService, log))
 		billingRoutes.Use(middleware.TenantIsolationMiddleware(log))
+		billingRoutes.Use(middleware.PermissionBasedAccessMiddleware(
+			rbacService,
+			[]string{"admin", "manager"},
+			log,
+		))
 		billingRoutes.HandleFunc("/plans", billingHandler.CreatePricingPlan).Methods("POST")
 		billingRoutes.HandleFunc("/plans", billingHandler.ListPricingPlans).Methods("GET")
 		billingRoutes.HandleFunc("/subscribe", billingHandler.SubscribeToPlan).Methods("POST")
@@ -587,6 +604,11 @@ func setupRoutes(
 		salesRoutes := v1.PathPrefix("/sales").Subrouter()
 		salesRoutes.Use(middleware.AuthMiddleware(authService, log))
 		salesRoutes.Use(middleware.TenantIsolationMiddleware(log))
+		salesRoutes.Use(middleware.PermissionBasedAccessMiddleware(
+			rbacService,
+			[]string{"admin", "manager", "agent"},
+			log,
+		))
 
 		// Lead endpoints
 		salesRoutes.HandleFunc("/leads", salesHandler.ListSalesLeads).Methods("GET")
@@ -665,7 +687,15 @@ func setupRoutes(
 	// CIVIL ENGINEERING ROUTES
 	// ============================================
 	if civilService != nil {
-		handlers.RegisterCivilRoutes(r, civilService)
+		civilRoutes := v1.PathPrefix("/civil").Subrouter()
+		civilRoutes.Use(middleware.AuthMiddleware(authService, log))
+		civilRoutes.Use(middleware.TenantIsolationMiddleware(log))
+		civilRoutes.Use(middleware.PermissionBasedAccessMiddleware(
+			rbacService,
+			[]string{"admin", "manager"},
+			log,
+		))
+		handlers.RegisterCivilRoutes(civilRoutes, civilService)
 	}
 
 	// ============================================
@@ -673,21 +703,45 @@ func setupRoutes(
 	// ============================================
 
 	if constructionService != nil {
-		handlers.RegisterConstructionRoutes(r, constructionService)
+		constructionRoutes := v1.PathPrefix("/construction").Subrouter()
+		constructionRoutes.Use(middleware.AuthMiddleware(authService, log))
+		constructionRoutes.Use(middleware.TenantIsolationMiddleware(log))
+		constructionRoutes.Use(middleware.PermissionBasedAccessMiddleware(
+			rbacService,
+			[]string{"admin", "manager"},
+			log,
+		))
+		handlers.RegisterConstructionRoutes(constructionRoutes, constructionService)
 	}
 
 	// ============================================
 	// BOQ MANAGEMENT ROUTES
 	// ============================================
 	if boqService != nil {
-		handlers.RegisterBOQRoutes(r, boqService)
+		boqRoutes := v1.PathPrefix("/boq").Subrouter()
+		boqRoutes.Use(middleware.AuthMiddleware(authService, log))
+		boqRoutes.Use(middleware.TenantIsolationMiddleware(log))
+		boqRoutes.Use(middleware.PermissionBasedAccessMiddleware(
+			rbacService,
+			[]string{"admin", "manager"},
+			log,
+		))
+		handlers.RegisterBOQRoutes(boqRoutes, boqService)
 	}
 
 	// ============================================
 	// HR & PAYROLL MANAGEMENT ROUTES
 	// ============================================
 	if hrService != nil {
-		handlers.RegisterHRRoutes(r, hrService)
+		hrRoutes := v1.PathPrefix("/hr").Subrouter()
+		hrRoutes.Use(middleware.AuthMiddleware(authService, log))
+		hrRoutes.Use(middleware.TenantIsolationMiddleware(log))
+		hrRoutes.Use(middleware.PermissionBasedAccessMiddleware(
+			rbacService,
+			[]string{"admin", "manager", "supervisor"},
+			log,
+		))
+		handlers.RegisterHRRoutes(hrRoutes, hrService)
 	}
 
 	// ============================================
@@ -696,6 +750,11 @@ func setupRoutes(
 		realEstateRoutes := v1.PathPrefix("/real-estate").Subrouter()
 		realEstateRoutes.Use(middleware.AuthMiddleware(authService, log))
 		realEstateRoutes.Use(middleware.TenantIsolationMiddleware(log))
+		realEstateRoutes.Use(middleware.PermissionBasedAccessMiddleware(
+			rbacService,
+			[]string{"admin", "manager"},
+			log,
+		))
 
 		// Property Projects
 		realEstateRoutes.HandleFunc("/projects", realEstateHandler.CreateProject).Methods("POST")
@@ -730,6 +789,11 @@ func setupRoutes(
 		projectMgmtRoutes := v1.PathPrefix("/project-management").Subrouter()
 		projectMgmtRoutes.Use(middleware.AuthMiddleware(authService, log))
 		projectMgmtRoutes.Use(middleware.TenantIsolationMiddleware(log))
+		projectMgmtRoutes.Use(middleware.PermissionBasedAccessMiddleware(
+			rbacService,
+			[]string{"admin", "manager"},
+			log,
+		))
 
 		// Customer Profile endpoints
 		projectMgmtRoutes.HandleFunc("/customers", projectMgmtHandler.CreateCustomerProfile).Methods("POST")
@@ -765,37 +829,101 @@ func setupRoutes(
 	// GENERAL LEDGER (GL) ROUTES
 	// ============================================
 	if glService != nil {
-		handlers.RegisterGLRoutes(r, glService)
+		glRoutes := v1.PathPrefix("/gl").Subrouter()
+		glRoutes.Use(middleware.AuthMiddleware(authService, log))
+		glRoutes.Use(middleware.TenantIsolationMiddleware(log))
+		glRoutes.Use(middleware.PermissionBasedAccessMiddleware(
+			rbacService,
+			[]string{"admin", "manager", "accountant"},
+			log,
+		))
+		handlers.RegisterGLRoutes(glRoutes, glService)
 	}
 
 	// Compliance Routes (RERA, HR, Tax)
 	if reraComplianceHandler != nil {
-		handlers.RegisterRERARoutes(r, reraComplianceHandler)
+		reraRoutes := v1.PathPrefix("/rera-compliance").Subrouter()
+		reraRoutes.Use(middleware.AuthMiddleware(authService, log))
+		reraRoutes.Use(middleware.TenantIsolationMiddleware(log))
+		reraRoutes.Use(middleware.PermissionBasedAccessMiddleware(
+			rbacService,
+			[]string{"admin", "manager"},
+			log,
+		))
+		handlers.RegisterRERARoutes(reraRoutes, reraComplianceHandler)
 	}
 
 	if hrComplianceHandler != nil {
-		handlers.RegisterHRComplianceRoutes(r, hrComplianceHandler)
+		hrComplianceRoutes := v1.PathPrefix("/hr-compliance").Subrouter()
+		hrComplianceRoutes.Use(middleware.AuthMiddleware(authService, log))
+		hrComplianceRoutes.Use(middleware.TenantIsolationMiddleware(log))
+		hrComplianceRoutes.Use(middleware.PermissionBasedAccessMiddleware(
+			rbacService,
+			[]string{"admin", "manager", "supervisor"},
+			log,
+		))
+		handlers.RegisterHRComplianceRoutes(hrComplianceRoutes, hrComplianceHandler)
 	}
 
 	if taxComplianceHandler != nil {
-		handlers.RegisterTaxComplianceRoutes(r, taxComplianceHandler)
+		taxRoutes := v1.PathPrefix("/tax-compliance").Subrouter()
+		taxRoutes.Use(middleware.AuthMiddleware(authService, log))
+		taxRoutes.Use(middleware.TenantIsolationMiddleware(log))
+		taxRoutes.Use(middleware.PermissionBasedAccessMiddleware(
+			rbacService,
+			[]string{"admin", "manager"},
+			log,
+		))
+		handlers.RegisterTaxComplianceRoutes(taxRoutes, taxComplianceHandler)
 	}
 
 	// Dashboard Routes
 	if financialDashboardHandler != nil {
-		handlers.RegisterFinancialDashboardRoutes(r, financialDashboardHandler)
+		finDashRoutes := v1.PathPrefix("/financial-dashboard").Subrouter()
+		finDashRoutes.Use(middleware.AuthMiddleware(authService, log))
+		finDashRoutes.Use(middleware.TenantIsolationMiddleware(log))
+		finDashRoutes.Use(middleware.PermissionBasedAccessMiddleware(
+			rbacService,
+			[]string{"admin", "manager"},
+			log,
+		))
+		handlers.RegisterFinancialDashboardRoutes(finDashRoutes, financialDashboardHandler)
 	}
 
 	if hrDashboardHandler != nil {
-		handlers.RegisterHRDashboardRoutes(r, hrDashboardHandler)
+		hrDashRoutes := v1.PathPrefix("/hr-dashboard").Subrouter()
+		hrDashRoutes.Use(middleware.AuthMiddleware(authService, log))
+		hrDashRoutes.Use(middleware.TenantIsolationMiddleware(log))
+		hrDashRoutes.Use(middleware.PermissionBasedAccessMiddleware(
+			rbacService,
+			[]string{"admin", "manager", "supervisor"},
+			log,
+		))
+		handlers.RegisterHRDashboardRoutes(hrDashRoutes, hrDashboardHandler)
 	}
 
 	if complianceDashboardHandler != nil {
-		handlers.RegisterComplianceDashboardRoutes(r, complianceDashboardHandler)
+		compDashRoutes := v1.PathPrefix("/compliance-dashboard").Subrouter()
+		compDashRoutes.Use(middleware.AuthMiddleware(authService, log))
+		compDashRoutes.Use(middleware.TenantIsolationMiddleware(log))
+		compDashRoutes.Use(middleware.PermissionBasedAccessMiddleware(
+			rbacService,
+			[]string{"admin", "manager"},
+			log,
+		))
+		handlers.RegisterComplianceDashboardRoutes(compDashRoutes, complianceDashboardHandler)
 	}
 
 	if salesDashboardHandler != nil {
-		handlers.RegisterSalesDashboardRoutes(r, salesDashboardHandler)
+		salesDashRoutes := v1.PathPrefix("/sales-dashboard").Subrouter()
+		salesDashRoutes.Use(middleware.AuthMiddleware(authService, log))
+		salesDashRoutes.Use(middleware.TenantIsolationMiddleware(log))
+		salesDashRoutes.Use(middleware.PermissionBasedAccessMiddleware(
+			rbacService,
+			[]string{"admin", "manager", "agent"},
+			log,
+		))
+		handlers.RegisterSalesDashboardRoutes(salesDashRoutes, salesDashboardHandler)
 	}
 
 	// OPTIONS handler for CORS preflight requests
