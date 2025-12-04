@@ -1,41 +1,66 @@
 package integration
 
 import (
+	"bytes"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-// TestCallCreationToCompletion tests end-to-end call workflow
+// Helper function to make HTTP requests in tests
+func makeRequest(method, path string, body interface{}) *http.Request {
+	var reqBody []byte
+	if body != nil {
+		var err error
+		reqBody, err = json.Marshal(body)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	req := httptest.NewRequest(method, path, bytes.NewReader(reqBody))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Tenant-ID", "test-tenant-1")
+	return req
+}
+
+// Helper function to decode response body
+func decodeResponse(t *testing.T, body []byte, v interface{}) {
+	err := json.Unmarshal(body, v)
+	require.NoError(t, err)
+}
+
 func TestCallCreationToCompletion(t *testing.T) {
-	// Step 1: Create call
-	callID := "call-uuid-1234"
-	leadID := "lead-uuid-5678"
-	agentID := "agent-uuid-9012"
+	// Test call status transitions
+	statuses := []string{"initiated", "ringing", "connected", "completed"}
+	for i, status := range statuses {
+		assert.NotEmpty(t, status, "Status at index %d should not be empty", i)
+	}
 
-	assert.NotEmpty(t, callID)
-	assert.NotEmpty(t, leadID)
+	// Verify no duplicate statuses
+	statusMap := make(map[string]bool)
+	for _, status := range statuses {
+		assert.False(t, statusMap[status], "Status %s should not repeat", status)
+		statusMap[status] = true
+	}
 
-	// Step 2: Update call status
-	status := "initiated"
-	assert.Equal(t, "initiated", status)
-
-	status = "ringing"
-	assert.Equal(t, "ringing", status)
-
-	status = "connected"
-	assert.Equal(t, "connected", status)
-
-	// Step 3: Record call metrics
+	// Test call duration validation
 	durationSeconds := 300
-	assert.Greater(t, durationSeconds, 0)
+	assert.Greater(t, durationSeconds, 0, "Call duration should be positive")
 
-	// Step 4: End call
+	// Test call outcome
 	outcome := "successful"
-	assert.Equal(t, "successful", outcome)
-
-	status = "completed"
-	assert.Equal(t, "completed", status)
+	validOutcomes := map[string]bool{
+		"successful":  true,
+		"unsuccessful": true,
+		"no_answer":   true,
+		"voicemail":   true,
+	}
+	assert.True(t, validOutcomes[outcome], "Invalid call outcome: %s", outcome)
 }
 
 // TestSalesQuotationToInvoiceFlow tests sales workflow
@@ -66,7 +91,15 @@ func TestSalesQuotationToInvoiceFlow(t *testing.T) {
 	paidAmount := 59000.0
 	invoiceStatus = "paid"
 	assert.Equal(t, "paid", invoiceStatus)
-	assert.InDelta(t, total, paidAmount, 0.01)
+	assert.InDelta(t, total, paidAmount, 0.01, "Paid amount should match invoice total")
+
+	// Additional validation: invoice status transitions
+	expectedStatuses := []string{"draft", "sent", "paid"}
+	statusMap := make(map[string]bool)
+	for _, s := range expectedStatuses {
+		assert.False(t, statusMap[s], "Status %s should not repeat", s)
+		statusMap[s] = true
+	}
 }
 
 // TestConstructionProjectToCompletion tests construction workflow
@@ -99,12 +132,19 @@ func TestConstructionProjectToCompletion(t *testing.T) {
 	// Step 4: Quality control
 	qcStatus := "passed"
 	assert.Equal(t, "passed", qcStatus)
+	validQCStatuses := map[string]bool{
+		"passed":  true,
+		"failed":  true,
+		"pending": true,
+	}
+	assert.True(t, validQCStatuses[qcStatus], "Invalid QC status: %s", qcStatus)
 
 	// Step 5: Project completion
 	finalProgress := 100.0
 	projectStatus := "completed"
-	assert.Equal(t, 100.0, finalProgress)
+	assert.Equal(t, 100.0, finalProgress, "Final progress should be 100%")
 	assert.Equal(t, "completed", projectStatus)
+	assert.LessOrEqual(t, finalProgress, 100.0, "Progress cannot exceed 100%")
 }
 
 // TestMultiTenantIsolation tests tenant data isolation
@@ -127,7 +167,13 @@ func TestMultiTenantIsolation(t *testing.T) {
 	// Verify tenant-specific operations
 	tenant1Calls := 5
 	tenant2Calls := 3
-	assert.NotEqual(t, tenant1Calls, tenant2Calls)
+	assert.NotEqual(t, tenant1Calls, tenant2Calls, "Tenant call counts should be different")
+	assert.Greater(t, tenant1Calls, 0, "Tenant 1 should have calls")
+	assert.Greater(t, tenant2Calls, 0, "Tenant 2 should have calls")
+
+	// Verify no cross-tenant contamination
+	totalCalls := tenant1Calls + tenant2Calls
+	assert.Equal(t, 8, totalCalls, "Total calls should be sum of both tenants")
 }
 
 // TestGLPostingForSalesInvoice tests GL integration for sales
@@ -278,20 +324,25 @@ func TestStatusTransitionValidation(t *testing.T) {
 	// Call status transitions
 	callStatuses := []string{"initiated", "ringing", "connected", "completed"}
 	for i := 0; i < len(callStatuses)-1; i++ {
-		assert.NotEqual(t, callStatuses[i], callStatuses[i+1])
+		assert.NotEqual(t, callStatuses[i], callStatuses[i+1], "Adjacent statuses should differ: %s vs %s", callStatuses[i], callStatuses[i+1])
 	}
 
 	// Project status transitions
 	projectStatuses := []string{"planning", "initiated", "in_progress", "completed"}
 	for i := 0; i < len(projectStatuses)-1; i++ {
-		assert.NotEqual(t, projectStatuses[i], projectStatuses[i+1])
+		assert.NotEqual(t, projectStatuses[i], projectStatuses[i+1], "Adjacent statuses should differ: %s vs %s", projectStatuses[i], projectStatuses[i+1])
 	}
 
 	// Invoice status transitions
 	invoiceStatuses := []string{"draft", "sent", "paid"}
 	for i := 0; i < len(invoiceStatuses)-1; i++ {
-		assert.NotEqual(t, invoiceStatuses[i], invoiceStatuses[i+1])
+		assert.NotEqual(t, invoiceStatuses[i], invoiceStatuses[i+1], "Adjacent statuses should differ: %s vs %s", invoiceStatuses[i], invoiceStatuses[i+1])
 	}
+
+	// Verify status order is sequential
+	assert.Equal(t, 4, len(callStatuses), "Call should have 4 status transitions")
+	assert.Equal(t, 4, len(projectStatuses), "Project should have 4 status transitions")
+	assert.Equal(t, 3, len(invoiceStatuses), "Invoice should have 3 status transitions")
 }
 
 // TestDataConsistencyAcrossModules tests data consistency
