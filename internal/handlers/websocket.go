@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"vyomtech-backend/internal/middleware"
 	"net/http"
 
 	"github.com/gorilla/websocket"
@@ -36,14 +37,14 @@ var upgrader = websocket.Upgrader{
 // GET /api/v1/ws
 func (wh *WebSocketHandler) HandleConnection(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		wh.logger.Error("Failed to extract tenant ID from context")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
 		return
 	}
 
-	userID, ok := ctx.Value("userID").(int64)
+	userID, ok := ctx.Value(middleware.UserIDKey).(int64)
 	if !ok {
 		wh.logger.Error("Failed to extract user ID from context")
 		http.Error(w, "user id not found", http.StatusBadRequest)
@@ -68,7 +69,7 @@ func (wh *WebSocketHandler) HandleConnection(w http.ResponseWriter, r *http.Requ
 // GET /api/v1/ws/stats
 func (wh *WebSocketHandler) GetConnectionStats(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		wh.logger.Error("Failed to extract tenant ID from context")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)

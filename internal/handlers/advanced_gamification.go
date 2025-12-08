@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"vyomtech-backend/internal/middleware"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -61,7 +62,7 @@ type CreateRewardRequest struct {
 // POST /api/v1/gamification/competitions
 func (agh *AdvancedGamificationHandler) CreateTeamCompetition(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		agh.logger.Error("Failed to extract tenant ID from context")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
@@ -112,7 +113,7 @@ func (agh *AdvancedGamificationHandler) CreateTeamCompetition(w http.ResponseWri
 // GET /api/v1/gamification/competitions/{id}/leaderboard
 func (agh *AdvancedGamificationHandler) GetTeamLeaderboard(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		agh.logger.Error("Failed to extract tenant ID from context")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
@@ -150,7 +151,7 @@ func (agh *AdvancedGamificationHandler) GetTeamLeaderboard(w http.ResponseWriter
 // POST /api/v1/gamification/challenges
 func (agh *AdvancedGamificationHandler) CreateChallenge(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		agh.logger.Error("Failed to extract tenant ID from context")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
@@ -206,7 +207,7 @@ func (agh *AdvancedGamificationHandler) CreateChallenge(w http.ResponseWriter, r
 // GET /api/v1/gamification/challenges/active
 func (agh *AdvancedGamificationHandler) GetActiveChallenges(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		agh.logger.Error("Failed to extract tenant ID from context")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
@@ -232,7 +233,7 @@ func (agh *AdvancedGamificationHandler) GetActiveChallenges(w http.ResponseWrite
 // POST /api/v1/gamification/rewards
 func (agh *AdvancedGamificationHandler) CreateReward(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		agh.logger.Error("Failed to extract tenant ID from context")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
@@ -271,7 +272,7 @@ func (agh *AdvancedGamificationHandler) CreateReward(w http.ResponseWriter, r *h
 // GET /api/v1/gamification/rewards
 func (agh *AdvancedGamificationHandler) GetAvailableRewards(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		agh.logger.Error("Failed to extract tenant ID from context")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
@@ -297,14 +298,14 @@ func (agh *AdvancedGamificationHandler) GetAvailableRewards(w http.ResponseWrite
 // POST /api/v1/gamification/redeem
 func (agh *AdvancedGamificationHandler) RedeemReward(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		agh.logger.Error("Failed to extract tenant ID from context")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
 		return
 	}
 
-	userID, ok := ctx.Value("userID").(int64)
+	userID, ok := ctx.Value(middleware.UserIDKey).(int64)
 	if !ok {
 		agh.logger.Error("Failed to extract user ID from context")
 		http.Error(w, "user id not found", http.StatusBadRequest)
@@ -341,7 +342,7 @@ func (agh *AdvancedGamificationHandler) RedeemReward(w http.ResponseWriter, r *h
 // GET /api/v1/gamification/leaderboard?limit=50
 func (agh *AdvancedGamificationHandler) GetGamificationLeaderboard(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		agh.logger.Error("Failed to extract tenant ID from context")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
@@ -376,7 +377,7 @@ func (agh *AdvancedGamificationHandler) GetGamificationLeaderboard(w http.Respon
 // GET /api/v1/gamification/stats
 func (agh *AdvancedGamificationHandler) GetGamificationStats(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		agh.logger.Error("Failed to extract tenant ID from context")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"vyomtech-backend/internal/middleware"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -29,14 +30,14 @@ func NewClickToCallHandler(clickToCallService *services.ClickToCallService, logg
 // POST /api/v1/click-to-call/initiate
 func (h *ClickToCallHandler) InitiateCall(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		h.logger.Error("Failed to extract tenant ID")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
 		return
 	}
 
-	userID, ok := ctx.Value("userID").(string)
+	userID, ok := ctx.Value(middleware.UserIDKey).(string)
 	if !ok {
 		h.logger.Error("Failed to extract user ID")
 		http.Error(w, "user id not found", http.StatusBadRequest)
@@ -90,7 +91,7 @@ func (h *ClickToCallHandler) InitiateCall(w http.ResponseWriter, r *http.Request
 // GET /api/v1/click-to-call/sessions/{id}
 func (h *ClickToCallHandler) GetCallSession(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		h.logger.Error("Failed to extract tenant ID")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
@@ -118,7 +119,7 @@ func (h *ClickToCallHandler) GetCallSession(w http.ResponseWriter, r *http.Reque
 // GET /api/v1/click-to-call/sessions
 func (h *ClickToCallHandler) ListCallSessions(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		h.logger.Error("Failed to extract tenant ID")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
@@ -170,7 +171,7 @@ func (h *ClickToCallHandler) ListCallSessions(w http.ResponseWriter, r *http.Req
 // PATCH /api/v1/click-to-call/sessions/{id}/status
 func (h *ClickToCallHandler) UpdateCallStatus(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		h.logger.Error("Failed to extract tenant ID")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
@@ -212,7 +213,7 @@ func (h *ClickToCallHandler) UpdateCallStatus(w http.ResponseWriter, r *http.Req
 // POST /api/v1/click-to-call/sessions/{id}/end
 func (h *ClickToCallHandler) EndCall(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		h.logger.Error("Failed to extract tenant ID")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
@@ -253,14 +254,14 @@ func (h *ClickToCallHandler) EndCall(w http.ResponseWriter, r *http.Request) {
 // POST /api/v1/voip-providers
 func (h *ClickToCallHandler) CreateVoIPProvider(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		h.logger.Error("Failed to extract tenant ID")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
 		return
 	}
 
-	userID, ok := ctx.Value("userID").(string)
+	userID, ok := ctx.Value(middleware.UserIDKey).(string)
 	if !ok {
 		userID = "system"
 	}
@@ -293,7 +294,7 @@ func (h *ClickToCallHandler) CreateVoIPProvider(w http.ResponseWriter, r *http.R
 // GET /api/v1/voip-providers/{id}
 func (h *ClickToCallHandler) GetVoIPProvider(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		h.logger.Error("Failed to extract tenant ID")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
@@ -321,7 +322,7 @@ func (h *ClickToCallHandler) GetVoIPProvider(w http.ResponseWriter, r *http.Requ
 // GET /api/v1/voip-providers
 func (h *ClickToCallHandler) ListVoIPProviders(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		h.logger.Error("Failed to extract tenant ID")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
@@ -403,7 +404,7 @@ func (h *ClickToCallHandler) HandleWebhookEvent(w http.ResponseWriter, r *http.R
 // POST /api/v1/agent-activity
 func (h *ClickToCallHandler) LogAgentActivity(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		h.logger.Error("Failed to extract tenant ID")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
@@ -446,7 +447,7 @@ func (h *ClickToCallHandler) LogAgentActivity(w http.ResponseWriter, r *http.Req
 // GET /api/v1/click-to-call/stats
 func (h *ClickToCallHandler) GetCallStats(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		h.logger.Error("Failed to extract tenant ID")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)

@@ -5,33 +5,11 @@
 -- ============================================================
 
 SET FOREIGN_KEY_CHECKS = 0;
-
 -- ============================================================
--- SALES MODULE TABLES
+-- SALES & POST-SALES SPECIFIC TABLES
 -- ============================================================
-
--- Sales Lead (Extended from sales_lead with real estate specifics)
-CREATE TABLE IF NOT EXISTS `sales_lead` (
-    `id` VARCHAR(36) PRIMARY KEY,
-    `tenant_id` VARCHAR(36) NOT NULL,
-    `lead_code` VARCHAR(50) UNIQUE NOT NULL,
-    `first_name` VARCHAR(100) NOT NULL,
-    `last_name` VARCHAR(100),
-    `email` VARCHAR(255),
-    `phone` VARCHAR(20),
-    `alternate_phone` VARCHAR(20),
-    `company_name` VARCHAR(255),
-    `source` VARCHAR(100),
-    `status` VARCHAR(50) DEFAULT 'new',
-    `created_by` INT,
-    `assigned_to` INT,
-    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (`tenant_id`) REFERENCES `tenant`(`id`) ON DELETE CASCADE,
-    KEY `idx_tenant_lead` (`tenant_id`, `status`),
-    KEY `idx_email` (`email`),
-    KEY `idx_phone` (`phone`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+-- Note: sales_lead, unit, and unit_cost_sheet are defined in migrations 007, 003, and 008
+-- This migration extends them with booking and client management features
 
 -- Booking/Unit Allocation
 CREATE TABLE IF NOT EXISTS `booking` (
@@ -52,82 +30,11 @@ CREATE TABLE IF NOT EXISTS `booking` (
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (`tenant_id`) REFERENCES `tenant`(`id`) ON DELETE CASCADE,
-    FOREIGN KEY (`unit_id`) REFERENCES `unit`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`unit_id`) REFERENCES `property_unit`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`lead_id`) REFERENCES `sales_lead`(`id`) ON DELETE CASCADE,
     KEY `idx_tenant_booking` (`tenant_id`, `status`),
     KEY `idx_unit` (`unit_id`),
     KEY `idx_booking_date` (`booking_date`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Unit Details (Real Estate Properties)
-CREATE TABLE IF NOT EXISTS `unit` (
-    `id` VARCHAR(36) PRIMARY KEY,
-    `tenant_id` VARCHAR(36) NOT NULL,
-    `project_id` VARCHAR(36) NOT NULL,
-    `unit_code` VARCHAR(50) UNIQUE NOT NULL,
-    `block` VARCHAR(50),
-    `block_wing` VARCHAR(50),
-    `apt_no` VARCHAR(50),
-    `floor` INT,
-    `unit_type` VARCHAR(50),
-    `facing` VARCHAR(100),
-    `rera_carpet_area` DECIMAL(10, 2),
-    `rera_carpet_area_with_balcony` DECIMAL(10, 2),
-    `plinth_area` DECIMAL(10, 2),
-    `sbua` DECIMAL(10, 2),
-    `uds_per_sqft` DECIMAL(10, 2),
-    `status` VARCHAR(50) DEFAULT 'available',
-    `allotted_to` VARCHAR(36),
-    `rate_per_sqft` DECIMAL(12, 2),
-    `composite_guideline_value` DECIMAL(15, 2),
-    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (`tenant_id`) REFERENCES `tenant`(`id`) ON DELETE CASCADE,
-    FOREIGN KEY (`project_id`) REFERENCES `construction_projects`(`id`) ON DELETE CASCADE,
-    KEY `idx_tenant_unit` (`tenant_id`, `status`),
-    KEY `idx_project` (`project_id`),
-    KEY `idx_status` (`status`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Unit Pricing/Cost Sheet
-CREATE TABLE IF NOT EXISTS `unit_cost_sheet` (
-    `id` VARCHAR(36) PRIMARY KEY,
-    `tenant_id` VARCHAR(36) NOT NULL,
-    `unit_id` VARCHAR(36) NOT NULL,
-    `frc` DECIMAL(15, 2),
-    `frc_type` VARCHAR(50),
-    `car_parking_type` VARCHAR(50),
-    `car_parking_cost` DECIMAL(15, 2),
-    `plc` DECIMAL(15, 2),
-    `plc_type` VARCHAR(50),
-    `other_charges_1` DECIMAL(15, 2),
-    `other_charges_1_type` VARCHAR(50),
-    `other_charges_2` DECIMAL(15, 2),
-    `other_charges_2_type` VARCHAR(50),
-    `other_charges_3` DECIMAL(15, 2),
-    `other_charges_3_type` VARCHAR(50),
-    `other_charges_4` DECIMAL(15, 2),
-    `other_charges_4_type` VARCHAR(50),
-    `other_charges_5` DECIMAL(15, 2),
-    `other_charges_5_type` VARCHAR(50),
-    `other_charges_6` DECIMAL(15, 2),
-    `other_charges_6_type` VARCHAR(50),
-    `other_charges_7` DECIMAL(15, 2),
-    `other_charges_7_type` VARCHAR(50),
-    `other_charges_8` DECIMAL(15, 2),
-    `other_charges_8_type` VARCHAR(50),
-    `other_charges_9` DECIMAL(15, 2),
-    `other_charges_9_type` VARCHAR(50),
-    `other_charges_10` DECIMAL(15, 2),
-    `other_charges_10_type` VARCHAR(50),
-    `legal_documentation_charges` DECIMAL(15, 2),
-    `apartment_cost_excluding_govt` DECIMAL(15, 2),
-    `total_cost` DECIMAL(15, 2),
-    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (`tenant_id`) REFERENCES `tenant`(`id`) ON DELETE CASCADE,
-    FOREIGN KEY (`unit_id`) REFERENCES `unit`(`id`) ON DELETE CASCADE,
-    KEY `idx_tenant_unit_cost` (`tenant_id`, `unit_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Applicant/Client Details

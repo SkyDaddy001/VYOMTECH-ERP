@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { BarChart3, Download, Filter, Plus } from 'lucide-react'
+import { FiBarChart2, FiDownload, FiFilter, FiPlus } from 'react-icons/fi'
 import { format } from 'date-fns'
 
 interface Report {
@@ -109,7 +109,7 @@ export default function ReportsPage() {
           <p className="text-gray-600 mt-2">View and download your business reports</p>
         </div>
         <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center">
-          <Plus className="w-4 h-4 mr-2" />
+          <FiPlus className="w-4 h-4 mr-2" />
           Generate Report
         </button>
       </div>
@@ -122,7 +122,7 @@ export default function ReportsPage() {
               <p className="text-sm text-gray-600">Total Reports</p>
               <p className="text-3xl font-bold text-gray-900 mt-2">{reports.length}</p>
             </div>
-            <BarChart3 className="w-10 h-10 text-blue-500 opacity-20" />
+            <FiBarChart2 className="w-10 h-10 text-blue-500 opacity-20" />
           </div>
         </div>
         <div className="bg-white rounded-lg shadow p-6">
@@ -133,7 +133,7 @@ export default function ReportsPage() {
                 {reports.filter(r => new Date(r.generatedAt).getMonth() === new Date().getMonth()).length}
               </p>
             </div>
-            <BarChart3 className="w-10 h-10 text-green-500 opacity-20" />
+            <FiBarChart2 className="w-10 h-10 text-green-500 opacity-20" />
           </div>
         </div>
         <div className="bg-white rounded-lg shadow p-6">
@@ -144,7 +144,7 @@ export default function ReportsPage() {
                 {(reports.reduce((sum, r) => sum + parseFloat(r.size), 0)).toFixed(1)} MB
               </p>
             </div>
-            <BarChart3 className="w-10 h-10 text-purple-500 opacity-20" />
+            <FiBarChart2 className="w-10 h-10 text-purple-500 opacity-20" />
           </div>
         </div>
         <div className="bg-white rounded-lg shadow p-6">
@@ -155,7 +155,7 @@ export default function ReportsPage() {
                 {reports.length > 0 ? format(new Date(reports[0].generatedAt), 'MMM dd') : 'N/A'}
               </p>
             </div>
-            <BarChart3 className="w-10 h-10 text-orange-500 opacity-20" />
+            <FiBarChart2 className="w-10 h-10 text-orange-500 opacity-20" />
           </div>
         </div>
       </div>
@@ -163,7 +163,7 @@ export default function ReportsPage() {
       {/* Filters */}
       <div className="bg-white rounded-lg shadow p-4 mb-6">
         <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4 text-gray-600" />
+          <FiFilter className="w-4 h-4 text-gray-600" />
           <button className="px-3 py-1 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">
             All Types
           </button>
@@ -230,7 +230,7 @@ export default function ReportsPage() {
                   </td>
                   <td className="px-6 py-4">
                     <button className="p-2 hover:bg-gray-100 rounded-lg transition">
-                      <Download className="w-4 h-4 text-gray-600" />
+                      <FiDownload className="w-4 h-4 text-gray-600" />
                     </button>
                   </td>
                 </tr>

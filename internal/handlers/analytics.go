@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"vyomtech-backend/internal/middleware"
 	"encoding/json"
 	"net/http"
 	"time"
@@ -36,7 +37,7 @@ type GenerateReportRequest struct {
 // POST /api/v1/analytics/reports
 func (ah *AnalyticsHandler) GenerateReport(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		ah.logger.Error("Failed to extract tenant ID from context")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
@@ -90,7 +91,7 @@ func (ah *AnalyticsHandler) GenerateReport(w http.ResponseWriter, r *http.Reques
 // GET /api/v1/analytics/trends?metric=leads&start_date=2024-01-01&end_date=2024-01-31
 func (ah *AnalyticsHandler) GetTrends(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		ah.logger.Error("Failed to extract tenant ID from context")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
@@ -137,7 +138,7 @@ func (ah *AnalyticsHandler) GetTrends(w http.ResponseWriter, r *http.Request) {
 // POST /api/v1/analytics/export
 func (ah *AnalyticsHandler) ExportReport(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		ah.logger.Error("Failed to extract tenant ID from context")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
@@ -207,7 +208,7 @@ func (ah *AnalyticsHandler) ExportReport(w http.ResponseWriter, r *http.Request)
 // GET /api/v1/analytics/metrics?metric=lead_source_distribution
 func (ah *AnalyticsHandler) GetCustomMetrics(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		ah.logger.Error("Failed to extract tenant ID from context")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)

@@ -5,7 +5,7 @@
 -- ==================== TEAM CHAT SYSTEM ====================
 
 -- Team chat channels/groups
-CREATE TABLE team_chat_channel (
+CREATE TABLE IF NOT EXISTS `team_chat_channel` (
     id CHAR(36) PRIMARY KEY,
     tenant_id CHAR(36) NOT NULL,
     channel_name VARCHAR(100) NOT NULL,
@@ -25,7 +25,7 @@ CREATE TABLE team_chat_channel (
 COMMENT='Team chat channels/groups';
 
 -- Chat channel members
-CREATE TABLE team_chat_member (
+CREATE TABLE IF NOT EXISTS `team_chat_member` (
     id CHAR(36) PRIMARY KEY,
     channel_id CHAR(36) NOT NULL,
     tenant_id CHAR(36) NOT NULL,
@@ -44,7 +44,7 @@ CREATE TABLE team_chat_member (
 COMMENT='Team chat channel members';
 
 -- Chat messages
-CREATE TABLE team_chat_message (
+CREATE TABLE IF NOT EXISTS `team_chat_message` (
     id CHAR(36) PRIMARY KEY,
     channel_id CHAR(36) NOT NULL,
     tenant_id CHAR(36) NOT NULL,
@@ -74,7 +74,7 @@ CREATE TABLE team_chat_message (
 COMMENT='Team chat messages';
 
 -- Message reactions
-CREATE TABLE team_chat_reaction (
+CREATE TABLE IF NOT EXISTS `team_chat_reaction` (
     id CHAR(36) PRIMARY KEY,
     message_id CHAR(36) NOT NULL,
     user_id CHAR(36) NOT NULL,
@@ -88,7 +88,7 @@ COMMENT='Message reactions/emojis';
 -- ==================== WEBRTC VOICE/VIDEO CALLS ====================
 
 -- Voice and video call sessions
-CREATE TABLE voice_video_call (
+CREATE TABLE IF NOT EXISTS `voice_video_call` (
     id CHAR(36) PRIMARY KEY,
     tenant_id CHAR(36) NOT NULL,
     call_type ENUM('ONE_TO_ONE', 'GROUP', 'CONFERENCE') NOT NULL,
@@ -120,7 +120,7 @@ CREATE TABLE voice_video_call (
 COMMENT='WebRTC voice and video calls';
 
 -- Call participants
-CREATE TABLE voice_video_call_participant (
+CREATE TABLE IF NOT EXISTS `voice_video_call_participant` (
     id CHAR(36) PRIMARY KEY,
     call_id CHAR(36) NOT NULL,
     tenant_id CHAR(36) NOT NULL,
@@ -146,7 +146,7 @@ COMMENT='Call participants and their status';
 -- ==================== MEETING ROOMS ====================
 
 -- Virtual meeting rooms
-CREATE TABLE meeting_room (
+CREATE TABLE IF NOT EXISTS `meeting_room` (
     id CHAR(36) PRIMARY KEY,
     tenant_id CHAR(36) NOT NULL,
     room_name VARCHAR(150) NOT NULL,
@@ -174,7 +174,7 @@ CREATE TABLE meeting_room (
 COMMENT='Virtual meeting rooms';
 
 -- Meeting room access control
-CREATE TABLE meeting_room_access (
+CREATE TABLE IF NOT EXISTS `meeting_room_access` (
     id CHAR(36) PRIMARY KEY,
     room_id CHAR(36) NOT NULL,
     tenant_id CHAR(36) NOT NULL,
@@ -197,7 +197,7 @@ COMMENT='Meeting room access and permissions';
 -- ==================== CALENDAR & APPOINTMENTS ====================
 
 -- Calendar events/appointments
-CREATE TABLE calendar_event (
+CREATE TABLE IF NOT EXISTS `calendar_event` (
     id CHAR(36) PRIMARY KEY,
     tenant_id CHAR(36) NOT NULL,
     event_title VARCHAR(200) NOT NULL,
@@ -238,7 +238,7 @@ CREATE TABLE calendar_event (
 COMMENT='Calendar events and appointments';
 
 -- Event attendees
-CREATE TABLE calendar_attendee (
+CREATE TABLE IF NOT EXISTS `calendar_attendee` (
     id CHAR(36) PRIMARY KEY,
     event_id CHAR(36) NOT NULL,
     tenant_id CHAR(36) NOT NULL,
@@ -259,7 +259,7 @@ COMMENT='Calendar event attendees';
 -- ==================== AUTO-DIALER WITH PRIORITY QUEUE ====================
 
 -- Dialer campaigns
-CREATE TABLE dialer_campaign (
+CREATE TABLE IF NOT EXISTS `dialer_campaign` (
     id CHAR(36) PRIMARY KEY,
     tenant_id CHAR(36) NOT NULL,
     campaign_name VARCHAR(150) NOT NULL,
@@ -296,7 +296,7 @@ CREATE TABLE dialer_campaign (
 COMMENT='Dialer campaigns for auto-calling';
 
 -- Call priority queue
-CREATE TABLE call_priority_queue (
+CREATE TABLE IF NOT EXISTS `call_priority_queue` (
     id CHAR(36) PRIMARY KEY,
     tenant_id CHAR(36) NOT NULL,
     campaign_id CHAR(36) NOT NULL,
@@ -330,7 +330,7 @@ CREATE TABLE call_priority_queue (
 COMMENT='Call priority queue for auto-dialer';
 
 -- Dialer scripts/call flows
-CREATE TABLE dialer_script (
+CREATE TABLE IF NOT EXISTS `dialer_script` (
     id CHAR(36) PRIMARY KEY,
     tenant_id CHAR(36) NOT NULL,
     script_name VARCHAR(150) NOT NULL,
@@ -351,7 +351,7 @@ COMMENT='Dialer scripts and call flows';
 -- ==================== WORK TRACKING & COMPLETION ====================
 
 -- Work items/tasks
-CREATE TABLE work_item (
+CREATE TABLE IF NOT EXISTS `work_item` (
     id CHAR(36) PRIMARY KEY,
     tenant_id CHAR(36) NOT NULL,
     work_title VARCHAR(255) NOT NULL,
@@ -388,7 +388,7 @@ CREATE TABLE work_item (
 COMMENT='Work items and tasks';
 
 -- Work item comments/updates
-CREATE TABLE work_item_comment (
+CREATE TABLE IF NOT EXISTS `work_item_comment` (
     id CHAR(36) PRIMARY KEY,
     work_item_id CHAR(36) NOT NULL,
     tenant_id CHAR(36) NOT NULL,
@@ -407,7 +407,7 @@ CREATE TABLE work_item_comment (
 COMMENT='Work item comments and updates';
 
 -- Work item time tracking
-CREATE TABLE work_item_time_log (
+CREATE TABLE IF NOT EXISTS `work_item_time_log` (
     id CHAR(36) PRIMARY KEY,
     work_item_id CHAR(36) NOT NULL,
     tenant_id CHAR(36) NOT NULL,
@@ -427,7 +427,7 @@ COMMENT='Work item time tracking and logging';
 -- ==================== REAL-TIME NOTIFICATIONS ====================
 
 -- Notifications for WebSocket delivery
-CREATE TABLE user_notification (
+CREATE TABLE IF NOT EXISTS `user_notification` (
     id CHAR(36) PRIMARY KEY,
     tenant_id CHAR(36) NOT NULL,
     user_id CHAR(36) NOT NULL,
@@ -450,7 +450,7 @@ COMMENT='Real-time user notifications';
 -- ==================== USER PRESENCE & STATUS ====================
 
 -- User online status
-CREATE TABLE user_presence (
+CREATE TABLE IF NOT EXISTS `user_presence` (
     id CHAR(36) PRIMARY KEY,
     tenant_id CHAR(36) NOT NULL,
     user_id CHAR(36) NOT NULL,

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"vyomtech-backend/internal/middleware"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -44,7 +45,7 @@ type ScheduleCampaignRequest struct {
 // POST /api/v1/automation/leads/{id}/score
 func (ah *AutomationHandler) CalculateLeadScore(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		ah.logger.Error("Failed to extract tenant ID from context")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
@@ -79,7 +80,7 @@ func (ah *AutomationHandler) CalculateLeadScore(w http.ResponseWriter, r *http.R
 // GET /api/v1/automation/leads/ranked?limit=20
 func (ah *AutomationHandler) RankLeads(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		ah.logger.Error("Failed to extract tenant ID from context")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
@@ -113,7 +114,7 @@ func (ah *AutomationHandler) RankLeads(w http.ResponseWriter, r *http.Request) {
 // POST /api/v1/automation/leads/{id}/route
 func (ah *AutomationHandler) RouteLeadToAgent(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		ah.logger.Error("Failed to extract tenant ID from context")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
@@ -151,7 +152,7 @@ func (ah *AutomationHandler) RouteLeadToAgent(w http.ResponseWriter, r *http.Req
 // POST /api/v1/automation/routing-rules
 func (ah *AutomationHandler) CreateRoutingRule(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		ah.logger.Error("Failed to extract tenant ID from context")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
@@ -190,7 +191,7 @@ func (ah *AutomationHandler) CreateRoutingRule(w http.ResponseWriter, r *http.Re
 // POST /api/v1/automation/schedule-campaign
 func (ah *AutomationHandler) ScheduleCampaign(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		ah.logger.Error("Failed to extract tenant ID from context")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
@@ -229,7 +230,7 @@ func (ah *AutomationHandler) ScheduleCampaign(w http.ResponseWriter, r *http.Req
 // GET /api/v1/automation/metrics
 func (ah *AutomationHandler) GetLeadScoringMetrics(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		ah.logger.Error("Failed to extract tenant ID from context")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)

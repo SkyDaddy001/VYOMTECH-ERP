@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"vyomtech-backend/internal/middleware"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -41,7 +42,7 @@ func (h *TaskHandler) RegisterRoutes(router *mux.Router) {
 // CreateTask creates a new task
 func (h *TaskHandler) CreateTask(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		http.Error(w, "tenant_id required", http.StatusBadRequest)
 		return
@@ -54,7 +55,7 @@ func (h *TaskHandler) CreateTask(w http.ResponseWriter, r *http.Request) {
 	}
 
 	task.TenantID = tenantID
-	userID, ok := ctx.Value("userID").(int64)
+	userID, ok := ctx.Value(middleware.UserIDKey).(int64)
 	if ok {
 		task.CreatedBy = userID
 	}
@@ -74,7 +75,7 @@ func (h *TaskHandler) CreateTask(w http.ResponseWriter, r *http.Request) {
 // GetTask retrieves a specific task
 func (h *TaskHandler) GetTask(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		http.Error(w, "tenant_id required", http.StatusBadRequest)
 		return
@@ -101,7 +102,7 @@ func (h *TaskHandler) GetTask(w http.ResponseWriter, r *http.Request) {
 // ListTasks lists tasks with optional filters
 func (h *TaskHandler) ListTasks(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		http.Error(w, "tenant_id required", http.StatusBadRequest)
 		return
@@ -144,7 +145,7 @@ func (h *TaskHandler) ListTasks(w http.ResponseWriter, r *http.Request) {
 // UpdateTask updates an existing task
 func (h *TaskHandler) UpdateTask(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		http.Error(w, "tenant_id required", http.StatusBadRequest)
 		return
@@ -180,7 +181,7 @@ func (h *TaskHandler) UpdateTask(w http.ResponseWriter, r *http.Request) {
 // DeleteTask deletes a task
 func (h *TaskHandler) DeleteTask(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		http.Error(w, "tenant_id required", http.StatusBadRequest)
 		return
@@ -206,7 +207,7 @@ func (h *TaskHandler) DeleteTask(w http.ResponseWriter, r *http.Request) {
 // CompleteTask marks a task as completed
 func (h *TaskHandler) CompleteTask(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		http.Error(w, "tenant_id required", http.StatusBadRequest)
 		return
@@ -240,7 +241,7 @@ func (h *TaskHandler) CompleteTask(w http.ResponseWriter, r *http.Request) {
 // GetTasksByUser gets tasks assigned to a specific user
 func (h *TaskHandler) GetTasksByUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		http.Error(w, "tenant_id required", http.StatusBadRequest)
 		return
@@ -274,13 +275,13 @@ func (h *TaskHandler) GetTasksByUser(w http.ResponseWriter, r *http.Request) {
 // GetTaskStats gets task statistics for current user
 func (h *TaskHandler) GetTaskStats(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		http.Error(w, "tenant_id required", http.StatusBadRequest)
 		return
 	}
 
-	userID, ok := ctx.Value("userID").(int64)
+	userID, ok := ctx.Value(middleware.UserIDKey).(int64)
 	if !ok {
 		userID = 0
 	}

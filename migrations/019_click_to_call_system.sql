@@ -3,7 +3,7 @@
 -- Date: 2025-12-03
 
 -- Table for VoIP provider configuration
-CREATE TABLE voip_provider (
+CREATE TABLE IF NOT EXISTS `voip_provider` (
     id CHAR(36) PRIMARY KEY,
     tenant_id CHAR(36) NOT NULL,
     provider_name VARCHAR(100) NOT NULL COMMENT 'asterisk, sip, mcube, exotel',
@@ -33,7 +33,7 @@ CREATE TABLE voip_provider (
 COMMENT='VoIP provider configuration for click-to-call';
 
 -- Table for click-to-call session tracking
-CREATE TABLE click_to_call_session (
+CREATE TABLE IF NOT EXISTS `click_to_call_session` (
     id CHAR(36) PRIMARY KEY,
     tenant_id CHAR(36) NOT NULL,
     initiated_by CHAR(36),
@@ -85,7 +85,7 @@ CREATE TABLE click_to_call_session (
 COMMENT='Click-to-call session tracking and call details';
 
 -- Table for call routing rules
-CREATE TABLE call_routing_rule (
+CREATE TABLE IF NOT EXISTS `call_routing_rule` (
     id CHAR(36) PRIMARY KEY,
     tenant_id CHAR(36) NOT NULL,
     rule_name VARCHAR(100) NOT NULL,
@@ -112,7 +112,7 @@ CREATE TABLE call_routing_rule (
 COMMENT='Call routing rules for intelligent call distribution';
 
 -- Table for DTMF (Dual Tone Multi-Frequency) interactions
-CREATE TABLE call_dtmf_interaction (
+CREATE TABLE IF NOT EXISTS `call_dtmf_interaction` (
     id CHAR(36) PRIMARY KEY,
     session_id CHAR(36) NOT NULL,
     tenant_id CHAR(36) NOT NULL,
@@ -129,7 +129,7 @@ CREATE TABLE call_dtmf_interaction (
 COMMENT='DTMF (keypad press) interactions during calls';
 
 -- Table for IVR (Interactive Voice Response) menu items
-CREATE TABLE ivr_menu (
+CREATE TABLE IF NOT EXISTS `ivr_menu` (
     id CHAR(36) PRIMARY KEY,
     tenant_id CHAR(36) NOT NULL,
     menu_name VARCHAR(100) NOT NULL,
@@ -151,7 +151,7 @@ CREATE TABLE ivr_menu (
 COMMENT='IVR menu definitions';
 
 -- Table for IVR menu options
-CREATE TABLE ivr_menu_option (
+CREATE TABLE IF NOT EXISTS `ivr_menu_option` (
     id CHAR(36) PRIMARY KEY,
     menu_id CHAR(36) NOT NULL,
     tenant_id CHAR(36) NOT NULL,
@@ -172,7 +172,7 @@ CREATE TABLE ivr_menu_option (
 COMMENT='IVR menu option mappings';
 
 -- Table for call recording configuration
-CREATE TABLE call_recording_config (
+CREATE TABLE IF NOT EXISTS `call_recording_config` (
     id CHAR(36) PRIMARY KEY,
     tenant_id CHAR(36) NOT NULL,
     record_all_calls TINYINT(1) DEFAULT 1,
@@ -198,7 +198,7 @@ CREATE TABLE call_recording_config (
 COMMENT='Call recording configuration per tenant';
 
 -- Table for call quality metrics
-CREATE TABLE call_quality_metric (
+CREATE TABLE IF NOT EXISTS `call_quality_metric` (
     id CHAR(36) PRIMARY KEY,
     session_id CHAR(36) NOT NULL,
     tenant_id CHAR(36) NOT NULL,
@@ -214,7 +214,7 @@ CREATE TABLE call_quality_metric (
 COMMENT='Call quality metrics (latency, jitter, packet loss, MOS)';
 
 -- Table for call transfer history
-CREATE TABLE call_transfer (
+CREATE TABLE IF NOT EXISTS `call_transfer` (
     id CHAR(36) PRIMARY KEY,
     session_id CHAR(36) NOT NULL,
     tenant_id CHAR(36) NOT NULL,
@@ -234,7 +234,7 @@ CREATE TABLE call_transfer (
 COMMENT='Call transfer and handoff history';
 
 -- Table for agent activity log
-CREATE TABLE agent_activity_log (
+CREATE TABLE IF NOT EXISTS `agent_activity_log` (
     id CHAR(36) PRIMARY KEY,
     tenant_id CHAR(36) NOT NULL,
     agent_id CHAR(36) NOT NULL,
@@ -252,7 +252,7 @@ CREATE TABLE agent_activity_log (
 COMMENT='Agent activity and status tracking for call center';
 
 -- Table for phone number whitelist/blacklist
-CREATE TABLE phone_number_list (
+CREATE TABLE IF NOT EXISTS `phone_number_list` (
     id CHAR(36) PRIMARY KEY,
     tenant_id CHAR(36) NOT NULL,
     phone_number VARCHAR(20) NOT NULL,
@@ -274,7 +274,7 @@ CREATE TABLE phone_number_list (
 COMMENT='Phone number whitelist/blacklist management';
 
 -- Table for caller ID management
-CREATE TABLE caller_id_profile (
+CREATE TABLE IF NOT EXISTS `caller_id_profile` (
     id CHAR(36) PRIMARY KEY,
     tenant_id CHAR(36) NOT NULL,
     profile_name VARCHAR(100) NOT NULL,
@@ -297,7 +297,7 @@ CREATE TABLE caller_id_profile (
 COMMENT='Caller ID profiles for outbound calls';
 
 -- Table for click-to-call webhook logs
-CREATE TABLE click_to_call_webhook_log (
+CREATE TABLE IF NOT EXISTS `click_to_call_webhook_log` (
     id CHAR(36) PRIMARY KEY,
     tenant_id CHAR(36) NOT NULL,
     provider_id CHAR(36),
@@ -318,7 +318,7 @@ CREATE TABLE click_to_call_webhook_log (
 COMMENT='Webhook event logs from VoIP providers';
 
 -- Table for call rules and compliance
-CREATE TABLE call_compliance_rule (
+CREATE TABLE IF NOT EXISTS `call_compliance_rule` (
     id CHAR(36) PRIMARY KEY,
     tenant_id CHAR(36) NOT NULL,
     rule_name VARCHAR(100) NOT NULL,
@@ -337,7 +337,7 @@ CREATE TABLE call_compliance_rule (
 COMMENT='Call compliance and regulatory rules';
 
 -- Table for call rate configuration
-CREATE TABLE call_rate_config (
+CREATE TABLE IF NOT EXISTS `call_rate_config` (
     id CHAR(36) PRIMARY KEY,
     tenant_id CHAR(36) NOT NULL,
     destination_country VARCHAR(3),
@@ -360,7 +360,7 @@ CREATE TABLE call_rate_config (
 COMMENT='Call rate configuration for billing';
 
 -- Table for call usage and billing
-CREATE TABLE call_usage_billing (
+CREATE TABLE IF NOT EXISTS `call_usage_billing` (
     id CHAR(36) PRIMARY KEY,
     tenant_id CHAR(36) NOT NULL,
     billing_period_start DATE,

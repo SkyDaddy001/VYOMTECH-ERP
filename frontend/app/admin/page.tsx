@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { UserPlus, Settings, BarChart3, AlertCircle, Building2, Clock, HardDrive, Activity } from 'lucide-react'
+import { FiUserPlus, FiSettings, FiBarChart2, FiAlertCircle, FiHome, FiClock, FiHardDrive, FiActivity } from 'react-icons/fi'
 import { apiClient } from '@/lib/api-client'
 
 interface SystemStats {
@@ -94,7 +94,7 @@ export default function AdminDashboard() {
       {/* Error State */}
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-8 flex items-center">
-          <AlertCircle className="w-5 h-5 text-red-600 mr-3" />
+          <FiAlertCircle className="w-5 h-5 text-red-600 mr-3" />
           <p className="text-red-800">{error}</p>
         </div>
       )}
@@ -116,38 +116,38 @@ export default function AdminDashboard() {
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             <StatCard 
-              icon={Building2}
+              icon={FiHome}
               label="Total Tenants" 
               value={stats.totalTenants}
               color="blue"
             />
             <StatCard 
-              icon={Activity}
+              icon={FiActivity}
               label="Active Tenants" 
               value={stats.activeTenants}
               change={`${((stats.activeTenants / (stats.totalTenants || 1)) * 100).toFixed(1)}% active`}
               color="green"
             />
             <StatCard 
-              icon={Clock}
+              icon={FiClock}
               label="System Uptime" 
               value={stats.uptime}
               color="purple"
             />
             <StatCard 
-              icon={UserPlus}
+              icon={FiUserPlus}
               label="Max Users" 
               value={stats.totalUsers}
               color="yellow"
             />
             <StatCard 
-              icon={BarChart3}
+              icon={FiBarChart2}
               label="API Calls Today" 
               value={stats.totalAPICallsToday.toLocaleString()}
               color="red"
             />
             <StatCard 
-              icon={HardDrive}
+              icon={FiHardDrive}
               label="Last Backup" 
               value={stats.lastBackup}
               color="indigo"
@@ -164,28 +164,28 @@ export default function AdminDashboard() {
                   onClick={() => { window.location.href = '/admin/tenants?action=create' }} 
                   className="px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium flex items-center justify-center"
                 >
-                  <Building2 className="w-4 h-4 mr-2" />
+                  <FiHome className="w-4 h-4 mr-2" />
                   Create Tenant
                 </button>
                 <button 
                   onClick={() => { window.location.href = '/admin/users?action=create' }} 
                   className="px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium flex items-center justify-center"
                 >
-                  <UserPlus className="w-4 h-4 mr-2" />
+                  <FiUserPlus className="w-4 h-4 mr-2" />
                   Add User
                 </button>
                 <button 
                   onClick={() => { window.location.href = '/admin/audit-logs' }} 
                   className="px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-medium flex items-center justify-center"
                 >
-                  <BarChart3 className="w-4 h-4 mr-2" />
+                  <FiBarChart2 className="w-4 h-4 mr-2" />
                   View Logs
                 </button>
                 <button 
                   onClick={() => { window.location.href = '/admin/settings' }} 
                   className="px-4 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-medium flex items-center justify-center"
                 >
-                  <Settings className="w-4 h-4 mr-2" />
+                  <FiSettings className="w-4 h-4 mr-2" />
                   System Settings
                 </button>
               </div>

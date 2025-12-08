@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"time"
+	"vyomtech-backend/internal/middleware"
 
 	"vyomtech-backend/internal/models"
 	"vyomtech-backend/internal/services"
@@ -26,26 +28,34 @@ func NewLeadHandler(leadService *services.LeadService, logger *logger.Logger) *L
 
 // CreateLeadRequest is the request body for creating a lead
 type CreateLeadRequest struct {
-	Name          string `json:"name"`
-	Email         string `json:"email"`
-	Phone         string `json:"phone"`
-	Status        string `json:"status,omitempty"`
-	Source        string `json:"source"`
-	CampaignID    *int64 `json:"campaign_id,omitempty"`
-	AssignedAgent *int64 `json:"assigned_agent_id,omitempty"`
-	Notes         string `json:"notes,omitempty"`
+	FirstName       string  `json:"first_name"`
+	LastName        string  `json:"last_name"`
+	Email           string  `json:"email"`
+	Phone           string  `json:"phone"`
+	CompanyName     string  `json:"company_name"`
+	Industry        string  `json:"industry,omitempty"`
+	Status          string  `json:"status,omitempty"`
+	Probability     float64 `json:"probability,omitempty"`
+	Source          string  `json:"source"`
+	AssignedTo      string  `json:"assigned_to,omitempty"`
+	NextActionDate  string  `json:"next_action_date,omitempty"`
+	NextActionNotes string  `json:"next_action_notes,omitempty"`
 }
 
 // UpdateLeadRequest is the request body for updating a lead
 type UpdateLeadRequest struct {
-	Name          string `json:"name,omitempty"`
-	Email         string `json:"email,omitempty"`
-	Phone         string `json:"phone,omitempty"`
-	Status        string `json:"status,omitempty"`
-	Source        string `json:"source,omitempty"`
-	CampaignID    *int64 `json:"campaign_id,omitempty"`
-	AssignedAgent *int64 `json:"assigned_agent_id,omitempty"`
-	Notes         string `json:"notes,omitempty"`
+	FirstName       string  `json:"first_name,omitempty"`
+	LastName        string  `json:"last_name,omitempty"`
+	Email           string  `json:"email,omitempty"`
+	Phone           string  `json:"phone,omitempty"`
+	CompanyName     string  `json:"company_name,omitempty"`
+	Industry        string  `json:"industry,omitempty"`
+	Status          string  `json:"status,omitempty"`
+	Probability     float64 `json:"probability,omitempty"`
+	Source          string  `json:"source,omitempty"`
+	AssignedTo      string  `json:"assigned_to,omitempty"`
+	NextActionDate  string  `json:"next_action_date,omitempty"`
+	NextActionNotes string  `json:"next_action_notes,omitempty"`
 }
 
 // UpdateLeadStatusRequest is the request body for updating a lead's status
@@ -57,11 +67,9 @@ type UpdateLeadStatusRequest struct {
 
 // LeadStatusResponse is the response for status update operations
 type LeadStatusResponse struct {
-	ID               int64  `json:"id"`
-	Status           string `json:"status"`
-	PipelineStage    string `json:"pipeline_stage"`
-	LastStatusChange int64  `json:"last_status_change"`
-	Message          string `json:"message"`
+	ID      string `json:"id"`
+	Status  string `json:"status"`
+	Message string `json:"message"`
 }
 
 // ListLeadsRequest is the query parameters for listing leads
@@ -77,7 +85,7 @@ type ListLeadsRequest struct {
 // GET /api/v1/leads
 func (lh *LeadHandler) GetLeads(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		lh.logger.Error("Failed to extract tenant ID from context")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
@@ -119,35 +127,30 @@ func (lh *LeadHandler) GetLeads(w http.ResponseWriter, r *http.Request) {
 // GET /api/v1/leads/{id}
 func (lh *LeadHandler) GetLead(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	userID, ok := ctx.Value("userID").(int64)
+	userID, ok := ctx.Value(middleware.UserIDKey).(int64)
 	if !ok {
 		lh.logger.Error("Failed to extract user ID from context")
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		lh.logger.Error("Failed to extract tenant ID from context")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
 		return
 	}
 
-	leadID := r.URL.Query().Get("id")
+	// Get leadID directly as string from URL
+	leadID := r.PathValue("id")
 	if leadID == "" {
-		http.Error(w, "lead id required", http.StatusBadRequest)
-		return
-	}
-
-	id, err := strconv.ParseInt(leadID, 10, 64)
-	if err != nil {
 		http.Error(w, "invalid lead id", http.StatusBadRequest)
 		return
 	}
 
-	lead, err := lh.leadService.GetLead(ctx, id, tenantID)
+	lead, err := lh.leadService.GetLead(ctx, leadID, tenantID)
 	if err != nil {
-		lh.logger.Error("Failed to get lead", "leadID", id, "userID", userID, "error", err)
+		lh.logger.Error("Failed to get lead", "leadID", leadID, "userID", userID, "error", err)
 		http.Error(w, "lead not found", http.StatusNotFound)
 		return
 	}
@@ -160,14 +163,14 @@ func (lh *LeadHandler) GetLead(w http.ResponseWriter, r *http.Request) {
 // POST /api/v1/leads
 func (lh *LeadHandler) CreateLead(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	userID, ok := ctx.Value("userID").(int64)
+	userID, ok := ctx.Value(middleware.UserIDKey).(int64)
 	if !ok {
 		lh.logger.Error("Failed to extract user ID from context")
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		lh.logger.Error("Failed to extract tenant ID from context")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
@@ -181,8 +184,8 @@ func (lh *LeadHandler) CreateLead(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Validate required fields
-	if req.Name == "" || req.Email == "" || req.Phone == "" || req.Source == "" {
-		http.Error(w, "name, email, phone, and source are required", http.StatusBadRequest)
+	if req.FirstName == "" || req.LastName == "" || req.Email == "" || req.Phone == "" || req.Source == "" {
+		http.Error(w, "first_name, last_name, email, phone, and source are required", http.StatusBadRequest)
 		return
 	}
 
@@ -191,16 +194,31 @@ func (lh *LeadHandler) CreateLead(w http.ResponseWriter, r *http.Request) {
 		status = "new"
 	}
 
+	// Parse NextActionDate if provided
+	var nextActionDate *time.Time
+	if req.NextActionDate != "" {
+		t, err := time.Parse(time.RFC3339, req.NextActionDate)
+		if err != nil {
+			http.Error(w, "invalid next_action_date format", http.StatusBadRequest)
+			return
+		}
+		nextActionDate = &t
+	}
+
 	lead := &models.Lead{
-		TenantID:      tenantID,
-		Name:          req.Name,
-		Email:         req.Email,
-		Phone:         req.Phone,
-		Status:        status,
-		Source:        req.Source,
-		CampaignID:    req.CampaignID,
-		AssignedAgent: req.AssignedAgent,
-		Notes:         req.Notes,
+		TenantID:        tenantID,
+		FirstName:       req.FirstName,
+		LastName:        req.LastName,
+		Email:           req.Email,
+		Phone:           req.Phone,
+		CompanyName:     req.CompanyName,
+		Industry:        req.Industry,
+		Status:          status,
+		Probability:     req.Probability,
+		Source:          req.Source,
+		AssignedTo:      req.AssignedTo,
+		NextActionDate:  nextActionDate,
+		NextActionNotes: req.NextActionNotes,
 	}
 
 	if err := lh.leadService.CreateLead(ctx, lead); err != nil {
@@ -218,36 +236,30 @@ func (lh *LeadHandler) CreateLead(w http.ResponseWriter, r *http.Request) {
 // PUT /api/v1/leads/{id}
 func (lh *LeadHandler) UpdateLead(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	userID, ok := ctx.Value("userID").(int64)
+	userID, ok := ctx.Value(middleware.UserIDKey).(int64)
 	if !ok {
 		lh.logger.Error("Failed to extract user ID from context")
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		lh.logger.Error("Failed to extract tenant ID from context")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
 		return
 	}
 
-	leadID := r.URL.Query().Get("id")
+	leadID := r.PathValue("id")
 	if leadID == "" {
 		http.Error(w, "lead id required", http.StatusBadRequest)
 		return
 	}
 
-	id, err := strconv.ParseInt(leadID, 10, 64)
-	if err != nil {
-		http.Error(w, "invalid lead id", http.StatusBadRequest)
-		return
-	}
-
 	// Get existing lead
-	lead, err := lh.leadService.GetLead(ctx, id, tenantID)
+	lead, err := lh.leadService.GetLead(ctx, leadID, tenantID)
 	if err != nil {
-		lh.logger.Error("Failed to get lead", "leadID", id, "error", err)
+		lh.logger.Error("Failed to get lead", "leadID", leadID, "error", err)
 		http.Error(w, "lead not found", http.StatusNotFound)
 		return
 	}
@@ -259,8 +271,11 @@ func (lh *LeadHandler) UpdateLead(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Update fields that were provided
-	if req.Name != "" {
-		lead.Name = req.Name
+	if req.FirstName != "" {
+		lead.FirstName = req.FirstName
+	}
+	if req.LastName != "" {
+		lead.LastName = req.LastName
 	}
 	if req.Email != "" {
 		lead.Email = req.Email
@@ -268,24 +283,38 @@ func (lh *LeadHandler) UpdateLead(w http.ResponseWriter, r *http.Request) {
 	if req.Phone != "" {
 		lead.Phone = req.Phone
 	}
+	if req.CompanyName != "" {
+		lead.CompanyName = req.CompanyName
+	}
+	if req.Industry != "" {
+		lead.Industry = req.Industry
+	}
 	if req.Status != "" {
 		lead.Status = req.Status
+	}
+	if req.Probability > 0 {
+		lead.Probability = req.Probability
 	}
 	if req.Source != "" {
 		lead.Source = req.Source
 	}
-	if req.CampaignID != nil {
-		lead.CampaignID = req.CampaignID
+	if req.AssignedTo != "" {
+		lead.AssignedTo = req.AssignedTo
 	}
-	if req.AssignedAgent != nil {
-		lead.AssignedAgent = req.AssignedAgent
+	if req.NextActionDate != "" {
+		t, err := time.Parse(time.RFC3339, req.NextActionDate)
+		if err != nil {
+			http.Error(w, "invalid next_action_date format", http.StatusBadRequest)
+			return
+		}
+		lead.NextActionDate = &t
 	}
-	if req.Notes != "" {
-		lead.Notes = req.Notes
+	if req.NextActionNotes != "" {
+		lead.NextActionNotes = req.NextActionNotes
 	}
 
 	if err := lh.leadService.UpdateLead(ctx, lead); err != nil {
-		lh.logger.Error("Failed to update lead", "leadID", id, "userID", userID, "error", err)
+		lh.logger.Error("Failed to update lead", "leadID", leadID, "userID", userID, "error", err)
 		http.Error(w, "failed to update lead", http.StatusInternalServerError)
 		return
 	}
@@ -298,34 +327,28 @@ func (lh *LeadHandler) UpdateLead(w http.ResponseWriter, r *http.Request) {
 // DELETE /api/v1/leads/{id}
 func (lh *LeadHandler) DeleteLead(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	userID, ok := ctx.Value("userID").(int64)
+	userID, ok := ctx.Value(middleware.UserIDKey).(int64)
 	if !ok {
 		lh.logger.Error("Failed to extract user ID from context")
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		lh.logger.Error("Failed to extract tenant ID from context")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
 		return
 	}
 
-	leadID := r.URL.Query().Get("id")
+	leadID := r.PathValue("id")
 	if leadID == "" {
 		http.Error(w, "lead id required", http.StatusBadRequest)
 		return
 	}
 
-	id, err := strconv.ParseInt(leadID, 10, 64)
-	if err != nil {
-		http.Error(w, "invalid lead id", http.StatusBadRequest)
-		return
-	}
-
-	if err := lh.leadService.DeleteLead(ctx, id, tenantID); err != nil {
-		lh.logger.Error("Failed to delete lead", "leadID", id, "userID", userID, "error", err)
+	if err := lh.leadService.DeleteLead(ctx, leadID, tenantID); err != nil {
+		lh.logger.Error("Failed to delete lead", "leadID", leadID, "userID", userID, "error", err)
 		http.Error(w, "lead not found", http.StatusNotFound)
 		return
 	}
@@ -339,7 +362,7 @@ func (lh *LeadHandler) DeleteLead(w http.ResponseWriter, r *http.Request) {
 // GET /api/v1/leads/stats
 func (lh *LeadHandler) GetLeadStats(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		lh.logger.Error("Failed to extract tenant ID from context")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
@@ -361,29 +384,23 @@ func (lh *LeadHandler) GetLeadStats(w http.ResponseWriter, r *http.Request) {
 // PUT /api/v1/leads/{id}/status
 func (lh *LeadHandler) UpdateLeadStatus(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	userID, ok := ctx.Value("userID").(int64)
+	userID, ok := ctx.Value(middleware.UserIDKey).(int64)
 	if !ok {
 		lh.logger.Error("Failed to extract user ID from context")
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		lh.logger.Error("Failed to extract tenant ID from context")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
 		return
 	}
 
-	leadID := r.URL.Query().Get("id")
+	leadID := r.PathValue("id")
 	if leadID == "" {
 		http.Error(w, "lead id required", http.StatusBadRequest)
-		return
-	}
-
-	id, err := strconv.ParseInt(leadID, 10, 64)
-	if err != nil {
-		http.Error(w, "invalid lead id", http.StatusBadRequest)
 		return
 	}
 
@@ -400,32 +417,29 @@ func (lh *LeadHandler) UpdateLeadStatus(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Get existing lead
-	lead, err := lh.leadService.GetLead(ctx, id, tenantID)
+	lead, err := lh.leadService.GetLead(ctx, leadID, tenantID)
 	if err != nil {
-		lh.logger.Error("Failed to get lead", "leadID", id, "error", err)
+		lh.logger.Error("Failed to get lead", "leadID", leadID, "error", err)
 		http.Error(w, "lead not found", http.StatusNotFound)
 		return
 	}
 
-	// Update status and pipeline stage
+	// Update status
 	lead.Status = req.Status
-	lead.PipelineStage = models.GetPipelineStage(req.Status)
 	if req.Notes != "" {
-		lead.Notes = req.Notes
+		lead.NextActionNotes = req.Notes
 	}
 
 	if err := lh.leadService.UpdateLead(ctx, lead); err != nil {
-		lh.logger.Error("Failed to update lead status", "leadID", id, "userID", userID, "error", err)
+		lh.logger.Error("Failed to update lead status", "leadID", leadID, "userID", userID, "error", err)
 		http.Error(w, "failed to update lead status", http.StatusInternalServerError)
 		return
 	}
 
 	response := LeadStatusResponse{
-		ID:               lead.ID,
-		Status:           lead.Status,
-		PipelineStage:    lead.PipelineStage,
-		LastStatusChange: lead.LastStatusChange.Unix(),
-		Message:          "status updated successfully",
+		ID:      lead.ID,
+		Status:  lead.Status,
+		Message: "status updated successfully",
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -437,7 +451,7 @@ func (lh *LeadHandler) UpdateLeadStatus(w http.ResponseWriter, r *http.Request) 
 // GET /api/v1/leads/pipeline/{stage}
 func (lh *LeadHandler) GetLeadsByPipelineStage(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		lh.logger.Error("Failed to extract tenant ID from context")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
@@ -483,7 +497,7 @@ func (lh *LeadHandler) GetLeadsByPipelineStage(w http.ResponseWriter, r *http.Re
 // GET /api/v1/leads/status/{status}
 func (lh *LeadHandler) GetLeadsByStatus(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		lh.logger.Error("Failed to extract tenant ID from context")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)

@@ -33,10 +33,15 @@ services:
       - ./migrations/019_click_to_call_system.sql:/docker-entrypoint-initdb.d/19-click-to-call-system.sql
       - ./migrations/020_multi_channel_communication.sql:/docker-entrypoint-initdb.d/20-multi-channel-communication.sql
       - ./migrations/021_team_collaboration_webrtc.sql:/docker-entrypoint-initdb.d/21-team-collaboration-webrtc.sql
-      - ./migrations/024_partner_management_system.sql:/docker-entrypoint-initdb.d/22-partner-management-system.sql
-      - ./migrations/025_vyomtech_demo_data.sql:/docker-entrypoint-initdb.d/23-vyomtech-demo-data.sql
-      - ./migrations/026_sales_postsales_module.sql:/docker-entrypoint-initdb.d/24-sales-postsales-module.sql
+      - ./migrations/022_project_management_system.sql:/docker-entrypoint-initdb.d/22-project-management-system.sql
+      - ./migrations/023_missing_placeholder.sql:/docker-entrypoint-initdb.d/23-missing-placeholder.sql
+      - ./migrations/024_partner_management_system.sql:/docker-entrypoint-initdb.d/24-partner-management-system.sql
+      - ./migrations/025_vyomtech_demo_data.sql:/docker-entrypoint-initdb.d/25-vyomtech-demo-data.sql
+      - ./migrations/026_sales_postsales_module.sql:/docker-entrypoint-initdb.d/26-sales-postsales-module.sql
+      - ./migrations/027_sales_analytics_reporting.sql:/docker-entrypoint-initdb.d/27-sales-analytics-reporting.sql
+      - ./migrations/028_lead_status_system.sql:/docker-entrypoint-initdb.d/28-lead-status-system.sql
       - mysql_data:/var/lib/mysql
+
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       timeout: 20s

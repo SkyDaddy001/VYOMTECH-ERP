@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Search, Plus, MoreVertical, TrendingUp, Calendar } from 'lucide-react'
+import { FiSearch, FiPlus, FiMoreVertical, FiTrendingUp, FiCalendar } from 'react-icons/fi'
 import { format } from 'date-fns'
 
 interface Campaign {
@@ -119,7 +119,7 @@ export default function CampaignsPage() {
           <p className="text-gray-600 mt-2">Create and manage your marketing campaigns</p>
         </div>
         <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center">
-          <Plus className="w-4 h-4 mr-2" />
+          <FiPlus className="w-4 h-4 mr-2" />
           New Campaign
         </button>
       </div>
@@ -128,7 +128,7 @@ export default function CampaignsPage() {
       <div className="bg-white rounded-lg shadow p-4 mb-6">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+            <FiSearch className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
             <input
               type="text"
               placeholder="Search campaigns..."
@@ -172,7 +172,7 @@ export default function CampaignsPage() {
                     <p className="text-sm text-gray-600 mt-1">{campaign.description}</p>
                   </div>
                   <button className="p-2 hover:bg-gray-100 rounded-lg transition">
-                    <MoreVertical className="w-4 h-4 text-gray-600" />
+                    <FiMoreVertical className="w-4 h-4 text-gray-600" />
                   </button>
                 </div>
                 <div className="flex items-center gap-2">
@@ -190,7 +190,7 @@ export default function CampaignsPage() {
                 {/* Timeline */}
                 <div>
                   <div className="flex items-center text-sm text-gray-600 mb-1">
-                    <Calendar className="w-4 h-4 mr-2" />
+                    <FiCalendar className="w-4 h-4 mr-2" />
                     {format(new Date(campaign.startDate), 'MMM dd, yyyy')} - {campaign.endDate ? format(new Date(campaign.endDate), 'MMM dd, yyyy') : 'Ongoing'}
                   </div>
                 </div>
@@ -211,7 +211,7 @@ export default function CampaignsPage() {
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <p className="text-sm text-gray-600 uppercase font-semibold flex items-center">
-                      <TrendingUp className="w-4 h-4 mr-1" />
+                      <FiTrendingUp className="w-4 h-4 mr-1" />
                       Conversion Rate
                     </p>
                     <p className="text-sm font-bold text-gray-900">{campaign.conversionRate.toFixed(2)}%</p>

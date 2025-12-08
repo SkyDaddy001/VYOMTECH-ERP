@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"vyomtech-backend/internal/middleware"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -56,7 +57,7 @@ type SendMessageRequest struct {
 // POST /api/v1/communication/providers
 func (ch *CommunicationHandler) RegisterProvider(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		ch.logger.Error("Failed to extract tenant ID from context")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
@@ -95,7 +96,7 @@ func (ch *CommunicationHandler) RegisterProvider(w http.ResponseWriter, r *http.
 // POST /api/v1/communication/templates
 func (ch *CommunicationHandler) CreateTemplate(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		ch.logger.Error("Failed to extract tenant ID from context")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
@@ -135,7 +136,7 @@ func (ch *CommunicationHandler) CreateTemplate(w http.ResponseWriter, r *http.Re
 // POST /api/v1/communication/messages
 func (ch *CommunicationHandler) SendMessage(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		ch.logger.Error("Failed to extract tenant ID from context")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
@@ -173,7 +174,7 @@ func (ch *CommunicationHandler) SendMessage(w http.ResponseWriter, r *http.Reque
 // GET /api/v1/communication/messages/{id}
 func (ch *CommunicationHandler) GetMessageStatus(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		ch.logger.Error("Failed to extract tenant ID from context")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
@@ -208,7 +209,7 @@ func (ch *CommunicationHandler) GetMessageStatus(w http.ResponseWriter, r *http.
 // GET /api/v1/communication/stats?start_date=2024-01-01&end_date=2024-01-31
 func (ch *CommunicationHandler) GetMessageStats(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		ch.logger.Error("Failed to extract tenant ID from context")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)

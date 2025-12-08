@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"vyomtech-backend/internal/middleware"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -84,14 +85,14 @@ type SuccessResponse struct {
 // GET /api/v1/gamification/points
 func (h *GamificationHandler) GetUserPoints(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	userID, ok := ctx.Value("userID").(int64)
+	userID, ok := ctx.Value(middleware.UserIDKey).(int64)
 	if !ok {
 		h.logger.Error("Failed to extract user ID from context")
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		h.logger.Error("Failed to extract tenant ID from context")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
@@ -113,14 +114,14 @@ func (h *GamificationHandler) GetUserPoints(w http.ResponseWriter, r *http.Reque
 // POST /api/v1/gamification/points/award
 func (h *GamificationHandler) AwardPoints(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	userID, ok := ctx.Value("userID").(int64)
+	userID, ok := ctx.Value(middleware.UserIDKey).(int64)
 	if !ok {
 		h.logger.Error("Failed to extract user ID from context")
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		h.logger.Error("Failed to extract tenant ID from context")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
@@ -150,14 +151,14 @@ func (h *GamificationHandler) AwardPoints(w http.ResponseWriter, r *http.Request
 // POST /api/v1/gamification/points/revoke
 func (h *GamificationHandler) RevokePoints(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	userID, ok := ctx.Value("userID").(int64)
+	userID, ok := ctx.Value(middleware.UserIDKey).(int64)
 	if !ok {
 		h.logger.Error("Failed to extract user ID from context")
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		h.logger.Error("Failed to extract tenant ID from context")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
@@ -187,14 +188,14 @@ func (h *GamificationHandler) RevokePoints(w http.ResponseWriter, r *http.Reques
 // GET /api/v1/gamification/badges
 func (h *GamificationHandler) GetUserBadges(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	userID, ok := ctx.Value("userID").(int64)
+	userID, ok := ctx.Value(middleware.UserIDKey).(int64)
 	if !ok {
 		h.logger.Error("Failed to extract user ID from context")
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		h.logger.Error("Failed to extract tenant ID from context")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
@@ -216,14 +217,14 @@ func (h *GamificationHandler) GetUserBadges(w http.ResponseWriter, r *http.Reque
 // POST /api/v1/gamification/badges/award
 func (h *GamificationHandler) AwardBadge(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	userID, ok := ctx.Value("userID").(int64)
+	userID, ok := ctx.Value(middleware.UserIDKey).(int64)
 	if !ok {
 		h.logger.Error("Failed to extract user ID from context")
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		h.logger.Error("Failed to extract tenant ID from context")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
@@ -253,7 +254,7 @@ func (h *GamificationHandler) AwardBadge(w http.ResponseWriter, r *http.Request)
 // POST /api/v1/gamification/badges
 func (h *GamificationHandler) CreateBadge(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		h.logger.Error("Failed to extract tenant ID from context")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
@@ -298,14 +299,14 @@ func (h *GamificationHandler) CreateBadge(w http.ResponseWriter, r *http.Request
 // GET /api/v1/gamification/challenges
 func (h *GamificationHandler) GetUserChallenges(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	userID, ok := ctx.Value("userID").(int64)
+	userID, ok := ctx.Value(middleware.UserIDKey).(int64)
 	if !ok {
 		h.logger.Error("Failed to extract user ID from context")
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		h.logger.Error("Failed to extract tenant ID from context")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
@@ -327,7 +328,7 @@ func (h *GamificationHandler) GetUserChallenges(w http.ResponseWriter, r *http.R
 // GET /api/v1/gamification/challenges/active
 func (h *GamificationHandler) GetActiveChallenges(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		h.logger.Error("Failed to extract tenant ID from context")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
@@ -349,7 +350,7 @@ func (h *GamificationHandler) GetActiveChallenges(w http.ResponseWriter, r *http
 // POST /api/v1/gamification/challenges
 func (h *GamificationHandler) CreateChallenge(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		h.logger.Error("Failed to extract tenant ID from context")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
@@ -406,7 +407,7 @@ func (h *GamificationHandler) CreateChallenge(w http.ResponseWriter, r *http.Req
 // GET /api/v1/gamification/leaderboard?period=weekly&limit=100
 func (h *GamificationHandler) GetLeaderboard(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		h.logger.Error("Failed to extract tenant ID from context")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
@@ -442,14 +443,14 @@ func (h *GamificationHandler) GetLeaderboard(w http.ResponseWriter, r *http.Requ
 // GET /api/v1/gamification/profile
 func (h *GamificationHandler) GetGamificationProfile(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	userID, ok := ctx.Value("userID").(int64)
+	userID, ok := ctx.Value(middleware.UserIDKey).(int64)
 	if !ok {
 		h.logger.Error("Failed to extract user ID from context")
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		h.logger.Error("Failed to extract tenant ID from context")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)

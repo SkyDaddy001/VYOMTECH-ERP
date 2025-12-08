@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"vyomtech-backend/internal/middleware"
 	"encoding/json"
 	"net/http"
 	"time"
@@ -44,7 +45,7 @@ type EndCallRequest struct {
 // GET /api/v1/calls
 func (ch *CallHandler) GetCalls(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		ch.logger.Error("Failed to extract tenant ID from context")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
@@ -73,7 +74,7 @@ func (ch *CallHandler) GetCalls(w http.ResponseWriter, r *http.Request) {
 // GET /api/v1/calls/{id}
 func (ch *CallHandler) GetCall(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		ch.logger.Error("Failed to extract tenant ID from context")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
@@ -101,14 +102,14 @@ func (ch *CallHandler) GetCall(w http.ResponseWriter, r *http.Request) {
 // POST /api/v1/calls
 func (ch *CallHandler) CreateCall(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	userID, ok := ctx.Value("userID").(string)
+	userID, ok := ctx.Value(middleware.UserIDKey).(string)
 	if !ok {
 		ch.logger.Error("Failed to extract user ID from context")
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		ch.logger.Error("Failed to extract tenant ID from context")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
@@ -157,14 +158,14 @@ func (ch *CallHandler) CreateCall(w http.ResponseWriter, r *http.Request) {
 // POST /api/v1/calls/{id}/end
 func (ch *CallHandler) EndCall(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	userID, ok := ctx.Value("userID").(string)
+	userID, ok := ctx.Value(middleware.UserIDKey).(string)
 	if !ok {
 		ch.logger.Error("Failed to extract user ID from context")
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		ch.logger.Error("Failed to extract tenant ID from context")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
@@ -203,7 +204,7 @@ func (ch *CallHandler) EndCall(w http.ResponseWriter, r *http.Request) {
 // GET /api/v1/calls/stats
 func (ch *CallHandler) GetCallStats(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		ch.logger.Error("Failed to extract tenant ID from context")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)

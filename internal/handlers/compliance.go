@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"vyomtech-backend/internal/middleware"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -48,7 +49,7 @@ type CreateRoleRequest struct {
 // POST /api/v1/compliance/roles
 func (ch *ComplianceHandler) CreateRole(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
 		return
@@ -84,7 +85,7 @@ func (ch *ComplianceHandler) CreateRole(w http.ResponseWriter, r *http.Request) 
 // GET /api/v1/compliance/roles
 func (ch *ComplianceHandler) GetRoles(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
 		return
@@ -109,7 +110,7 @@ func (ch *ComplianceHandler) GetRoles(w http.ResponseWriter, r *http.Request) {
 // GET /api/v1/compliance/audit-logs?limit=50&offset=0
 func (ch *ComplianceHandler) GetAuditLogs(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
 		return
@@ -167,7 +168,7 @@ func (ch *ComplianceHandler) GetAuditLogs(w http.ResponseWriter, r *http.Request
 // GET /api/v1/compliance/audit-summary?days=30
 func (ch *ComplianceHandler) GetAuditSummary(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
 		return
@@ -196,7 +197,7 @@ func (ch *ComplianceHandler) GetAuditSummary(w http.ResponseWriter, r *http.Requ
 // GET /api/v1/compliance/security-events
 func (ch *ComplianceHandler) GetSecurityEvents(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
 		return
@@ -248,7 +249,7 @@ func (ch *ComplianceHandler) GetSecurityEvents(w http.ResponseWriter, r *http.Re
 // GET /api/v1/compliance/report?start_date=2024-01-01&end_date=2024-12-31
 func (ch *ComplianceHandler) GetComplianceReport(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
 		return
@@ -283,13 +284,13 @@ func (ch *ComplianceHandler) GetComplianceReport(w http.ResponseWriter, r *http.
 // POST /api/v1/compliance/gdpr/access
 func (ch *ComplianceHandler) RequestDataAccess(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
 		return
 	}
 
-	userID, ok := ctx.Value("userID").(int64)
+	userID, ok := ctx.Value(middleware.UserIDKey).(int64)
 	if !ok {
 		http.Error(w, "user id not found", http.StatusBadRequest)
 		return
@@ -311,13 +312,13 @@ func (ch *ComplianceHandler) RequestDataAccess(w http.ResponseWriter, r *http.Re
 // GET /api/v1/compliance/gdpr/export
 func (ch *ComplianceHandler) ExportUserData(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
 		return
 	}
 
-	userID, ok := ctx.Value("userID").(int64)
+	userID, ok := ctx.Value(middleware.UserIDKey).(int64)
 	if !ok {
 		http.Error(w, "user id not found", http.StatusBadRequest)
 		return
@@ -344,13 +345,13 @@ type DataDeletionRequest struct {
 
 func (ch *ComplianceHandler) RequestDataDeletion(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
 		return
 	}
 
-	userID, ok := ctx.Value("userID").(int64)
+	userID, ok := ctx.Value(middleware.UserIDKey).(int64)
 	if !ok {
 		http.Error(w, "user id not found", http.StatusBadRequest)
 		return
@@ -378,13 +379,13 @@ func (ch *ComplianceHandler) RequestDataDeletion(w http.ResponseWriter, r *http.
 // GET /api/v1/compliance/gdpr/consent
 func (ch *ComplianceHandler) GetUserConsent(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
 		return
 	}
 
-	userID, ok := ctx.Value("userID").(int64)
+	userID, ok := ctx.Value(middleware.UserIDKey).(int64)
 	if !ok {
 		http.Error(w, "user id not found", http.StatusBadRequest)
 		return
@@ -414,13 +415,13 @@ type ConsentRequest struct {
 
 func (ch *ComplianceHandler) RecordConsent(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
 		return
 	}
 
-	userID, ok := ctx.Value("userID").(int64)
+	userID, ok := ctx.Value(middleware.UserIDKey).(int64)
 	if !ok {
 		http.Error(w, "user id not found", http.StatusBadRequest)
 		return

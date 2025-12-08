@@ -9,10 +9,13 @@ import (
 	"vyomtech-backend/pkg/logger"
 )
 
+// contextKey is a custom type for context keys to avoid collisions
+type contextKey string
+
 const (
-	UserIDKey   = "user_id"
-	TenantIDKey = "tenant_id"
-	RoleKey     = "role"
+	UserIDKey   contextKey = "user_id"
+	TenantIDKey contextKey = "tenant_id"
+	RoleKey     contextKey = "role"
 )
 
 // AuthMiddleware validates JWT token in Authorization header

@@ -23,13 +23,14 @@ func NewLeadService(db *sql.DB) *LeadService {
 // CreateLead creates a new lead
 func (ls *LeadService) CreateLead(ctx context.Context, lead *models.Lead) error {
 	query := `
-		INSERT INTO lead (tenant_id, name, email, phone, status, source, campaign_id, assigned_agent_id, notes, created_at, updated_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+		INSERT INTO sales_lead (tenant_id, lead_code, first_name, last_name, email, phone, company_name, industry, status, probability, source, campaign_id, assigned_to, created_by, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
 	`
 
 	result, err := ls.db.ExecContext(ctx, query,
-		lead.TenantID, lead.Name, lead.Email, lead.Phone, lead.Status, lead.Source,
-		lead.CampaignID, lead.AssignedAgent, lead.Notes,
+		lead.TenantID, lead.LeadCode, lead.FirstName, lead.LastName, lead.Email, lead.Phone,
+		lead.CompanyName, lead.Industry, lead.Status, lead.Probability, lead.Source,
+		lead.CampaignID, lead.AssignedTo, lead.CreatedBy,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create lead: %w", err)
@@ -40,22 +41,23 @@ func (ls *LeadService) CreateLead(ctx context.Context, lead *models.Lead) error 
 		return fmt.Errorf("failed to get lead id: %w", err)
 	}
 
-	lead.ID = id
+	lead.ID = fmt.Sprintf("%d", id)
 	return nil
 }
 
 // GetLead retrieves a lead by ID
-func (ls *LeadService) GetLead(ctx context.Context, id int64, tenantID string) (*models.Lead, error) {
+func (ls *LeadService) GetLead(ctx context.Context, id string, tenantID string) (*models.Lead, error) {
 	query := `
-		SELECT id, tenant_id, name, email, phone, status, source, campaign_id, assigned_agent_id, notes, created_at, updated_at
-		FROM lead
+		SELECT id, tenant_id, lead_code, first_name, last_name, email, phone, company_name, industry, status, probability, source, campaign_id, assigned_to, created_by, created_at, updated_at
+		FROM sales_lead
 		WHERE id = ? AND tenant_id = ?
 	`
 
 	lead := &models.Lead{}
 	err := ls.db.QueryRowContext(ctx, query, id, tenantID).Scan(
-		&lead.ID, &lead.TenantID, &lead.Name, &lead.Email, &lead.Phone, &lead.Status,
-		&lead.Source, &lead.CampaignID, &lead.AssignedAgent, &lead.Notes, &lead.CreatedAt, &lead.UpdatedAt,
+		&lead.ID, &lead.TenantID, &lead.LeadCode, &lead.FirstName, &lead.LastName, &lead.Email, &lead.Phone,
+		&lead.CompanyName, &lead.Industry, &lead.Status, &lead.Probability, &lead.Source, &lead.CampaignID,
+		&lead.AssignedTo, &lead.CreatedBy, &lead.CreatedAt, &lead.UpdatedAt,
 	)
 	if err == sql.ErrNoRows {
 		return nil, fmt.Errorf("lead not found")
@@ -70,15 +72,13 @@ func (ls *LeadService) GetLead(ctx context.Context, id int64, tenantID string) (
 // UpdateLead updates an existing lead
 func (ls *LeadService) UpdateLead(ctx context.Context, lead *models.Lead) error {
 	query := `
-		UPDATE lead
-		SET name = ?, email = ?, phone = ?, status = ?, source = ?, campaign_id = ?,
-		    assigned_agent_id = ?, notes = ?, updated_at = NOW()
+		UPDATE sales_lead
+		SET first_name = ?, last_name = ?, email = ?, phone = ?, company_name = ?, industry = ?, status = ?, probability = ?, source = ?, assigned_to = ?, next_action_date = ?, next_action_notes = ?, updated_at = NOW()
 		WHERE id = ? AND tenant_id = ?
 	`
 
 	result, err := ls.db.ExecContext(ctx, query,
-		lead.Name, lead.Email, lead.Phone, lead.Status, lead.Source, lead.CampaignID,
-		lead.AssignedAgent, lead.Notes, lead.ID, lead.TenantID,
+		lead.FirstName, lead.LastName, lead.Email, lead.Phone, lead.CompanyName, lead.Industry, lead.Status, lead.Probability, lead.Source, lead.AssignedTo, lead.NextActionDate, lead.NextActionNotes, lead.ID, lead.TenantID,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to update lead: %w", err)
@@ -95,9 +95,9 @@ func (ls *LeadService) UpdateLead(ctx context.Context, lead *models.Lead) error 
 	return nil
 }
 
-// DeleteLead deletes a lead
-func (ls *LeadService) DeleteLead(ctx context.Context, id int64, tenantID string) error {
-	query := `DELETE FROM lead WHERE id = ? AND tenant_id = ?`
+// DeleteLead soft deletes a lead
+func (ls *LeadService) DeleteLead(ctx context.Context, id string, tenantID string) error {
+	query := `UPDATE sales_lead SET deleted_at = NOW() WHERE id = ? AND tenant_id = ?`
 
 	result, err := ls.db.ExecContext(ctx, query, id, tenantID)
 	if err != nil {
@@ -118,8 +118,8 @@ func (ls *LeadService) DeleteLead(ctx context.Context, id int64, tenantID string
 // GetLeads retrieves leads with filtering and pagination
 func (ls *LeadService) GetLeads(ctx context.Context, tenantID string, filter *models.LeadFilter) ([]*models.Lead, error) {
 	query := `
-		SELECT id, tenant_id, name, email, phone, status, source, campaign_id, assigned_agent_id, notes, created_at, updated_at
-		FROM lead
+		SELECT id, tenant_id, lead_code, first_name, last_name, email, phone, company_name, industry, status, probability, source, campaign_id, assigned_to, created_by, created_at, updated_at
+		FROM sales_lead
 		WHERE tenant_id = ?
 	`
 
@@ -138,7 +138,7 @@ func (ls *LeadService) GetLeads(ctx context.Context, tenantID string, filter *mo
 		args = append(args, filter.CampaignID)
 	}
 	if filter.AssignedTo > 0 {
-		query += " AND assigned_agent_id = ?"
+		query += " AND assigned_to = ?"
 		args = append(args, filter.AssignedTo)
 	}
 
@@ -159,8 +159,9 @@ func (ls *LeadService) GetLeads(ctx context.Context, tenantID string, filter *mo
 	for rows.Next() {
 		lead := &models.Lead{}
 		err := rows.Scan(
-			&lead.ID, &lead.TenantID, &lead.Name, &lead.Email, &lead.Phone, &lead.Status,
-			&lead.Source, &lead.CampaignID, &lead.AssignedAgent, &lead.Notes, &lead.CreatedAt, &lead.UpdatedAt,
+			&lead.ID, &lead.TenantID, &lead.LeadCode, &lead.FirstName, &lead.LastName, &lead.Email, &lead.Phone,
+			&lead.CompanyName, &lead.Industry, &lead.Status, &lead.Probability, &lead.Source, &lead.CampaignID,
+			&lead.AssignedTo, &lead.CreatedBy, &lead.CreatedAt, &lead.UpdatedAt,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan lead: %w", err)
@@ -181,7 +182,7 @@ func (ls *LeadService) GetLeadStats(ctx context.Context, tenantID string) (*mode
 			SUM(CASE WHEN status = 'qualified' THEN 1 ELSE 0 END) as qualified,
 			SUM(CASE WHEN status = 'converted' THEN 1 ELSE 0 END) as converted,
 			SUM(CASE WHEN status = 'lost' THEN 1 ELSE 0 END) as lost
-		FROM lead
+		FROM sales_lead
 		WHERE tenant_id = ?
 	`
 
@@ -203,15 +204,15 @@ func (ls *LeadService) GetLeadStats(ctx context.Context, tenantID string) (*mode
 // GetLeadsByPipelineStage retrieves leads by pipeline stage
 func (ls *LeadService) GetLeadsByPipelineStage(ctx context.Context, tenantID string, stage string, filter *models.LeadFilter) ([]*models.Lead, error) {
 	query := `
-		SELECT id, tenant_id, name, email, phone, status, source, campaign_id, assigned_agent_id, notes, created_at, updated_at
-		FROM lead
-		WHERE tenant_id = ? AND (pipeline_stage = ? OR status IN (SELECT status FROM lead_pipeline_config WHERE tenant_id = ? AND pipeline_stage = ?))
+		SELECT id, tenant_id, lead_code, first_name, last_name, email, phone, company_name, industry, status, probability, source, campaign_id, assigned_to, created_by, created_at, updated_at
+		FROM sales_lead
+		WHERE tenant_id = ? AND status IN (SELECT DISTINCT status FROM sales_lead WHERE tenant_id = ? LIMIT 1)
 	`
 
-	args := []interface{}{tenantID, stage, tenantID, stage}
+	args := []interface{}{tenantID, tenantID}
 
 	if filter.AssignedTo > 0 {
-		query += " AND assigned_agent_id = ?"
+		query += " AND assigned_to = ?"
 		args = append(args, filter.AssignedTo)
 	}
 
@@ -232,8 +233,9 @@ func (ls *LeadService) GetLeadsByPipelineStage(ctx context.Context, tenantID str
 	for rows.Next() {
 		lead := &models.Lead{}
 		err := rows.Scan(
-			&lead.ID, &lead.TenantID, &lead.Name, &lead.Email, &lead.Phone, &lead.Status,
-			&lead.Source, &lead.CampaignID, &lead.AssignedAgent, &lead.Notes, &lead.CreatedAt, &lead.UpdatedAt,
+			&lead.ID, &lead.TenantID, &lead.LeadCode, &lead.FirstName, &lead.LastName, &lead.Email, &lead.Phone,
+			&lead.CompanyName, &lead.Industry, &lead.Status, &lead.Probability, &lead.Source, &lead.CampaignID,
+			&lead.AssignedTo, &lead.CreatedBy, &lead.CreatedAt, &lead.UpdatedAt,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan lead: %w", err)

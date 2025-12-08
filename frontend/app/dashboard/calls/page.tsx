@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Search, Plus, Phone, Clock, User, Download } from 'lucide-react'
+import { FiSearch, FiPlus, FiPhone, FiClock, FiUser, FiDownload } from 'react-icons/fi'
 import { format, formatDistance } from 'date-fns'
 
 interface Call {
@@ -129,7 +129,7 @@ export default function CallsPage() {
           <p className="text-gray-600 mt-2">View and manage all call records</p>
         </div>
         <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center">
-          <Plus className="w-4 h-4 mr-2" />
+          <FiPlus className="w-4 h-4 mr-2" />
           Make Call
         </button>
       </div>
@@ -138,7 +138,7 @@ export default function CallsPage() {
       <div className="bg-white rounded-lg shadow p-4 mb-6">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+            <FiSearch className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
             <input
               type="text"
               placeholder="Search by name or phone..."
@@ -191,7 +191,7 @@ export default function CallsPage() {
                       <div>
                         <p className="font-medium text-gray-900">{call.leadName}</p>
                         <p className="text-sm text-gray-600 flex items-center mt-1">
-                          <Phone className="w-3 h-3 mr-1" />
+                          <FiPhone className="w-3 h-3 mr-1" />
                           {call.leadPhone}
                         </p>
                       </div>
@@ -199,14 +199,14 @@ export default function CallsPage() {
                     <td className="px-6 py-4">
                       <div className="flex items-center">
                         <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center mr-2">
-                          <User className="w-4 h-4 text-blue-600" />
+                          <FiUser className="w-4 h-4 text-blue-600" />
                         </div>
                         <p className="text-sm text-gray-900">{call.agentName}</p>
                       </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center text-sm text-gray-600">
-                        <Clock className="w-4 h-4 mr-2" />
+                        <FiClock className="w-4 h-4 mr-2" />
                         {formatDuration(call.duration)}
                       </div>
                     </td>
@@ -226,7 +226,7 @@ export default function CallsPage() {
                     </td>
                     <td className="px-6 py-4">
                       <button className="p-2 hover:bg-gray-100 rounded-lg transition">
-                        <Download className="w-4 h-4 text-gray-600" />
+                        <FiDownload className="w-4 h-4 text-gray-600" />
                       </button>
                     </td>
                   </tr>

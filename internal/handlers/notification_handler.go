@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"vyomtech-backend/internal/middleware"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -43,7 +44,7 @@ func (h *NotificationHandler) RegisterRoutes(router *mux.Router) {
 // CreateNotification creates a new notification
 func (h *NotificationHandler) CreateNotification(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		http.Error(w, "tenant_id required", http.StatusBadRequest)
 		return
@@ -56,7 +57,7 @@ func (h *NotificationHandler) CreateNotification(w http.ResponseWriter, r *http.
 	}
 
 	notif.TenantID = tenantID
-	userID, ok := ctx.Value("userID").(int64)
+	userID, ok := ctx.Value(middleware.UserIDKey).(int64)
 	if ok && notif.UserID == 0 {
 		notif.UserID = userID
 	}
@@ -76,7 +77,7 @@ func (h *NotificationHandler) CreateNotification(w http.ResponseWriter, r *http.
 // GetNotification retrieves a specific notification
 func (h *NotificationHandler) GetNotification(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		http.Error(w, "tenant_id required", http.StatusBadRequest)
 		return
@@ -103,13 +104,13 @@ func (h *NotificationHandler) GetNotification(w http.ResponseWriter, r *http.Req
 // ListNotifications lists notifications for current user
 func (h *NotificationHandler) ListNotifications(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		http.Error(w, "tenant_id required", http.StatusBadRequest)
 		return
 	}
 
-	userID, ok := ctx.Value("userID").(int64)
+	userID, ok := ctx.Value(middleware.UserIDKey).(int64)
 	if !ok {
 		http.Error(w, "user_id required", http.StatusBadRequest)
 		return
@@ -150,7 +151,7 @@ func (h *NotificationHandler) ListNotifications(w http.ResponseWriter, r *http.R
 // DeleteNotification deletes a notification
 func (h *NotificationHandler) DeleteNotification(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		http.Error(w, "tenant_id required", http.StatusBadRequest)
 		return
@@ -176,7 +177,7 @@ func (h *NotificationHandler) DeleteNotification(w http.ResponseWriter, r *http.
 // MarkAsRead marks a notification as read
 func (h *NotificationHandler) MarkAsRead(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		http.Error(w, "tenant_id required", http.StatusBadRequest)
 		return
@@ -210,7 +211,7 @@ func (h *NotificationHandler) MarkAsRead(w http.ResponseWriter, r *http.Request)
 // ArchiveNotification archives a notification
 func (h *NotificationHandler) ArchiveNotification(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		http.Error(w, "tenant_id required", http.StatusBadRequest)
 		return
@@ -244,7 +245,7 @@ func (h *NotificationHandler) ArchiveNotification(w http.ResponseWriter, r *http
 // GetUnreadNotifications gets unread notifications for a user
 func (h *NotificationHandler) GetUnreadNotifications(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		http.Error(w, "tenant_id required", http.StatusBadRequest)
 		return
@@ -282,13 +283,13 @@ func (h *NotificationHandler) GetUnreadNotifications(w http.ResponseWriter, r *h
 // GetNotificationStats gets notification statistics
 func (h *NotificationHandler) GetNotificationStats(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		http.Error(w, "tenant_id required", http.StatusBadRequest)
 		return
 	}
 
-	userID, ok := ctx.Value("userID").(int64)
+	userID, ok := ctx.Value(middleware.UserIDKey).(int64)
 	if !ok {
 		userID = 0
 	}
@@ -307,13 +308,13 @@ func (h *NotificationHandler) GetNotificationStats(w http.ResponseWriter, r *htt
 // GetPreferences gets notification preferences for current user
 func (h *NotificationHandler) GetPreferences(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		http.Error(w, "tenant_id required", http.StatusBadRequest)
 		return
 	}
 
-	userID, ok := ctx.Value("userID").(int64)
+	userID, ok := ctx.Value(middleware.UserIDKey).(int64)
 	if !ok {
 		http.Error(w, "user_id required", http.StatusBadRequest)
 		return
@@ -333,13 +334,13 @@ func (h *NotificationHandler) GetPreferences(w http.ResponseWriter, r *http.Requ
 // UpdatePreferences updates notification preferences for current user
 func (h *NotificationHandler) UpdatePreferences(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		http.Error(w, "tenant_id required", http.StatusBadRequest)
 		return
 	}
 
-	userID, ok := ctx.Value("userID").(int64)
+	userID, ok := ctx.Value(middleware.UserIDKey).(int64)
 	if !ok {
 		http.Error(w, "user_id required", http.StatusBadRequest)
 		return

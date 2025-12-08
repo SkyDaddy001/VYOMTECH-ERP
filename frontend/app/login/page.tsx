@@ -6,8 +6,8 @@ import { apiClient } from '@/lib/api-client'
 
 export default function LoginPage() {
   const router = useRouter()
-  const [email, setEmail] = useState('demo@vyomtech.com')
-  const [password, setPassword] = useState('demo123')
+  const [email, setEmail] = useState('master.admin@vyomtech.com')
+  const [password, setPassword] = useState('MasterAdmin@123')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 

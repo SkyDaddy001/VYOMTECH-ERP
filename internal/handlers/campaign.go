@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"vyomtech-backend/internal/middleware"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -53,7 +54,7 @@ type UpdateCampaignRequest struct {
 // GET /api/v1/campaigns
 func (ch *CampaignHandler) GetCampaigns(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		ch.logger.Error("Failed to extract tenant ID from context")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
@@ -93,7 +94,7 @@ func (ch *CampaignHandler) GetCampaigns(w http.ResponseWriter, r *http.Request) 
 // GET /api/v1/campaigns/{id}
 func (ch *CampaignHandler) GetCampaign(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		ch.logger.Error("Failed to extract tenant ID from context")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
@@ -127,14 +128,14 @@ func (ch *CampaignHandler) GetCampaign(w http.ResponseWriter, r *http.Request) {
 // POST /api/v1/campaigns
 func (ch *CampaignHandler) CreateCampaign(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	userID, ok := ctx.Value("userID").(int64)
+	userID, ok := ctx.Value(middleware.UserIDKey).(int64)
 	if !ok {
 		ch.logger.Error("Failed to extract user ID from context")
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		ch.logger.Error("Failed to extract tenant ID from context")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
@@ -183,14 +184,14 @@ func (ch *CampaignHandler) CreateCampaign(w http.ResponseWriter, r *http.Request
 // PUT /api/v1/campaigns/{id}
 func (ch *CampaignHandler) UpdateCampaign(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	userID, ok := ctx.Value("userID").(int64)
+	userID, ok := ctx.Value(middleware.UserIDKey).(int64)
 	if !ok {
 		ch.logger.Error("Failed to extract user ID from context")
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		ch.logger.Error("Failed to extract tenant ID from context")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
@@ -274,14 +275,14 @@ func (ch *CampaignHandler) UpdateCampaign(w http.ResponseWriter, r *http.Request
 // DELETE /api/v1/campaigns/{id}
 func (ch *CampaignHandler) DeleteCampaign(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	userID, ok := ctx.Value("userID").(int64)
+	userID, ok := ctx.Value(middleware.UserIDKey).(int64)
 	if !ok {
 		ch.logger.Error("Failed to extract user ID from context")
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		ch.logger.Error("Failed to extract tenant ID from context")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
@@ -315,7 +316,7 @@ func (ch *CampaignHandler) DeleteCampaign(w http.ResponseWriter, r *http.Request
 // GET /api/v1/campaigns/stats
 func (ch *CampaignHandler) GetCampaignStats(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		ch.logger.Error("Failed to extract tenant ID from context")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"vyomtech-backend/internal/middleware"
 	"encoding/json"
 	"net/http"
 
@@ -50,14 +51,14 @@ type AIProvider struct {
 // POST /api/v1/ai/query
 func (ah *AIHandler) ProcessAIQuery(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	userID, ok := ctx.Value("userID").(int64)
+	userID, ok := ctx.Value(middleware.UserIDKey).(int64)
 	if !ok {
 		ah.logger.Error("Failed to extract user ID from context")
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	tenantID, ok := ctx.Value("tenantID").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		ah.logger.Error("Failed to extract tenant ID from context")
 		http.Error(w, "tenant id not found", http.StatusBadRequest)
@@ -105,7 +106,7 @@ func (ah *AIHandler) ProcessAIQuery(w http.ResponseWriter, r *http.Request) {
 // GET /api/v1/ai/providers
 func (ah *AIHandler) ListAIProviders(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	_, ok := ctx.Value("userID").(int64)
+	_, ok := ctx.Value(middleware.UserIDKey).(int64)
 	if !ok {
 		ah.logger.Error("Failed to extract user ID from context")
 		http.Error(w, "unauthorized", http.StatusUnauthorized)

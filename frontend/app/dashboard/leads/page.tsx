@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Search, Plus, MoreVertical, Phone, Mail, User, TrendingUp, Filter } from 'lucide-react'
+import { FiSearch, FiPlus, FiMoreVertical, FiPhone, FiMail, FiUser, FiTrendingUp, FiFilter } from 'react-icons/fi'
 import { apiClient } from '@/lib/api-client'
 import { format } from 'date-fns'
 import { DetailedLeadStatus, STATUS_MAP, getStatusesByPhase, getPhases, getStatusInfo } from '@/lib/lead-status-config'
@@ -33,14 +33,22 @@ export default function LeadsPage() {
     try {
       setLoading(true)
       // Fetch leads from real API
-      const response = await apiClient.get<Lead[]>('/api/v1/leads', {
+      const response = (await apiClient.get('/api/v1/leads', {
         params: {
           limit: 50,
           offset: 0
         }
-      })
+      })) as any
       
-      const leadData = Array.isArray(response.data) ? response.data : (response.data && typeof response.data === 'object' && 'data' in response.data ? (response.data as any).data : [])
+      // Handle both direct array and wrapped response formats
+      let leadData: Lead[] = []
+      
+      if (Array.isArray(response.data)) {
+        leadData = response.data as Lead[]
+      } else if (response.data && typeof response.data === 'object' && 'data' in response.data) {
+        leadData = response.data.data || []
+      }
+      
       const formattedLeads = (leadData || []).map((lead: any) => ({
         id: lead.id?.toString() || '',
         name: lead.name || '',
@@ -164,7 +172,7 @@ export default function LeadsPage() {
           <p className="text-gray-600 mt-2">Manage and track your sales leads</p>
         </div>
         <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center">
-          <Plus className="w-4 h-4 mr-2" />
+          <FiPlus className="w-4 h-4 mr-2" />
           New Lead
         </button>
       </div>
@@ -174,7 +182,7 @@ export default function LeadsPage() {
         <div className="flex flex-col gap-4">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+              <FiSearch className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
               <input
                 type="text"
                 placeholder="Search by name, email, or company..."
@@ -188,7 +196,7 @@ export default function LeadsPage() {
           {/* Status Filter by Phase */}
           <div className="border-t pt-4">
             <label className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
-              <Filter className="w-4 h-4 mr-2" />
+              <FiFilter className="w-4 h-4 mr-2" />
               Filter by Status
             </label>
             <div className="space-y-3 max-h-96 overflow-y-auto">
@@ -258,7 +266,7 @@ export default function LeadsPage() {
                   <td className="px-6 py-4">
                     <div className="flex items-center">
                       <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                        <User className="w-5 h-5 text-blue-600" />
+                        <FiUser className="w-5 h-5 text-blue-600" />
                       </div>
                       <p className="ml-3 font-medium text-gray-900">{lead.name}</p>
                     </div>
@@ -268,13 +276,13 @@ export default function LeadsPage() {
                     <div className="space-y-1">
                       {lead.email && (
                         <div className="flex items-center text-sm text-gray-600">
-                          <Mail className="w-4 h-4 mr-2" />
+                          <FiMail className="w-4 h-4 mr-2" />
                           {lead.email}
                         </div>
                       )}
                       {lead.phone && (
                         <div className="flex items-center text-sm text-gray-600">
-                          <Phone className="w-4 h-4 mr-2" />
+                          <FiPhone className="w-4 h-4 mr-2" />
                           {lead.phone}
                         </div>
                       )}
@@ -298,7 +306,7 @@ export default function LeadsPage() {
                   </td>
                   <td className="px-6 py-4">
                     <button className="p-2 hover:bg-gray-100 rounded-lg transition">
-                      <MoreVertical className="w-4 h-4 text-gray-600" />
+                      <FiMoreVertical className="w-4 h-4 text-gray-600" />
                     </button>
                   </td>
                 </tr>

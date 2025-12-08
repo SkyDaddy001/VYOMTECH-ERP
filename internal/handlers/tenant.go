@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"vyomtech-backend/internal/middleware"
 	"vyomtech-backend/internal/services"
 	"vyomtech-backend/pkg/logger"
 )
@@ -41,7 +42,7 @@ func (h *TenantHandler) GetTenantInfo(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	// Get tenant ID from context
-	tenantID, ok := ctx.Value("tenant_id").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		http.Error(w, "Tenant ID not found in context", http.StatusBadRequest)
 		return
@@ -63,7 +64,7 @@ func (h *TenantHandler) GetTenantInfo(w http.ResponseWriter, r *http.Request) {
 func (h *TenantHandler) GetTenantUserCount(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	tenantID, ok := ctx.Value("tenant_id").(string)
+	tenantID, ok := ctx.Value(middleware.TenantIDKey).(string)
 	if !ok {
 		http.Error(w, "Tenant ID not found in context", http.StatusBadRequest)
 		return
@@ -94,7 +95,7 @@ func (h *TenantHandler) SwitchTenant(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	// Get user ID and new tenant ID from context
-	userID, ok := ctx.Value("user_id").(int64)
+	userID, ok := ctx.Value(middleware.UserIDKey).(int64)
 	if !ok {
 		http.Error(w, "User ID not found in context", http.StatusBadRequest)
 		return
@@ -142,7 +143,7 @@ func (h *TenantHandler) AddTenantMember(w http.ResponseWriter, r *http.Request) 
 	ctx := r.Context()
 
 	// Get user ID for authorization check
-	userID, ok := ctx.Value("user_id").(int64)
+	userID, ok := ctx.Value(middleware.UserIDKey).(int64)
 	if !ok {
 		http.Error(w, "User ID not found in context", http.StatusBadRequest)
 		return
@@ -210,7 +211,7 @@ func (h *TenantHandler) RemoveTenantMember(w http.ResponseWriter, r *http.Reques
 	ctx := r.Context()
 
 	// Get user ID for authorization check
-	userID, ok := ctx.Value("user_id").(int64)
+	userID, ok := ctx.Value(middleware.UserIDKey).(int64)
 	if !ok {
 		http.Error(w, "User ID not found in context", http.StatusBadRequest)
 		return
@@ -268,7 +269,7 @@ func (h *TenantHandler) RemoveTenantMember(w http.ResponseWriter, r *http.Reques
 func (h *TenantHandler) GetUserTenants(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	userID, ok := ctx.Value("user_id").(int64)
+	userID, ok := ctx.Value(middleware.UserIDKey).(int64)
 	if !ok {
 		http.Error(w, "User ID not found in context", http.StatusBadRequest)
 		return

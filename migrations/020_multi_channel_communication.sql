@@ -3,7 +3,7 @@
 -- Date: 2025-12-03
 
 -- Table for communication channel configuration
-CREATE TABLE communication_channel (
+CREATE TABLE IF NOT EXISTS `communication_channel` (
     id CHAR(36) PRIMARY KEY,
     tenant_id CHAR(36) NOT NULL,
     channel_type ENUM('TELEGRAM', 'WHATSAPP', 'SMS', 'EMAIL') NOT NULL,
@@ -33,7 +33,7 @@ CREATE TABLE communication_channel (
 COMMENT='Communication channel configuration';
 
 -- Table for message templates
-CREATE TABLE message_template (
+CREATE TABLE IF NOT EXISTS `message_template` (
     id CHAR(36) PRIMARY KEY,
     tenant_id CHAR(36) NOT NULL,
     template_name VARCHAR(100) NOT NULL,
@@ -55,7 +55,7 @@ CREATE TABLE message_template (
 COMMENT='Message templates for different channels';
 
 -- Table for communication sessions/conversations
-CREATE TABLE communication_session (
+CREATE TABLE IF NOT EXISTS `communication_session` (
     id CHAR(36) PRIMARY KEY,
     tenant_id CHAR(36) NOT NULL,
     initiated_by CHAR(36),
@@ -98,7 +98,7 @@ CREATE TABLE communication_session (
 COMMENT='Communication sessions/conversations';
 
 -- Table for individual messages
-CREATE TABLE communication_message (
+CREATE TABLE IF NOT EXISTS `communication_message` (
     id CHAR(36) PRIMARY KEY,
     session_id CHAR(36) NOT NULL,
     tenant_id CHAR(36) NOT NULL,
@@ -142,7 +142,7 @@ CREATE TABLE communication_message (
 COMMENT='Individual messages in conversations';
 
 -- Table for contact preferences
-CREATE TABLE contact_communication_preference (
+CREATE TABLE IF NOT EXISTS `contact_communication_preference` (
     id CHAR(36) PRIMARY KEY,
     tenant_id CHAR(36) NOT NULL,
     contact_id CHAR(36),
@@ -171,7 +171,7 @@ CREATE TABLE contact_communication_preference (
 COMMENT='Contact communication preferences';
 
 -- Table for webhook logs
-CREATE TABLE communication_webhook_log (
+CREATE TABLE IF NOT EXISTS `communication_webhook_log` (
     id CHAR(36) PRIMARY KEY,
     tenant_id CHAR(36) NOT NULL,
     channel_id CHAR(36),
@@ -193,7 +193,7 @@ CREATE TABLE communication_webhook_log (
 COMMENT='Webhook event logs from communication providers';
 
 -- Table for campaign/bulk messaging
-CREATE TABLE bulk_message_campaign (
+CREATE TABLE IF NOT EXISTS `bulk_message_campaign` (
     id CHAR(36) PRIMARY KEY,
     tenant_id CHAR(36) NOT NULL,
     campaign_name VARCHAR(100) NOT NULL,
@@ -221,7 +221,7 @@ CREATE TABLE bulk_message_campaign (
 COMMENT='Bulk messaging campaigns';
 
 -- Table for campaign recipients
-CREATE TABLE bulk_message_recipient (
+CREATE TABLE IF NOT EXISTS `bulk_message_recipient` (
     id CHAR(36) PRIMARY KEY,
     campaign_id CHAR(36) NOT NULL,
     tenant_id CHAR(36) NOT NULL,
@@ -243,7 +243,7 @@ CREATE TABLE bulk_message_recipient (
 COMMENT='Bulk campaign recipients';
 
 -- Table for message automation rules
-CREATE TABLE message_automation_rule (
+CREATE TABLE IF NOT EXISTS `message_automation_rule` (
     id CHAR(36) PRIMARY KEY,
     tenant_id CHAR(36) NOT NULL,
     rule_name VARCHAR(100) NOT NULL,
@@ -267,7 +267,7 @@ CREATE TABLE message_automation_rule (
 COMMENT='Message automation rules';
 
 -- Table for communication analytics
-CREATE TABLE communication_analytics (
+CREATE TABLE IF NOT EXISTS `communication_analytics` (
     id CHAR(36) PRIMARY KEY,
     tenant_id CHAR(36) NOT NULL,
     channel_type ENUM('TELEGRAM', 'WHATSAPP', 'SMS', 'EMAIL'),
@@ -289,7 +289,7 @@ CREATE TABLE communication_analytics (
 COMMENT='Communication channel analytics';
 
 -- Table for message scheduling
-CREATE TABLE scheduled_message (
+CREATE TABLE IF NOT EXISTS `scheduled_message` (
     id CHAR(36) PRIMARY KEY,
     tenant_id CHAR(36) NOT NULL,
     channel_type ENUM('TELEGRAM', 'WHATSAPP', 'SMS', 'EMAIL') NOT NULL,
@@ -316,7 +316,7 @@ CREATE TABLE scheduled_message (
 COMMENT='Scheduled messages for later delivery';
 
 -- Table for conversation attachments
-CREATE TABLE communication_attachment (
+CREATE TABLE IF NOT EXISTS `communication_attachment` (
     id CHAR(36) PRIMARY KEY,
     message_id CHAR(36) NOT NULL,
     tenant_id CHAR(36) NOT NULL,
@@ -336,7 +336,7 @@ CREATE TABLE communication_attachment (
 COMMENT='Message attachments';
 
 -- Table for user communication permissions
-CREATE TABLE user_communication_permission (
+CREATE TABLE IF NOT EXISTS `user_communication_permission` (
     id CHAR(36) PRIMARY KEY,
     tenant_id CHAR(36) NOT NULL,
     user_id CHAR(36) NOT NULL,
