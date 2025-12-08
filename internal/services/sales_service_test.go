@@ -21,8 +21,12 @@ func TestSalesLead(t *testing.T) {
 	}
 
 	assert.Equal(t, "lead-uuid-001", lead.ID)
+	assert.Equal(t, "tenant-001", lead.TenantID)
 	assert.Equal(t, "LD001", lead.LeadCode)
+	assert.Equal(t, "John", lead.FirstName)
+	assert.Equal(t, "john@example.com", lead.Email)
 	assert.Equal(t, "new", lead.Status)
+	assert.Equal(t, "website", lead.Source)
 }
 
 // TestLeadStatuses validates valid lead statuses
@@ -59,7 +63,12 @@ func TestSalesCustomer(t *testing.T) {
 	}
 
 	assert.Equal(t, "cust-uuid-001", customer.ID)
+	assert.Equal(t, "tenant-001", customer.TenantID)
+	assert.Equal(t, "CUST001", customer.CustomerCode)
+	assert.Equal(t, "John Doe", customer.CustomerName)
 	assert.Equal(t, 100000.00, customer.CreditLimit)
+	assert.Equal(t, 30, customer.CreditDays)
+	assert.Equal(t, 25000.00, customer.CurrentBalance)
 	assert.Equal(t, "active", customer.Status)
 }
 
@@ -78,6 +87,12 @@ func TestQuotation(t *testing.T) {
 	}
 
 	assert.Equal(t, "quote-uuid-001", quotation.ID)
+	assert.Equal(t, "tenant-001", quotation.TenantID)
+	assert.Equal(t, "QT001", quotation.QuotationNumber)
+	assert.Equal(t, "cust-uuid-001", quotation.CustomerID)
+	assert.Equal(t, 10000.00, quotation.SubtotalAmount)
+	assert.Equal(t, 1000.00, quotation.DiscountAmount)
+	assert.Equal(t, 1620.00, quotation.TaxAmount)
 	assert.Equal(t, "draft", quotation.Status)
 	expectedTotal := 10000.00 - 1000.00 + 1620.00
 	assert.InDelta(t, expectedTotal, quotation.TotalAmount, 0.01)
@@ -175,6 +190,8 @@ func TestMultiTenantSales(t *testing.T) {
 	lead2 := &models.SalesLead{ID: "lead-2", TenantID: "tenant-2"}
 
 	assert.NotEqual(t, lead1.TenantID, lead2.TenantID)
+	assert.Equal(t, "lead-1", lead1.ID)
+	assert.Equal(t, "lead-2", lead2.ID)
 }
 
 // TestCustomerCategoryValidation validates customer categories

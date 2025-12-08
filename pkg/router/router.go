@@ -18,7 +18,7 @@ func SetupRoutesWithServices(
 	agentService *services.AgentService,
 	log *logger.Logger,
 ) *mux.Router {
-	return setupRoutes(authService, nil, passwordResetHandler, agentService, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, log)
+	return setupRoutes(authService, nil, passwordResetHandler, agentService, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, log)
 }
 
 // SetupRoutesWithTenant configures all API routes with tenant service
@@ -29,7 +29,7 @@ func SetupRoutesWithTenant(
 	agentService *services.AgentService,
 	log *logger.Logger,
 ) *mux.Router {
-	return setupRoutes(authService, tenantService, passwordResetHandler, agentService, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, log)
+	return setupRoutes(authService, tenantService, passwordResetHandler, agentService, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, log)
 }
 
 // SetupRoutesWithGamification configures all API routes with gamification features
@@ -41,7 +41,7 @@ func SetupRoutesWithGamification(
 	gamificationService *services.GamificationService,
 	log *logger.Logger,
 ) *mux.Router {
-	return setupRoutes(authService, tenantService, passwordResetHandler, agentService, gamificationService, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, log)
+	return setupRoutes(authService, tenantService, passwordResetHandler, agentService, gamificationService, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, log)
 }
 
 // SetupRoutesWithCoreFeatures configures all API routes with core features and real-time support
@@ -57,7 +57,7 @@ func SetupRoutesWithCoreFeatures(
 	aiOrchestrator *services.AIOrchestrator,
 	log *logger.Logger,
 ) *mux.Router {
-	return setupRoutes(authService, tenantService, passwordResetHandler, agentService, gamificationService, leadService, callService, campaignService, aiOrchestrator, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, log)
+	return setupRoutes(authService, tenantService, passwordResetHandler, agentService, gamificationService, leadService, callService, campaignService, aiOrchestrator, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, log)
 }
 
 // SetupRoutesWithRealtime configures all API routes with realtime WebSocket support
@@ -79,7 +79,7 @@ func SetupRoutesWithRealtime(
 	customizationService services.TenantCustomizationService,
 	log *logger.Logger,
 ) *mux.Router {
-	return setupRoutes(authService, tenantService, passwordResetHandler, agentService, gamificationService, leadService, callService, campaignService, aiOrchestrator, webSocketHub, leadScoringService, dashboardService, taskService, notificationService, customizationService, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, log)
+	return setupRoutes(authService, tenantService, passwordResetHandler, agentService, gamificationService, leadService, callService, campaignService, aiOrchestrator, webSocketHub, leadScoringService, dashboardService, taskService, notificationService, customizationService, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, log)
 }
 
 // SetupRoutesWithPhase3C configures all API routes including Phase 3C (Modular Monetization)
@@ -115,9 +115,11 @@ func SetupRoutesWithPhase3C(
 	hrDashboardHandler *handlers.HRDashboardHandler,
 	complianceDashboardHandler *handlers.ComplianceDashboardHandler,
 	salesDashboardHandler *handlers.SalesDashboardHandler,
+	userAdminHandler *handlers.UserAdminHandler,
+	tenantAdminHandler *handlers.TenantAdminHandler,
 	log *logger.Logger,
 ) *mux.Router {
-	return setupRoutes(authService, tenantService, passwordResetHandler, agentService, gamificationService, leadService, callService, campaignService, aiOrchestrator, webSocketHub, leadScoringService, dashboardService, taskService, notificationService, customizationService, phase3cServices, salesService, realEstateService, civilService, constructionService, boqService, hrService, glService, rbacService, reraComplianceHandler, hrComplianceHandler, taxComplianceHandler, financialDashboardHandler, hrDashboardHandler, complianceDashboardHandler, salesDashboardHandler, log)
+	return setupRoutes(authService, tenantService, passwordResetHandler, agentService, gamificationService, leadService, callService, campaignService, aiOrchestrator, webSocketHub, leadScoringService, dashboardService, taskService, notificationService, customizationService, phase3cServices, salesService, realEstateService, civilService, constructionService, boqService, hrService, glService, rbacService, reraComplianceHandler, hrComplianceHandler, taxComplianceHandler, financialDashboardHandler, hrDashboardHandler, complianceDashboardHandler, salesDashboardHandler, userAdminHandler, tenantAdminHandler, log)
 }
 
 func setupRoutes(
@@ -152,6 +154,8 @@ func setupRoutes(
 	hrDashboardHandler *handlers.HRDashboardHandler,
 	complianceDashboardHandler *handlers.ComplianceDashboardHandler,
 	salesDashboardHandler *handlers.SalesDashboardHandler,
+	userAdminHandler *handlers.UserAdminHandler,
+	tenantAdminHandler *handlers.TenantAdminHandler,
 	log *logger.Logger,
 ) *mux.Router {
 	r := mux.NewRouter()
@@ -185,31 +189,48 @@ func setupRoutes(
 	resetRoutes.HandleFunc("/request", passwordResetHandler.RequestReset).Methods("POST")
 	resetRoutes.HandleFunc("/reset", passwordResetHandler.ResetPassword).Methods("POST")
 
-	// Tenant routes (if tenant service provided)
+	// Admin Tenant Routes (CRUD operations for tenant management - replaces old tenant routes)
+	if tenantAdminHandler != nil {
+		tenantAdminRoutes := v1.PathPrefix("/tenants").Subrouter()
+		tenantAdminRoutes.HandleFunc("", tenantAdminHandler.ListTenants).Methods("GET")
+		tenantAdminRoutes.HandleFunc("", tenantAdminHandler.CreateTenant).Methods("POST")
+		tenantAdminRoutes.HandleFunc("/{id}", tenantAdminHandler.GetTenant).Methods("GET")
+		tenantAdminRoutes.HandleFunc("/{id}", tenantAdminHandler.UpdateTenant).Methods("PUT")
+		tenantAdminRoutes.HandleFunc("/{id}", tenantAdminHandler.DeleteTenant).Methods("DELETE")
+		tenantAdminRoutes.HandleFunc("/{id}/users", tenantAdminHandler.GetTenantUsers).Methods("GET")
+	}
+
+	// Legacy tenant routes (if tenant service provided) - for backwards compatibility
 	if tenantService != nil {
 		tenantHandler := handlers.NewTenantHandler(tenantService, log)
 
-		// Public tenant creation route (no auth required for registration)
-		publicTenantRoutes := v1.PathPrefix("/tenants").Subrouter()
-		publicTenantRoutes.HandleFunc("", tenantHandler.CreateTenant).Methods("POST")
-
-		// Admin tenant routes (no auth for now, TODO: add admin-only middleware)
-		adminTenantRoutes := v1.PathPrefix("/tenants").Subrouter()
-		adminTenantRoutes.HandleFunc("", tenantHandler.ListTenants).Methods("GET")
-
-		// Protected tenant routes
+		// Protected tenant routes (different path prefix to avoid conflicts)
 		protectedTenantRoutes := v1.PathPrefix("/tenant").Subrouter()
 		protectedTenantRoutes.Use(middleware.AuthMiddleware(authService, log))
 		protectedTenantRoutes.HandleFunc("", tenantHandler.GetTenantInfo).Methods("GET")
 		protectedTenantRoutes.HandleFunc("/users/count", tenantHandler.GetTenantUserCount).Methods("GET")
 
 		// Multi-tenant routes (protected)
-		multiTenantRoutes := v1.PathPrefix("/tenants").Subrouter()
+		multiTenantRoutes := v1.PathPrefix("/my-tenants").Subrouter()
 		multiTenantRoutes.Use(middleware.AuthMiddleware(authService, log))
-		multiTenantRoutes.HandleFunc("", tenantHandler.GetUserTenants).Methods("GET") // List user's tenants
+		multiTenantRoutes.HandleFunc("", tenantHandler.GetUserTenants).Methods("GET")
 		multiTenantRoutes.HandleFunc("/{id}/switch", tenantHandler.SwitchTenant).Methods("POST")
 		multiTenantRoutes.HandleFunc("/{id}/members", tenantHandler.AddTenantMember).Methods("POST")
 		multiTenantRoutes.HandleFunc("/{id}/members/{email}", tenantHandler.RemoveTenantMember).Methods("DELETE")
+	}
+
+	// Admin User Routes (CRUD operations for user management)
+	if userAdminHandler != nil {
+		userAdminRoutes := v1.PathPrefix("/users").Subrouter()
+		userAdminRoutes.Use(middleware.AuthMiddleware(authService, log))
+		userAdminRoutes.Use(middleware.TenantIsolationMiddleware(log))
+		userAdminRoutes.HandleFunc("", userAdminHandler.ListUsers).Methods("GET")
+		userAdminRoutes.HandleFunc("", userAdminHandler.CreateUser).Methods("POST")
+		userAdminRoutes.HandleFunc("/{id}", userAdminHandler.GetUser).Methods("GET")
+		userAdminRoutes.HandleFunc("/{id}", userAdminHandler.UpdateUser).Methods("PUT")
+		userAdminRoutes.HandleFunc("/{id}", userAdminHandler.DeleteUser).Methods("DELETE")
+		userAdminRoutes.HandleFunc("/{id}/role", userAdminHandler.UpdateUserRole).Methods("PUT")
+		userAdminRoutes.HandleFunc("/{id}/reset-password", userAdminHandler.ResetPassword).Methods("POST")
 	}
 
 	// Protected agent routes

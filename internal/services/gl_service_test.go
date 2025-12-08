@@ -22,7 +22,11 @@ func TestChartOfAccount(t *testing.T) {
 	}
 
 	assert.Equal(t, "acc-001", account.ID)
+	assert.Equal(t, "tenant-001", account.TenantID)
 	assert.Equal(t, "1010", account.AccountCode)
+	assert.Equal(t, "Cash", account.AccountName)
+	assert.Equal(t, 15000.00, account.CurrentBalance)
+	assert.Equal(t, "INR", account.Currency)
 	assert.Equal(t, "Asset", account.AccountType)
 	assert.Equal(t, 10000.00, account.OpeningBalance)
 }
@@ -48,6 +52,8 @@ func TestJournalEntry(t *testing.T) {
 	}
 
 	assert.Equal(t, "je-001", entry.ID)
+	assert.Equal(t, "tenant-001", entry.TenantID)
+	assert.Equal(t, "Sales invoice", entry.Description)
 	assert.Equal(t, 5000.00, entry.Amount)
 	assert.Equal(t, "Draft", entry.EntryStatus)
 }
@@ -63,8 +69,12 @@ func TestJournalEntryDetail(t *testing.T) {
 		LineNumber:     1,
 	}
 
+	assert.Equal(t, "jed-001", detail.ID)
+	assert.Equal(t, "je-001", detail.JournalEntryID)
+	assert.Equal(t, "acc-ar", detail.AccountID)
 	assert.Equal(t, 5000.00, detail.DebitAmount)
 	assert.Equal(t, 0.00, detail.CreditAmount)
+	assert.Equal(t, 1, detail.LineNumber)
 }
 
 // TestDoubleEntryBalance validates debit=credit principle
@@ -95,6 +105,8 @@ func TestTrialBalance(t *testing.T) {
 		CreditBalance: 0.00,
 	}
 
+	assert.Equal(t, "acc-001", tb.AccountID)
+	assert.Equal(t, "Cash", tb.AccountName)
 	assert.Equal(t, 5000.00, tb.DebitBalance)
 	assert.Equal(t, 0.00, tb.CreditBalance)
 }
@@ -109,6 +121,7 @@ func TestGLAccountBalance(t *testing.T) {
 		ClosingBalance: 7000.00,
 	}
 
+	assert.Equal(t, "gab-001", balance.ID)
 	expectedClosing := balance.OpeningBalance + balance.TotalDebit - balance.TotalCredit
 	assert.Equal(t, expectedClosing, balance.ClosingBalance)
 }
@@ -144,6 +157,7 @@ func TestFinancialPeriod(t *testing.T) {
 
 	assert.Equal(t, "fp-001", period.ID)
 	assert.Equal(t, "January 2025", period.PeriodName)
+	assert.Equal(t, "Monthly", period.PeriodType)
 	assert.False(t, period.IsClosed)
 }
 
@@ -153,4 +167,6 @@ func TestGLMultiTenant(t *testing.T) {
 	acc2 := &models.ChartOfAccount{ID: "acc-2", TenantID: "tenant-2"}
 
 	assert.NotEqual(t, acc1.TenantID, acc2.TenantID)
+	assert.Equal(t, "acc-1", acc1.ID)
+	assert.Equal(t, "acc-2", acc2.ID)
 }

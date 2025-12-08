@@ -23,6 +23,8 @@ func TestCallModelUUIDs(t *testing.T) {
 	assert.IsType(t, "", call.LeadID)
 	assert.IsType(t, "", call.AgentID)
 	assert.Equal(t, "550e8400-e29b-41d4-a716-446655440000", call.ID)
+	assert.Equal(t, "tenant-001", call.TenantID)
+	assert.Equal(t, "initiated", call.Status)
 }
 
 // TestCallStatusValues validates call status field
@@ -63,8 +65,11 @@ func TestCallStats(t *testing.T) {
 	}
 
 	assert.Equal(t, 100, stats.Total)
-	assert.Equal(t, 90.0, stats.SuccessRate)
+	assert.Equal(t, 5, stats.Active)
+	assert.Equal(t, 90, stats.Completed)
+	assert.Equal(t, 5, stats.Failed)
 	assert.Equal(t, 300, stats.AverageDuration)
+	assert.Equal(t, 90.0, stats.SuccessRate)
 }
 
 // TestMultiTenantCallIsolation ensures calls are tenant-isolated

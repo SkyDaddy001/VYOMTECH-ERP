@@ -199,3 +199,108 @@ func (ls *LeadService) GetLeadStats(ctx context.Context, tenantID string) (*mode
 
 	return stats, nil
 }
+
+// GetLeadsByPipelineStage retrieves leads by pipeline stage
+func (ls *LeadService) GetLeadsByPipelineStage(ctx context.Context, tenantID string, stage string, filter *models.LeadFilter) ([]*models.Lead, error) {
+	query := `
+		SELECT id, tenant_id, name, email, phone, status, source, campaign_id, assigned_agent_id, notes, created_at, updated_at
+		FROM lead
+		WHERE tenant_id = ? AND (pipeline_stage = ? OR status IN (SELECT status FROM lead_pipeline_config WHERE tenant_id = ? AND pipeline_stage = ?))
+	`
+
+	args := []interface{}{tenantID, stage, tenantID, stage}
+
+	if filter.AssignedTo > 0 {
+		query += " AND assigned_agent_id = ?"
+		args = append(args, filter.AssignedTo)
+	}
+
+	query += " ORDER BY created_at DESC"
+
+	if filter.Limit > 0 {
+		query += " LIMIT ? OFFSET ?"
+		args = append(args, filter.Limit, filter.Offset)
+	}
+
+	rows, err := ls.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query leads by pipeline stage: %w", err)
+	}
+	defer rows.Close()
+
+	var leads []*models.Lead
+	for rows.Next() {
+		lead := &models.Lead{}
+		err := rows.Scan(
+			&lead.ID, &lead.TenantID, &lead.Name, &lead.Email, &lead.Phone, &lead.Status,
+			&lead.Source, &lead.CampaignID, &lead.AssignedAgent, &lead.Notes, &lead.CreatedAt, &lead.UpdatedAt,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan lead: %w", err)
+		}
+		leads = append(leads, lead)
+	}
+
+	return leads, nil
+}
+
+// LogStatusChange logs a lead status change for audit purposes
+func (ls *LeadService) LogStatusChange(ctx context.Context, leadID int64, tenantID string, oldStatus, newStatus string, userID *int64, reason string) error {
+	query := `
+		INSERT INTO lead_status_log (id, tenant_id, lead_id, old_status, new_status, old_pipeline_stage, new_pipeline_stage, changed_by, change_reason, created_at)
+		VALUES (UUID(), ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+	`
+
+	oldStage := models.GetPipelineStage(oldStatus)
+	newStage := models.GetPipelineStage(newStatus)
+
+	_, err := ls.db.ExecContext(ctx, query, tenantID, leadID, oldStatus, newStatus, oldStage, newStage, userID, reason)
+	if err != nil {
+		return fmt.Errorf("failed to log status change: %w", err)
+	}
+
+	return nil
+}
+
+// GetLeadStatusHistory retrieves the history of status changes for a lead
+func (ls *LeadService) GetLeadStatusHistory(ctx context.Context, leadID int64, tenantID string) ([]map[string]interface{}, error) {
+	query := `
+		SELECT id, old_status, new_status, old_pipeline_stage, new_pipeline_stage, changed_by, change_reason, created_at
+		FROM lead_status_log
+		WHERE lead_id = ? AND tenant_id = ?
+		ORDER BY created_at DESC
+		LIMIT 50
+	`
+
+	rows, err := ls.db.QueryContext(ctx, query, leadID, tenantID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query status history: %w", err)
+	}
+	defer rows.Close()
+
+	var history []map[string]interface{}
+	for rows.Next() {
+		var id, oldStatus, newStatus, oldStage, newStage, changeReason string
+		var changedBy *int64
+		var createdAt string
+
+		err := rows.Scan(&id, &oldStatus, &newStatus, &oldStage, &newStage, &changedBy, &changeReason, &createdAt)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan history: %w", err)
+		}
+
+		entry := map[string]interface{}{
+			"id":                 id,
+			"old_status":         oldStatus,
+			"new_status":         newStatus,
+			"old_pipeline_stage": oldStage,
+			"new_pipeline_stage": newStage,
+			"changed_by":         changedBy,
+			"change_reason":      changeReason,
+			"created_at":         createdAt,
+		}
+		history = append(history, entry)
+	}
+
+	return history, nil
+}

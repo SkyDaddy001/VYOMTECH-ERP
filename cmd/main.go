@@ -120,6 +120,10 @@ func main() {
 	// Initialize handlers
 	passwordResetHandler := handlers.NewPasswordResetHandler(passwordResetService)
 
+	// Admin Handlers
+	userAdminHandler := handlers.NewUserAdminHandler(dbConn, log)
+	tenantAdminHandler := handlers.NewTenantAdminHandler(dbConn, log)
+
 	// Compliance Handlers
 	reraComplianceHandler := handlers.NewRERAComplianceHandler(reraComplianceService)
 	hrComplianceHandler := handlers.NewHRComplianceHandler(hrComplianceService)
@@ -132,7 +136,7 @@ func main() {
 	salesDashboardHandler := handlers.NewSalesDashboardHandler(salesService)
 
 	// Setup router with all services
-	r := router.SetupRoutesWithPhase3C(authService, tenantService, passwordResetHandler, agentService, gamificationService, leadService, callService, campaignService, aiOrchestrator, webSocketHub, leadScoringService, dashboardService, taskService, notificationService, tenantCustomizationService, phase3cServices, salesService, realEstateService, civilService, constructionService, boqService, hrService, glService, rbacService, reraComplianceHandler, hrComplianceHandler, taxComplianceHandler, financialDashboardHandler, hrDashboardHandler, complianceDashboardHandler, salesDashboardHandler, log)
+	r := router.SetupRoutesWithPhase3C(authService, tenantService, passwordResetHandler, agentService, gamificationService, leadService, callService, campaignService, aiOrchestrator, webSocketHub, leadScoringService, dashboardService, taskService, notificationService, tenantCustomizationService, phase3cServices, salesService, realEstateService, civilService, constructionService, boqService, hrService, glService, rbacService, reraComplianceHandler, hrComplianceHandler, taxComplianceHandler, financialDashboardHandler, hrDashboardHandler, complianceDashboardHandler, salesDashboardHandler, userAdminHandler, tenantAdminHandler, log)
 
 	// Create HTTP server
 	server := &http.Server{

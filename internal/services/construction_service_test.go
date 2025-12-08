@@ -23,7 +23,12 @@ func TestConstructionProject(t *testing.T) {
 	// Verify string ID type (not int64)
 	assert.IsType(t, "", project.ID)
 	assert.Equal(t, "project-uuid-001", project.ID)
+	assert.Equal(t, "tenant-001", project.TenantID)
+	assert.Equal(t, "Tower A", project.ProjectName)
+	assert.Equal(t, "TA001", project.ProjectCode)
 	assert.Equal(t, 50000000.00, project.ContractValue)
+	assert.Equal(t, 0, project.CurrentProgressPercent)
+	assert.Equal(t, "planning", project.Status)
 }
 
 // TestProjectStatus validates project status values
@@ -55,7 +60,15 @@ func TestBillOfQuantities(t *testing.T) {
 	assert.IsType(t, "", boq.ID)
 	assert.IsType(t, "", boq.ProjectID)
 	assert.Equal(t, "boq-uuid-001", boq.ID)
+	assert.Equal(t, "tenant-001", boq.TenantID)
 	assert.Equal(t, "project-uuid-001", boq.ProjectID)
+	assert.Equal(t, "BOQ001", boq.BOQNumber)
+	assert.Equal(t, "Cement", boq.ItemDescription)
+	assert.Equal(t, "bags", boq.Unit)
+	assert.Equal(t, 100.0, boq.Quantity)
+	assert.Equal(t, 350.00, boq.UnitRate)
+	assert.Equal(t, 35000.00, boq.TotalAmount)
+	assert.Equal(t, "planned", boq.Status)
 }
 
 // TestBOQCalculation validates quantity * rate = total
@@ -108,7 +121,11 @@ func TestProgressTracking(t *testing.T) {
 
 	assert.IsType(t, "", progress.ID)
 	assert.IsType(t, "", progress.ProjectID)
+	assert.Equal(t, "progress-uuid-001", progress.ID)
+	assert.Equal(t, "tenant-001", progress.TenantID)
+	assert.Equal(t, "project-uuid-001", progress.ProjectID)
 	assert.Equal(t, 25, progress.PercentComplete)
+	assert.Equal(t, 50, progress.WorkforceDeployed)
 }
 
 // TestProgressValidation validates progress percentage
@@ -144,7 +161,12 @@ func TestQualityControl(t *testing.T) {
 	assert.IsType(t, "", qc.ID)
 	assert.IsType(t, "", qc.ProjectID)
 	assert.IsType(t, "", qc.BOQItemID)
+	assert.Equal(t, "qc-uuid-001", qc.ID)
+	assert.Equal(t, "tenant-001", qc.TenantID)
+	assert.Equal(t, "project-uuid-001", qc.ProjectID)
+	assert.Equal(t, "boq-uuid-001", qc.BOQItemID)
 	assert.Equal(t, "passed", qc.QualityStatus)
+	assert.Equal(t, "Inspector John", qc.InspectorName)
 }
 
 // TestQCStatus validates QC status values
@@ -170,7 +192,12 @@ func TestConstructionEquipment(t *testing.T) {
 
 	assert.IsType(t, "", equip.ID)
 	assert.IsType(t, "", equip.ProjectID)
+	assert.Equal(t, "equip-uuid-001", equip.ID)
+	assert.Equal(t, "tenant-001", equip.TenantID)
+	assert.Equal(t, "project-uuid-001", equip.ProjectID)
+	assert.Equal(t, "Excavator", equip.EquipmentName)
 	assert.Equal(t, "in_use", equip.Status)
+	assert.Equal(t, 5000.00, equip.CostPerDay)
 }
 
 // TestEquipmentStatus validates equipment status values
@@ -210,23 +237,33 @@ func TestMultiTenantConstruction(t *testing.T) {
 	proj2 := &models.ConstructionProject{ID: "proj-2", TenantID: "tenant-2"}
 
 	assert.NotEqual(t, proj1.TenantID, proj2.TenantID)
+	assert.Equal(t, "proj-1", proj1.ID)
+	assert.Equal(t, "proj-2", proj2.ID)
+	assert.Equal(t, "tenant-1", proj1.TenantID)
+	assert.Equal(t, "tenant-2", proj2.TenantID)
 }
 
 // TestProjectIdStringType validates ProjectID is always string
 func TestProjectIdStringType(t *testing.T) {
+	projectID := "proj-uuid"
+
 	// BOQ
-	boq := &models.BillOfQuantities{ProjectID: "proj-uuid"}
+	boq := &models.BillOfQuantities{ProjectID: projectID}
 	assert.IsType(t, "", boq.ProjectID)
+	assert.Equal(t, projectID, boq.ProjectID)
 
 	// Progress
-	progress := &models.ProgressTracking{ProjectID: "proj-uuid"}
+	progress := &models.ProgressTracking{ProjectID: projectID}
 	assert.IsType(t, "", progress.ProjectID)
+	assert.Equal(t, projectID, progress.ProjectID)
 
 	// QC
-	qc := &models.QualityControl{ProjectID: "proj-uuid"}
+	qc := &models.QualityControl{ProjectID: projectID}
 	assert.IsType(t, "", qc.ProjectID)
+	assert.Equal(t, projectID, qc.ProjectID)
 
 	// Equipment
-	equip := &models.ConstructionEquipment{ProjectID: "proj-uuid"}
+	equip := &models.ConstructionEquipment{ProjectID: projectID}
 	assert.IsType(t, "", equip.ProjectID)
+	assert.Equal(t, projectID, equip.ProjectID)
 }

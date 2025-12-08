@@ -74,11 +74,6 @@ type CreateChallengeRequest struct {
 	PointsMultiplier float64 `json:"pointsMultiplier"`
 }
 
-// ErrorResponse is a standard error response
-type ErrorResponse struct {
-	Error string `json:"error"`
-}
-
 // SuccessResponse is a standard success response
 type SuccessResponse struct {
 	Message string      `json:"message"`

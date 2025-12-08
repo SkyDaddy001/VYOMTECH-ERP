@@ -24,6 +24,7 @@ func TestCreateCustomerProfile(t *testing.T) {
 	assert.NotNil(t, service)
 	assert.Equal(t, "John", profile.FirstName)
 	assert.Equal(t, "CUST001", profile.CustomerCode)
+	assert.Equal(t, "john@example.com", profile.Email)
 }
 
 // TestGetCustomerProfile tests fetching customer profile
@@ -340,7 +341,9 @@ func BenchmarkCreateCustomerProfile(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = profile
+		_ = profile.CustomerCode
+		_ = profile.FirstName
+		_ = profile.Email
 	}
 }
 

@@ -21,7 +21,10 @@ func TestBOQImportResult(t *testing.T) {
 	assert.Equal(t, 100, result.TotalRows)
 	assert.Equal(t, 95, result.SuccessCount)
 	assert.Equal(t, 5, result.FailureCount)
+	assert.Equal(t, 90, result.CreatedBOQs)
+	assert.Equal(t, 5, result.UpdatedBOQs)
 	assert.Equal(t, 1000000.00, result.TotalAmountINR)
+	assert.Len(t, result.Errors, 1)
 }
 
 // TestBOQImportSuccessRate validates success rate calculation
@@ -204,6 +207,7 @@ func TestBOQExportFormat(t *testing.T) {
 
 	assert.NotEmpty(t, exportItem.boqNumber)
 	assert.NotEmpty(t, exportItem.itemDesc)
+	assert.Equal(t, "bags", exportItem.unit)
 	assert.Greater(t, exportItem.qty, 0.0)
 	assert.InDelta(t, exportItem.qty*exportItem.rate, exportItem.total, 0.01)
 }

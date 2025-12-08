@@ -4,18 +4,24 @@ import "time"
 
 // Lead represents a potential customer or prospect
 type Lead struct {
-	ID            int64     `json:"id" db:"id"`
-	TenantID      string    `json:"tenant_id" db:"tenant_id"`
-	Name          string    `json:"name" db:"name"`
-	Email         string    `json:"email" db:"email"`
-	Phone         string    `json:"phone" db:"phone"`
-	Status        string    `json:"status" db:"status"`           // new, contacted, qualified, converted, lost
-	Source        string    `json:"source" db:"source"`           // campaign, manual, import
-	CampaignID    *int64    `json:"campaign_id" db:"campaign_id"` // FK to campaign
-	AssignedAgent *int64    `json:"assigned_agent_id" db:"assigned_agent_id"`
-	Notes         string    `json:"notes" db:"notes"`
-	CreatedAt     time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt     time.Time `json:"updated_at" db:"updated_at"`
+	ID               int64      `json:"id" db:"id"`
+	TenantID         string     `json:"tenant_id" db:"tenant_id"`
+	Name             string     `json:"name" db:"name"`
+	Email            string     `json:"email" db:"email"`
+	Phone            string     `json:"phone" db:"phone"`
+	Status           string     `json:"status" db:"status"` // Detailed 30+ status system
+	PipelineStage    string     `json:"pipeline_stage" db:"pipeline_stage"`
+	Source           string     `json:"source" db:"source"`           // campaign, manual, import
+	CampaignID       *int64     `json:"campaign_id" db:"campaign_id"` // FK to campaign
+	AssignedAgent    *int64     `json:"assigned_agent_id" db:"assigned_agent_id"`
+	Notes            string     `json:"notes" db:"notes"`
+	CaptureDateA     *time.Time `json:"capture_date_a" db:"capture_date_a"`
+	CaptureDateB     *time.Time `json:"capture_date_b" db:"capture_date_b"`
+	CaptureDateC     *time.Time `json:"capture_date_c" db:"capture_date_c"`
+	CaptureDateD     *time.Time `json:"capture_date_d" db:"capture_date_d"`
+	LastStatusChange time.Time  `json:"last_status_change" db:"last_status_change"`
+	CreatedAt        time.Time  `json:"created_at" db:"created_at"`
+	UpdatedAt        time.Time  `json:"updated_at" db:"updated_at"`
 }
 
 // LeadFilter for filtering leads

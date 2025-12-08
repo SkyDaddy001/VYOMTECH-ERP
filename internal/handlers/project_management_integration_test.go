@@ -376,5 +376,6 @@ func TestDataConsistency(t *testing.T) {
 
 	assert.Equal(t, "CUST001", customer.CustomerCode)
 	assert.Equal(t, "John", customer.FirstName)
+	assert.Equal(t, "john@example.com", customer.Email)
 	assert.NotNil(t, handler)
 }

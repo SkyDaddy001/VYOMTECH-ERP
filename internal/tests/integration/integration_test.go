@@ -8,11 +8,10 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
-// Helper function to make HTTP requests in tests
-func makeRequest(method, path string, body interface{}) *http.Request {
+// buildRequest is a helper to construct HTTP requests for testing
+func buildRequest(method, path string, body interface{}) *http.Request {
 	var reqBody []byte
 	if body != nil {
 		var err error
@@ -26,12 +25,6 @@ func makeRequest(method, path string, body interface{}) *http.Request {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("X-Tenant-ID", "test-tenant-1")
 	return req
-}
-
-// Helper function to decode response body
-func decodeResponse(t *testing.T, body []byte, v interface{}) {
-	err := json.Unmarshal(body, v)
-	require.NoError(t, err)
 }
 
 func TestCallCreationToCompletion(t *testing.T) {
@@ -55,10 +48,10 @@ func TestCallCreationToCompletion(t *testing.T) {
 	// Test call outcome
 	outcome := "successful"
 	validOutcomes := map[string]bool{
-		"successful":  true,
+		"successful":   true,
 		"unsuccessful": true,
-		"no_answer":   true,
-		"voicemail":   true,
+		"no_answer":    true,
+		"voicemail":    true,
 	}
 	assert.True(t, validOutcomes[outcome], "Invalid call outcome: %s", outcome)
 }
@@ -179,7 +172,6 @@ func TestMultiTenantIsolation(t *testing.T) {
 // TestGLPostingForSalesInvoice tests GL integration for sales
 func TestGLPostingForSalesInvoice(t *testing.T) {
 	// Sales invoice data
-	invoiceID := "inv-uuid-1234"
 	subtotal := 50000.0
 	taxRate := 18.0
 	tax := subtotal * (taxRate / 100)
@@ -198,7 +190,6 @@ func TestGLPostingForSalesInvoice(t *testing.T) {
 // TestGLPostingForPayment tests GL integration for payments
 func TestGLPostingForPayment(t *testing.T) {
 	// Payment data
-	paymentID := "pay-uuid-1234"
 	invoiceTotal := 59000.0
 	paidAmount := 59000.0
 
@@ -285,8 +276,8 @@ func TestCreditLimitEnforcement(t *testing.T) {
 	assert.LessOrEqual(t, invoice1, creditLimit)
 	assert.InDelta(t, 60000.0, available, 0.01)
 
-	// Invoice 2
-	invoice2 := 50000.0
+	// Invoice 2 - would exceed limit if issued
+	invoice2 := 70000.0 // This exceeds available (60000)
 	canIssue := invoice2 <= available
 
 	assert.False(t, canIssue) // Would exceed limit

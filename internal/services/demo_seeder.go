@@ -44,6 +44,12 @@ func (s *DemoUserSeeder) SeedDemoUsers(ctx context.Context) error {
 	// Demo user credentials
 	demoUsers := []DemoUser{
 		{
+			Email:    "master.admin@vyomtech.com",
+			Password: "MasterAdmin@123",
+			Role:     "master_admin",
+			TenantID: demoTenantID,
+		},
+		{
 			Email:    "demo@vyomtech.com",
 			Password: "DemoPass@123",
 			Role:     "admin",
@@ -100,10 +106,11 @@ func (s *DemoUserSeeder) ensureTenant(ctx context.Context, tenantID, tenantName 
 	}
 
 	// Tenant doesn't exist, create it
+	domain := tenantName + ".demo.vyomtech.com"
 	_, err = s.db.ExecContext(ctx,
-		`INSERT INTO tenant (id, name, status, max_users, max_concurrent_calls, ai_budget_monthly) 
-		 VALUES (?, ?, 'active', 100, 50, 1000.00)`,
-		tenantID, tenantName)
+		`INSERT INTO tenant (id, name, domain, status, max_users, max_concurrent_calls, ai_budget_monthly) 
+		 VALUES (?, ?, ?, 'active', 100, 50, 1000.00)`,
+		tenantID, tenantName, domain)
 	if err != nil {
 		return fmt.Errorf("failed to create tenant: %w", err)
 	}
