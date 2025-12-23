@@ -14,10 +14,13 @@ CREATE OR REPLACE VIEW v_booking_details AS
 SELECT
     b.id,
     b.tenant_id,
+    b.booking_code,
     b.booking_date,
     b.allotment_date,
     b.agreement_date,
-    b.booking_status,
+    b.registration_date,
+    b.handover_date,
+    b.status as booking_status,
     u.id as unit_id,
     u.unit_number,
     u.unit_type,
@@ -30,7 +33,7 @@ SELECT
     ucs.base_price,
     ucs.frc,
     ucs.car_parking_cost
-FROM property_booking b
+FROM booking b
 LEFT JOIN property_unit u ON b.unit_id = u.id
 LEFT JOIN property_block pb ON u.block_id = pb.id
 LEFT JOIN property_project pp ON u.project_id = pp.id
@@ -63,20 +66,26 @@ CREATE OR REPLACE VIEW v_booking_pipeline AS
 SELECT
     b.tenant_id,
     b.id as booking_id,
+    b.booking_code,
     u.unit_number,
     u.unit_type,
     pp.project_name,
     pb.block_name,
     b.booking_date,
-    b.booking_amount,
-    b.booking_status,
+    b.allotment_date,
+    b.agreement_date,
+    b.registration_date,
+    b.handover_date,
+    b.status as booking_status,
     CASE 
-        WHEN b.agreement_date IS NOT NULL THEN 'Registered'
+        WHEN b.handover_date IS NOT NULL THEN 'Handover Complete'
+        WHEN b.registration_date IS NOT NULL THEN 'Registered'
+        WHEN b.agreement_date IS NOT NULL THEN 'Agreement'
         WHEN b.allotment_date IS NOT NULL THEN 'Allotted'
         ELSE 'Booked'
     END as booking_stage,
     DATEDIFF(CURDATE(), b.booking_date) as days_since_booking
-FROM property_booking b
+FROM booking b
 LEFT JOIN property_unit u ON b.unit_id = u.id
 LEFT JOIN property_block pb ON u.block_id = pb.id
 LEFT JOIN property_project pp ON u.project_id = pp.id;
@@ -92,21 +101,19 @@ SELECT
     pp.project_code,
     pp.location,
     pp.city,
-    pp.total_units,
-    pp.launch_date,
-    pp.expected_completion,
-    pp.status,
-    COUNT(DISTINCT u.id) as units_created,
+    COUNT(DISTINCT u.id) as total_units,
     COUNT(DISTINCT b.id) as units_booked,
+    COUNT(DISTINCT CASE WHEN b.allotment_date IS NOT NULL THEN b.id END) as units_allotted,
+    COUNT(DISTINCT CASE WHEN b.registration_date IS NOT NULL THEN b.id END) as units_registered,
+    COUNT(DISTINCT CASE WHEN b.handover_date IS NOT NULL THEN b.id END) as units_handed_over,
     ROUND(COUNT(DISTINCT b.id) / COUNT(DISTINCT u.id) * 100, 2) as booking_percentage,
-    COUNT(DISTINCT CASE WHEN b.agreement_date IS NOT NULL THEN b.id END) as registered_count,
     SUM(COALESCE(ucs.base_price, 0)) as total_inventory_value
 FROM property_project pp
 LEFT JOIN property_block pb ON pp.id = pb.project_id
 LEFT JOIN property_unit u ON pb.id = u.block_id
-LEFT JOIN property_booking b ON u.id = b.unit_id
+LEFT JOIN booking b ON u.id = b.unit_id
 LEFT JOIN unit_cost_sheet ucs ON u.id = ucs.unit_id
-GROUP BY pp.id, pp.tenant_id, pp.project_name, pp.project_code, pp.location, pp.city, pp.total_units, pp.launch_date, pp.expected_completion, pp.status;
+GROUP BY pp.id, pp.tenant_id, pp.project_name, pp.project_code, pp.location, pp.city;
 
 -- ============================================================
 -- UNIT COST ANALYSIS VIEW
@@ -140,18 +147,23 @@ CREATE OR REPLACE VIEW v_payment_tracking AS
 SELECT
     b.tenant_id,
     b.id as booking_id,
+    b.booking_code,
     u.unit_number,
     pp.project_name,
     b.booking_date,
-    b.booking_amount,
-    COALESCE(SUM(p.amount_paid), 0) as total_paid,
-    b.booking_amount - COALESCE(SUM(p.amount_paid), 0) as outstanding_amount,
-    ROUND((COALESCE(SUM(p.amount_paid), 0) / b.booking_amount) * 100, 2) as payment_percentage
-FROM property_booking b
+    b.status as booking_status,
+    rd.gst_applicable,
+    rd.gst_percentage,
+    rd.gst_cost,
+    rd.registration_cost,
+    ac.maintenance_charge,
+    ac.corpus_charge,
+    ac.eb_deposit,
+    ac.other_works_charge
+FROM booking b
 LEFT JOIN property_unit u ON b.unit_id = u.id
 LEFT JOIN property_project pp ON u.project_id = pp.id
-LEFT JOIN installment inst ON b.id = (SELECT booking_id FROM property_booking WHERE id = b.id LIMIT 1)
-LEFT JOIN installment p ON inst.id = p.id
-GROUP BY b.id, b.tenant_id, u.unit_number, pp.project_name, b.booking_date, b.booking_amount;
+LEFT JOIN registration_details rd ON b.id = rd.booking_id
+LEFT JOIN additional_charges ac ON b.id = ac.booking_id;
 
 SET FOREIGN_KEY_CHECKS = 1;
