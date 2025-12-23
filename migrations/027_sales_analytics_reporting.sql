@@ -48,7 +48,7 @@ SELECT
     ac.eb_deposit,
     ac.other_works_charge
 FROM booking b
-LEFT JOIN unit u ON b.unit_id = u.id
+LEFT JOIN property_unit u ON b.unit_id = u.id
 LEFT JOIN sales_lead sl ON b.lead_id = sl.id
 LEFT JOIN unit_cost_sheet ucs ON u.id = ucs.unit_id
 LEFT JOIN registration_details rd ON b.id = rd.booking_id
