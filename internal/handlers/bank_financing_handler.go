@@ -452,22 +452,6 @@ func (h *BankFinancingHandler) CreateBank(c *gin.Context) {
 		"message": "Bank created successfully",
 	})
 }
-		RelationshipManagerEmail: req.RelationshipManagerEmail,
-		Status:                   "active",
-	}
-
-	created, err := h.financingService.CreateBank(c.Request.Context(), bank)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create bank"})
-		return
-	}
-
-	c.JSON(http.StatusCreated, gin.H{
-		"success": true,
-		"data":    created,
-		"message": "Bank created successfully",
-	})
-}
 
 // ListBanks GET /api/v1/banks
 func (h *BankFinancingHandler) ListBanks(c *gin.Context) {
