@@ -126,8 +126,8 @@ func (cs *CampaignService) DeleteCampaign(ctx context.Context, id int64, tenantI
 // GetCampaigns retrieves campaigns with filtering and pagination
 func (cs *CampaignService) GetCampaigns(ctx context.Context, tenantID string, filter *models.CampaignFilter) ([]*models.Campaign, error) {
 	query := `
-		SELECT id, tenant_id, name, description, status, target_leads, generated_leads, converted_leads,
-		       budget, spent_budget, cost_per_lead, conversion_rate, start_date, end_date, created_at, updated_at
+		SELECT id, tenant_id, campaign_name as name, COALESCE(campaign_type, '') as description, status, COALESCE(target_leads, 0), 0, 0,
+		       COALESCE(budget, 0), 0, 0, 0, start_date, end_date, created_at, updated_at
 		FROM campaign
 		WHERE tenant_id = ?
 	`

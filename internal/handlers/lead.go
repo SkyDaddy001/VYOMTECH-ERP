@@ -206,17 +206,22 @@ func (lh *LeadHandler) CreateLead(w http.ResponseWriter, r *http.Request) {
 	}
 
 	lead := &models.Lead{
-		TenantID:        tenantID,
-		FirstName:       req.FirstName,
-		LastName:        req.LastName,
-		Email:           req.Email,
-		Phone:           req.Phone,
-		CompanyName:     req.CompanyName,
-		Industry:        req.Industry,
+		TenantID:    tenantID,
+		FirstName:   req.FirstName,
+		LastName:    req.LastName,
+		Email:       req.Email,
+		Phone:       req.Phone,
+		CompanyName: req.CompanyName,
+		Industry: func(s string) *string {
+			if s == "" {
+				return nil
+			}
+			return &s
+		}(req.Industry),
 		Status:          status,
 		Probability:     req.Probability,
 		Source:          req.Source,
-		AssignedTo:      req.AssignedTo,
+		AssignedTo:      func(s string) *string { if s == "" { return nil }; return &s }(req.AssignedTo),
 		NextActionDate:  nextActionDate,
 		NextActionNotes: req.NextActionNotes,
 	}
@@ -287,7 +292,7 @@ func (lh *LeadHandler) UpdateLead(w http.ResponseWriter, r *http.Request) {
 		lead.CompanyName = req.CompanyName
 	}
 	if req.Industry != "" {
-		lead.Industry = req.Industry
+		lead.Industry = &req.Industry
 	}
 	if req.Status != "" {
 		lead.Status = req.Status
@@ -299,7 +304,7 @@ func (lh *LeadHandler) UpdateLead(w http.ResponseWriter, r *http.Request) {
 		lead.Source = req.Source
 	}
 	if req.AssignedTo != "" {
-		lead.AssignedTo = req.AssignedTo
+		lead.AssignedTo = &req.AssignedTo
 	}
 	if req.NextActionDate != "" {
 		t, err := time.Parse(time.RFC3339, req.NextActionDate)
