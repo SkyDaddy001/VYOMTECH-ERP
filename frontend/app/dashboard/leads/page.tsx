@@ -1,325 +1,243 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { FiSearch, FiPlus, FiMoreVertical, FiPhone, FiMail, FiUser, FiTrendingUp, FiFilter } from 'react-icons/fi'
-import { apiClient } from '@/lib/api-client'
+import { useState, useMemo } from 'react'
+import { useLeads } from '@/hooks/use-api'
+import { ProtectedRoute } from '@/hooks/use-auth'
+import { Sidebar } from '@/components/layout/sidebar'
+import { Header } from '@/components/layout/header'
+import { FiSearch, FiPlus, FiPhone, FiMail, FiTrendingUp, FiFilter } from 'react-icons/fi'
 import { format } from 'date-fns'
-import { DetailedLeadStatus, STATUS_MAP, getStatusesByPhase, getPhases, getStatusInfo } from '@/lib/lead-status-config'
 
 interface Lead {
-  id: string
+  id: string | number
   name: string
   email: string
   phone?: string
   company?: string
-  status: DetailedLeadStatus
+  status: string
   source?: string
   value?: number
+  score?: number
   created_at: string
   updated_at: string
 }
 
 export default function LeadsPage() {
-  const [leads, setLeads] = useState<Lead[]>([])
-  const [loading, setLoading] = useState(true)
+  const { data: leads, loading, error, refetch } = useLeads({ limit: 100 })
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState<string>('all')
+  const [sortBy, setSortBy] = useState<'name' | 'value' | 'created' | 'score'>('created')
 
-  useEffect(() => {
-    fetchLeads()
-  }, [])
+  // Filter and search
+  const filteredLeads = useMemo(() => {
+    let result = leads as Lead[]
 
-  const fetchLeads = async () => {
-    try {
-      setLoading(true)
-      // Fetch leads from real API
-      const response = (await apiClient.get('/api/v1/leads', {
-        params: {
-          limit: 50,
-          offset: 0
-        }
-      })) as any
-      
-      // Handle both direct array and wrapped response formats
-      let leadData: Lead[] = []
-      
-      if (Array.isArray(response.data)) {
-        leadData = response.data as Lead[]
-      } else if (response.data && typeof response.data === 'object' && 'data' in response.data) {
-        leadData = response.data.data || []
-      }
-      
-      const formattedLeads = (leadData || []).map((lead: any) => ({
-        id: lead.id?.toString() || '',
-        name: lead.name || '',
-        email: lead.email || '',
-        phone: lead.phone,
-        company: lead.company,
-        status: lead.status as DetailedLeadStatus,
-        source: lead.source,
-        value: lead.value,
-        created_at: lead.created_at,
-        updated_at: lead.updated_at
-      }))
-      
-      setLeads(formattedLeads)
-    } catch (error) {
-      console.error('Error fetching leads:', error)
-      // Fallback to mock data if API fails
-      const mockLeads: Lead[] = [
-        {
-          id: '1',
-          name: 'John Smith',
-          email: 'john@example.com',
-          phone: '+1 234 567 8900',
-          company: 'Acme Corp',
-          status: 'SV - Done',
-          source: 'LinkedIn',
-          value: 50000,
-          created_at: new Date(Date.now() - 604800000).toISOString(),
-          updated_at: new Date(Date.now() - 172800000).toISOString()
-        },
-        {
-          id: '2',
-          name: 'Sarah Johnson',
-          email: 'sarah@example.com',
-          phone: '+1 234 567 8901',
-          company: 'Tech Solutions Inc',
-          status: 'Follow Up - Warm',
-          source: 'Website',
-          value: 25000,
-          created_at: new Date(Date.now() - 432000000).toISOString(),
-          updated_at: new Date(Date.now() - 86400000).toISOString()
-        },
-        {
-          id: '3',
-          name: 'Mike Davis',
-          email: 'mike@example.com',
-          phone: '+1 234 567 8902',
-          company: 'Global Enterprises',
-          status: 'Fresh Lead',
-          source: 'Referral',
-          value: 75000,
-          created_at: new Date(Date.now() - 172800000).toISOString(),
-          updated_at: new Date(Date.now() - 172800000).toISOString()
-        },
-        {
-          id: '4',
-          name: 'Emily Chen',
-          email: 'emily@example.com',
-          phone: '+1 234 567 8903',
-          company: 'Innovation Labs',
-          status: 'F2F - Scheduled',
-          source: 'Event',
-          value: 100000,
-          created_at: new Date(Date.now() - 345600000).toISOString(),
-          updated_at: new Date(Date.now() - 259200000).toISOString()
-        },
-        {
-          id: '5',
-          name: 'Robert Wilson',
-          email: 'robert@example.com',
-          phone: '+1 234 567 8904',
-          company: 'Enterprise Solutions',
-          status: 'Booking - In Progress',
-          source: 'Cold Call',
-          value: 150000,
-          created_at: new Date(Date.now() - 864000000).toISOString(),
-          updated_at: new Date(Date.now() - 345600000).toISOString()
-        },
-        {
-          id: '6',
-          name: 'Lisa Anderson',
-          email: 'lisa@example.com',
-          phone: '+1 234 567 8905',
-          company: 'Digital Ventures',
-          status: 'SV - Warm',
-          source: 'Partner',
-          value: 60000,
-          created_at: new Date(Date.now() - 518400000).toISOString(),
-          updated_at: new Date(Date.now() - 259200000).toISOString()
-        }
-      ]
-      setLeads(mockLeads)
-    } finally {
-      setLoading(false)
+    // Filter by status
+    if (filterStatus !== 'all') {
+      result = result.filter(lead => 
+        (lead.status || '').toLowerCase().includes(filterStatus.toLowerCase())
+      )
     }
+
+    // Search by name, email, phone, or company
+    if (searchTerm) {
+      const query = searchTerm.toLowerCase()
+      result = result.filter(lead =>
+        (lead.name || '').toLowerCase().includes(query) ||
+        (lead.email || '').toLowerCase().includes(query) ||
+        (lead.phone || '').toLowerCase().includes(query) ||
+        (lead.company || '').toLowerCase().includes(query)
+      )
+    }
+
+    // Sort
+    result.sort((a, b) => {
+      switch (sortBy) {
+        case 'name':
+          return (a.name || '').localeCompare(b.name || '')
+        case 'value':
+          return (b.value || 0) - (a.value || 0)
+        case 'score':
+          return (b.score || 0) - (a.score || 0)
+        case 'created':
+        default:
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      }
+    })
+
+    return result
+  }, [leads, filterStatus, searchTerm, sortBy])
+
+  const getStatusColor = (status: string) => {
+    const statusLower = (status || '').toLowerCase()
+    if (statusLower.includes('done')) return 'bg-green-100 text-green-800'
+    if (statusLower.includes('warm')) return 'bg-yellow-100 text-yellow-800'
+    if (statusLower.includes('cold')) return 'bg-blue-100 text-blue-800'
+    if (statusLower.includes('lost')) return 'bg-red-100 text-red-800'
+    return 'bg-gray-100 text-gray-800'
   }
 
-  const filteredLeads = leads.filter(lead => {
-    const matchesSearch = lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         lead.email.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesStatus = filterStatus === 'all' || lead.status === filterStatus
-    return matchesSearch && matchesStatus
-  })
-
-  const getStatusColor = (status: DetailedLeadStatus) => {
-    const statusInfo = getStatusInfo(status)
-    return statusInfo.color
+  const getStatusBgColor = (status: string) => {
+    const statusLower = (status || '').toLowerCase()
+    if (statusLower.includes('done')) return 'bg-green-50'
+    if (statusLower.includes('warm')) return 'bg-yellow-50'
+    if (statusLower.includes('cold')) return 'bg-blue-50'
+    if (statusLower.includes('lost')) return 'bg-red-50'
+    return 'bg-gray-50'
   }
-
-  const phases = getPhases().sort()
-  const statusesByPhase = Object.fromEntries(
-    phases.map(phase => [phase, getStatusesByPhase(phase)])
-  )
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Header */}
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Leads</h1>
-          <p className="text-gray-600 mt-2">Manage and track your sales leads</p>
-        </div>
-        <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center">
-          <FiPlus className="w-4 h-4 mr-2" />
-          New Lead
-        </button>
-      </div>
-
-      {/* Search and Filters */}
-      <div className="bg-white rounded-lg shadow p-4 mb-6">
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1 relative">
-              <FiSearch className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search by name, email, or company..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-          </div>
-          
-          {/* Status Filter by Phase */}
-          <div className="border-t pt-4">
-            <label className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
-              <FiFilter className="w-4 h-4 mr-2" />
-              Filter by Status
-            </label>
-            <div className="space-y-3 max-h-96 overflow-y-auto">
-              <div>
-                <button
-                  onClick={() => setFilterStatus('all')}
-                  className={`w-full text-left px-3 py-2 rounded-lg transition ${
-                    filterStatus === 'all'
-                      ? 'bg-blue-100 text-blue-800 font-medium'
-                      : 'hover:bg-gray-100'
-                  }`}
-                >
-                  All Statuses
+    <ProtectedRoute>
+      <div className="flex h-screen bg-gray-50">
+        <Sidebar />
+        <div className="flex-1 flex flex-col lg:ml-64">
+          <Header />
+          <main className="flex-1 overflow-auto pt-20 pb-6">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+              {/* Header */}
+              <div className="mb-8 flex items-center justify-between">
+                <div>
+                  <h1 className="text-3xl font-bold text-gray-900">Leads</h1>
+                  <p className="text-gray-600 mt-2">Manage and track all your leads</p>
+                </div>
+                <button className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2 transition">
+                  <FiPlus className="text-lg" />
+                  Add Lead
                 </button>
               </div>
-              {phases.map(phase => (
-                <div key={phase} className="border-l-2 border-gray-200 pl-3">
-                  <p className="text-xs font-semibold text-gray-600 mb-2 uppercase">{phase}</p>
-                  <div className="space-y-1">
-                    {statusesByPhase[phase]?.map(status => (
-                      <button
-                        key={status}
-                        onClick={() => setFilterStatus(status)}
-                        className={`w-full text-left px-2 py-1.5 rounded text-sm transition ${
-                          filterStatus === status
-                            ? getStatusColor(status) + ' font-medium'
-                            : 'hover:bg-gray-100'
-                        }`}
-                      >
-                        {status}
-                      </button>
-                    ))}
-                  </div>
+
+              {/* Error Message */}
+              {error && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                  <p className="text-red-800 text-sm">{error}</p>
                 </div>
-              ))}
+              )}
+
+              {/* Filters & Search */}
+              <div className="bg-white rounded-lg shadow p-4 mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Search */}
+                  <div className="relative">
+                    <FiSearch className="absolute left-3 top-3 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Search by name, email, phone..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  {/* Status Filter */}
+                  <select
+                    value={filterStatus}
+                    onChange={(e) => setFilterStatus(e.target.value)}
+                    className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="all">All Status</option>
+                    <option value="done">Done</option>
+                    <option value="warm">Warm</option>
+                    <option value="cold">Cold</option>
+                    <option value="lost">Lost</option>
+                  </select>
+
+                  {/* Sort */}
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value as any)}
+                    className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="created">Newest First</option>
+                    <option value="name">By Name</option>
+                    <option value="value">By Value</option>
+                    <option value="score">By Score</option>
+                  </select>
+                </div>
+
+                {/* Results Count */}
+                <div className="mt-4 text-sm text-gray-600">
+                  Showing {filteredLeads.length} of {leads.length} leads
+                </div>
+              </div>
+
+              {/* Loading State */}
+              {loading && (
+                <div className="space-y-4">
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="bg-white rounded-lg shadow h-20 animate-pulse"></div>
+                  ))}
+                </div>
+              )}
+
+              {/* Empty State */}
+              {!loading && filteredLeads.length === 0 && (
+                <div className="bg-white rounded-lg shadow p-12 text-center">
+                  <div className="text-gray-500 mb-4 text-5xl">📭</div>
+                  <p className="text-gray-600 text-lg font-medium">No leads found</p>
+                  <p className="text-gray-500 mt-1">Try adjusting your filters or create a new lead</p>
+                </div>
+              )}
+
+              {/* Leads Table */}
+              {!loading && filteredLeads.length > 0 && (
+                <div className="overflow-x-auto bg-white rounded-lg shadow">
+                  <table className="w-full">
+                    <thead className="bg-gray-50 border-b">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Name</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Contact</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Company</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Status</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Value</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Source</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Created</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {filteredLeads.map((lead) => (
+                        <tr key={lead.id} className={`hover:bg-gray-50 transition ${getStatusBgColor(lead.status)}`}>
+                          <td className="px-6 py-4">
+                            <div className="font-medium text-gray-900">{lead.name}</div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="space-y-1">
+                              {lead.email && (
+                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                                  <FiMail className="text-gray-400" />
+                                  {lead.email}
+                                </div>
+                              )}
+                              {lead.phone && (
+                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                                  <FiPhone className="text-gray-400" />
+                                  {lead.phone}
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-600">{lead.company || '—'}</td>
+                          <td className="px-6 py-4">
+                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(lead.status)}`}>
+                              {lead.status || 'Unknown'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                            {lead.value ? `$${lead.value.toLocaleString()}` : '—'}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-600">{lead.source || '—'}</td>
+                          <td className="px-6 py-4 text-sm text-gray-600">
+                            {format(new Date(lead.created_at), 'MMM d, yyyy')}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
-          </div>
+          </main>
         </div>
       </div>
-
-      {/* Leads Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        {loading ? (
-          <div className="p-8 text-center">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          </div>
-        ) : filteredLeads.length === 0 ? (
-          <div className="p-8 text-center">
-            <p className="text-gray-600">No leads found</p>
-          </div>
-        ) : (
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b">
-              <tr>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Name</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Company</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Contact</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Status</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Value</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Added</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {filteredLeads.map((lead) => (
-                <tr key={lead.id} className="hover:bg-gray-50 transition">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center">
-                      <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                        <FiUser className="w-5 h-5 text-blue-600" />
-                      </div>
-                      <p className="ml-3 font-medium text-gray-900">{lead.name}</p>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-gray-600">{lead.company || '-'}</td>
-                  <td className="px-6 py-4">
-                    <div className="space-y-1">
-                      {lead.email && (
-                        <div className="flex items-center text-sm text-gray-600">
-                          <FiMail className="w-4 h-4 mr-2" />
-                          {lead.email}
-                        </div>
-                      )}
-                      {lead.phone && (
-                        <div className="flex items-center text-sm text-gray-600">
-                          <FiPhone className="w-4 h-4 mr-2" />
-                          {lead.phone}
-                        </div>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex flex-col gap-2">
-                      <span className={`px-3 py-1 rounded-full text-sm font-medium w-fit ${getStatusColor(lead.status)}`}>
-                        {lead.status}
-                      </span>
-                      <span className="text-xs text-gray-500">
-                        {getStatusInfo(lead.status).pipeline}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 font-medium text-gray-900">
-                    {lead.value ? `$${(lead.value / 1000).toFixed(0)}k` : '-'}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
-                    {format(new Date(lead.created_at), 'MMM dd, yyyy')}
-                  </td>
-                  <td className="px-6 py-4">
-                    <button className="p-2 hover:bg-gray-100 rounded-lg transition">
-                      <FiMoreVertical className="w-4 h-4 text-gray-600" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
-
-      {/* Results Summary */}
-      <div className="mt-4 text-sm text-gray-600">
-        Showing {filteredLeads.length} of {leads.length} leads
-      </div>
-    </div>
+    </ProtectedRoute>
   )
 }

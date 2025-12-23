@@ -22,24 +22,26 @@ export default function LoginPage() {
         password,
       })
 
-      if (response.token) {
-        // Store token and user data
-        localStorage.setItem('auth_token', response.token)
-        localStorage.setItem('user', JSON.stringify(response.user))
-        localStorage.setItem('user_id', response.user.id)
-        localStorage.setItem('tenant_id', response.user.tenant_id)
+      // Handle both wrapped and unwrapped response formats
+      const token = response.token || response.data?.token
+      const user = response.user || response.data?.user
 
-        // Redirect based on role
-        if (response.user.role === 'admin') {
-          router.push('/admin')
-        } else {
-          router.push('/dashboard')
-        }
+      if (token && user) {
+        // Store token and user data
+        localStorage.setItem('auth_token', token)
+        localStorage.setItem('user', JSON.stringify(user))
+        localStorage.setItem('user_id', String(user.id))
+        localStorage.setItem('tenant_id', user.tenant_id)
+
+        // Redirect to dashboard
+        router.push('/dashboard')
       } else {
         setError('No token received from server')
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed')
+      const errorMsg = err instanceof Error ? err.message : 'Login failed'
+      setError(errorMsg)
+      console.error('Login error:', err)
     } finally {
       setLoading(false)
     }

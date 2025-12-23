@@ -218,10 +218,15 @@ func (lh *LeadHandler) CreateLead(w http.ResponseWriter, r *http.Request) {
 			}
 			return &s
 		}(req.Industry),
-		Status:          status,
-		Probability:     req.Probability,
-		Source:          req.Source,
-		AssignedTo:      func(s string) *string { if s == "" { return nil }; return &s }(req.AssignedTo),
+		Status:      status,
+		Probability: req.Probability,
+		Source:      req.Source,
+		AssignedTo: func(s string) *string {
+			if s == "" {
+				return nil
+			}
+			return &s
+		}(req.AssignedTo),
 		NextActionDate:  nextActionDate,
 		NextActionNotes: req.NextActionNotes,
 	}
