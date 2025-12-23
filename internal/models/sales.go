@@ -17,6 +17,8 @@ type SalesLead struct {
 	CompanyName         string     `json:"company_name" db:"company_name"`
 	Industry            string     `json:"industry" db:"industry"`
 	Status              string     `json:"status" db:"status"` // new, contacted, qualified, negotiation, converted, lost
+	DetailedStatus      *string    `json:"detailed_status" db:"detailed_status"`
+	PipelineStage       *string    `json:"pipeline_stage" db:"pipeline_stage"`
 	Probability         float64    `json:"probability" db:"probability"`
 	Source              string     `json:"source" db:"source"` // website, email, phone, referral, event, social
 	CampaignID          *string    `json:"campaign_id" db:"campaign_id"`
@@ -26,6 +28,11 @@ type SalesLead struct {
 	CustomerID          *string    `json:"customer_id" db:"customer_id"`
 	NextActionDate      *time.Time `json:"next_action_date" db:"next_action_date"`
 	NextActionNotes     *string    `json:"next_action_notes" db:"next_action_notes"`
+	CaptureDateA        *time.Time `json:"capture_date_a" db:"capture_date_a"`
+	CaptureDateB        *time.Time `json:"capture_date_b" db:"capture_date_b"`
+	CaptureDateC        *time.Time `json:"capture_date_c" db:"capture_date_c"`
+	CaptureDateD        *time.Time `json:"capture_date_d" db:"capture_date_d"`
+	LastStatusChange    *time.Time `json:"last_status_change" db:"last_status_change"`
 	CreatedBy           *string    `json:"created_by" db:"created_by"`
 	CreatedAt           time.Time  `json:"created_at" db:"created_at"`
 	UpdatedAt           time.Time  `json:"updated_at" db:"updated_at"`
@@ -476,9 +483,46 @@ type SalesAccountLedger struct {
 	CreditAmount          float64   `json:"credit_amount" db:"credit_amount"`
 	BalanceAfter          float64   `json:"balance_after" db:"balance_after"`
 	Description           *string   `json:"description" db:"description"`
-	Remarks               *string   `json:"remarks" db:"remarks"`
-	Status                string    `json:"status" db:"status"` // active, reversed, cancelled
-	CreatedBy             *string   `json:"created_by" db:"created_by"`
-	CreatedAt             time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt             time.Time `json:"updated_at" db:"updated_at"`
+}
+
+// ============================================================================
+// LEAD STATUS LOG - Track all status changes
+// ============================================================================
+
+type LeadStatusLog struct {
+	ID               string    `json:"id" db:"id"`
+	TenantID         string    `json:"tenant_id" db:"tenant_id"`
+	LeadID           string    `json:"lead_id" db:"lead_id"`
+	OldStatus        *string   `json:"old_status" db:"old_status"`
+	NewStatus        string    `json:"new_status" db:"new_status"`
+	OldPipelineStage *string   `json:"old_pipeline_stage" db:"old_pipeline_stage"`
+	NewPipelineStage *string   `json:"new_pipeline_stage" db:"new_pipeline_stage"`
+	ChangedBy        *string   `json:"changed_by" db:"changed_by"`
+	ChangeReason     *string   `json:"change_reason" db:"change_reason"`
+	CaptureDateType  *string   `json:"capture_date_type" db:"capture_date_type"` // capture_date_a, capture_date_b, etc
+	CreatedAt        time.Time `json:"created_at" db:"created_at"`
+}
+
+// ============================================================================
+// LEAD PIPELINE CONFIG - Store pipeline configurations
+// ============================================================================
+
+type LeadPipelineConfig struct {
+	ID            string    `json:"id" db:"id"`
+	TenantID      string    `json:"tenant_id" db:"tenant_id"`
+	Status        string    `json:"status" db:"status"`
+	PipelineStage string    `json:"pipeline_stage" db:"pipeline_stage"`
+	Phase         *string   `json:"phase" db:"phase"`
+	ColorCode     *string   `json:"color_code" db:"color_code"`
+	Icon          *string   `json:"icon" db:"icon"`
+	Description   *string   `json:"description" db:"description"`
+	IsActive      bool      `json:"is_active" db:"is_active"`
+	SortOrder     int       `json:"sort_order" db:"sort_order"`
+	CreatedAt     time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at" db:"updated_at"`
+	Remarks       *string   `json:"remarks" db:"remarks"`
+	Status        string    `json:"status" db:"status"` // active, reversed, cancelled
+	CreatedBy     *string   `json:"created_by" db:"created_by"`
+	CreatedAt     time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at" db:"updated_at"`
 }

@@ -35,6 +35,8 @@ type CreateLeadRequest struct {
 	CompanyName     string  `json:"company_name"`
 	Industry        string  `json:"industry,omitempty"`
 	Status          string  `json:"status,omitempty"`
+	DetailedStatus  string  `json:"detailed_status,omitempty"`
+	PipelineStage   string  `json:"pipeline_stage,omitempty"`
 	Probability     float64 `json:"probability,omitempty"`
 	Source          string  `json:"source"`
 	AssignedTo      string  `json:"assigned_to,omitempty"`
@@ -51,6 +53,8 @@ type UpdateLeadRequest struct {
 	CompanyName     string  `json:"company_name,omitempty"`
 	Industry        string  `json:"industry,omitempty"`
 	Status          string  `json:"status,omitempty"`
+	DetailedStatus  string  `json:"detailed_status,omitempty"`
+	PipelineStage   string  `json:"pipeline_stage,omitempty"`
 	Probability     float64 `json:"probability,omitempty"`
 	Source          string  `json:"source,omitempty"`
 	AssignedTo      string  `json:"assigned_to,omitempty"`
@@ -60,9 +64,12 @@ type UpdateLeadRequest struct {
 
 // UpdateLeadStatusRequest is the request body for updating a lead's status
 type UpdateLeadStatusRequest struct {
-	Status      string  `json:"status" binding:"required"`
-	Notes       string  `json:"notes,omitempty"`
-	CaptureDate *string `json:"capture_date,omitempty"` // capture_date_a, b, c, or d
+	Status          string  `json:"status" binding:"required"`
+	DetailedStatus  string  `json:"detailed_status,omitempty"`
+	PipelineStage   string  `json:"pipeline_stage,omitempty"`
+	Notes           string  `json:"notes,omitempty"`
+	CaptureDate     *string `json:"capture_date,omitempty"`      // capture_date_a, b, c, or d
+	CaptureDateType *string `json:"capture_date_type,omitempty"` // a, b, c, or d
 }
 
 // LeadStatusResponse is the response for status update operations
