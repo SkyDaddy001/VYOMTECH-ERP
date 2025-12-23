@@ -483,6 +483,11 @@ type SalesAccountLedger struct {
 	CreditAmount          float64   `json:"credit_amount" db:"credit_amount"`
 	BalanceAfter          float64   `json:"balance_after" db:"balance_after"`
 	Description           *string   `json:"description" db:"description"`
+	Remarks               *string   `json:"remarks" db:"remarks"`
+	Status                string    `json:"status" db:"status"` // active, inactive, reversed
+	CreatedBy             *string   `json:"created_by" db:"created_by"`
+	CreatedAt             time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt             time.Time `json:"updated_at" db:"updated_at"`
 }
 
 // ============================================================================
