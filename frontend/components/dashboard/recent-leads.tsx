@@ -8,11 +8,11 @@ export const RecentLeads = ({ limit = 5 }: { limit?: number }) => {
 
   if (loading) {
     return (
-      <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold mb-4">Recent Leads</h3>
+      <div className="bg-white rounded-sm p-6">
+        <h3 className="text-sm font-semibold uppercase tracking-wide mb-6">Recent Leads</h3>
         <div className="space-y-4">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="bg-gray-200 h-12 rounded animate-pulse"></div>
+            <div key={i} className="bg-gray-100 h-12 rounded-sm animate-pulse"></div>
           ))}
         </div>
       </div>
@@ -21,9 +21,9 @@ export const RecentLeads = ({ limit = 5 }: { limit?: number }) => {
 
   if (!leads || leads.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold mb-4">Recent Leads</h3>
-        <p className="text-gray-500 text-center py-8">No leads found</p>
+      <div className="bg-white rounded-sm p-6">
+        <h3 className="text-sm font-semibold uppercase tracking-wide mb-6">Recent Leads</h3>
+        <p className="text-gray-500 text-center py-8 text-sm">No leads found</p>
       </div>
     )
   }

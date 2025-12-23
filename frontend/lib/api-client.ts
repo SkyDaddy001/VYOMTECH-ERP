@@ -54,8 +54,8 @@ class ApiClient {
   async get<T>(url: string, config = {}) {
     try {
       const response = await this.client.get<any>(url, config)
-      // Handle null response body
-      if (!response.data) {
+      // Handle null/undefined response
+      if (!response || !response.data) {
         return null
       }
       // Return nested data if available, otherwise return the response data itself
@@ -69,7 +69,7 @@ class ApiClient {
   async post<T>(url: string, data?: any, config = {}) {
     try {
       const response = await this.client.post<any>(url, data, config)
-      if (!response.data) {
+      if (!response || !response.data) {
         return null
       }
       return response.data?.data ?? response.data
@@ -82,7 +82,7 @@ class ApiClient {
   async put<T>(url: string, data?: any, config = {}) {
     try {
       const response = await this.client.put<any>(url, data, config)
-      if (!response.data) {
+      if (!response || !response.data) {
         return null
       }
       return response.data?.data ?? response.data
@@ -95,7 +95,7 @@ class ApiClient {
   async patch<T>(url: string, data?: any, config = {}) {
     try {
       const response = await this.client.patch<any>(url, data, config)
-      if (!response.data) {
+      if (!response || !response.data) {
         return null
       }
       return response.data?.data ?? response.data
@@ -108,7 +108,7 @@ class ApiClient {
   async delete<T>(url: string, config = {}) {
     try {
       const response = await this.client.delete<any>(url, config)
-      if (!response.data) {
+      if (!response || !response.data) {
         return null
       }
       return response.data?.data ?? response.data
