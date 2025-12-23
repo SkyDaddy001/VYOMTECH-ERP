@@ -3,39 +3,39 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
-	"log"
 	"net/http"
 	"vyomtech-backend/internal/models"
 	"vyomtech-backend/internal/services"
+	"vyomtech-backend/pkg/logger"
 )
 
 // RoleTemplateHandler handles role template operations
 type RoleTemplateHandler struct {
 	db     *sql.DB
-	logger *log.Logger
+	logger *logger.Logger
 	svc    *services.RoleTemplateService
+	rbac   *services.RBACService
 }
 
 // NewRoleTemplateHandler creates a new role template handler
-func NewRoleTemplateHandler(db *sql.DB, logger *log.Logger) *RoleTemplateHandler {
+func NewRoleTemplateHandler(db *sql.DB, log *logger.Logger, rbacService *services.RBACService) *RoleTemplateHandler {
 	return &RoleTemplateHandler{
 		db:     db,
-		logger: logger,
-		svc:    services.NewRoleTemplateService(db, logger),
+		logger: log,
+		svc:    services.NewRoleTemplateService(db, rbacService, log),
+		rbac:   rbacService,
 	}
 }
 
-// CreateRoleTemplateRequest represents the request to create a role template
+// CreateRoleTemplateRequest represents the request to create a custom role template
 type CreateRoleTemplateRequest struct {
-	Name             string                 `json:"name" binding:"required"`
-	Description      string                 `json:"description"`
-	Category         string                 `json:"category"`
-	IsSystemTemplate bool                   `json:"is_system_template"`
-	PermissionIDs    []string               `json:"permission_ids"`
-	Metadata         map[string]interface{} `json:"metadata"`
+	Name        string   `json:"name" binding:"required"`
+	Description string   `json:"description"`
+	Category    string   `json:"category"`
+	Permissions []string `json:"permissions"`
 }
 
-// CreateRoleTemplate creates a new role template
+// CreateRoleTemplate creates a new custom role template
 func (h *RoleTemplateHandler) CreateRoleTemplate(w http.ResponseWriter, r *http.Request) {
 	tenantID := r.Context().Value("tenant_id").(string)
 
@@ -45,20 +45,17 @@ func (h *RoleTemplateHandler) CreateRoleTemplate(w http.ResponseWriter, r *http.
 		return
 	}
 
-	metadataJSON, _ := json.Marshal(req.Metadata)
 	template := &models.RoleTemplate{
-		TenantID:         tenantID,
-		Name:             req.Name,
-		Description:      req.Description,
-		Category:         req.Category,
-		IsSystemTemplate: req.IsSystemTemplate,
-		PermissionIDs:    req.PermissionIDs,
-		Metadata:         string(metadataJSON),
-		IsActive:         true,
+		TenantID:      tenantID,
+		Name:          req.Name,
+		Description:   req.Description,
+		Category:      req.Category,
+		PermissionIDs: req.Permissions,
+		IsActive:      true,
 	}
 
-	if err := h.svc.CreateTemplate(r.Context(), template); err != nil {
-		h.logger.Printf("Error creating role template: %v", err)
+	if err := h.svc.CreateCustomTemplate(r.Context(), template); err != nil {
+		h.logger.Error("Error creating role template", "error", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -78,7 +75,7 @@ func (h *RoleTemplateHandler) GetRoleTemplate(w http.ResponseWriter, r *http.Req
 			http.Error(w, "Template not found", http.StatusNotFound)
 			return
 		}
-		h.logger.Printf("Error getting role template: %v", err)
+		h.logger.Error("Error getting role template", "error", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -93,7 +90,7 @@ func (h *RoleTemplateHandler) ListRoleTemplates(w http.ResponseWriter, r *http.R
 
 	templates, err := h.svc.ListTemplates(r.Context(), tenantID)
 	if err != nil {
-		h.logger.Printf("Error listing role templates: %v", err)
+		h.logger.Error("Error listing role templates", "error", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -102,67 +99,15 @@ func (h *RoleTemplateHandler) ListRoleTemplates(w http.ResponseWriter, r *http.R
 	json.NewEncoder(w).Encode(templates)
 }
 
-// UpdateRoleTemplate updates a role template
-func (h *RoleTemplateHandler) UpdateRoleTemplate(w http.ResponseWriter, r *http.Request) {
-	tenantID := r.Context().Value("tenant_id").(string)
-
-	var req CreateRoleTemplateRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	templateID := r.URL.Query().Get("id")
-	metadataJSON, _ := json.Marshal(req.Metadata)
-
-	template := &models.RoleTemplate{
-		ID:               templateID,
-		TenantID:         tenantID,
-		Name:             req.Name,
-		Description:      req.Description,
-		Category:         req.Category,
-		IsSystemTemplate: req.IsSystemTemplate,
-		PermissionIDs:    req.PermissionIDs,
-		Metadata:         string(metadataJSON),
-		IsActive:         true,
-	}
-
-	if err := h.svc.UpdateTemplate(r.Context(), template); err != nil {
-		h.logger.Printf("Error updating role template: %v", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(template)
-}
-
-// DeleteRoleTemplate deletes a role template
-func (h *RoleTemplateHandler) DeleteRoleTemplate(w http.ResponseWriter, r *http.Request) {
-	tenantID := r.Context().Value("tenant_id").(string)
-	templateID := r.URL.Query().Get("id")
-
-	if err := h.svc.DeleteTemplate(r.Context(), tenantID, templateID); err != nil {
-		h.logger.Printf("Error deleting role template: %v", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusNoContent)
-}
-
-// CreateRoleFromTemplate creates a new role from a template
+// CreateRoleFromTemplateRequest for creating a role from a template
 type CreateRoleFromTemplateRequest struct {
-	TemplateID     string                 `json:"template_id" binding:"required"`
-	RoleName       string                 `json:"role_name" binding:"required"`
-	Customizations map[string]interface{} `json:"customizations"`
+	TemplateID string `json:"template_id" binding:"required"`
+	RoleName   string `json:"role_name" binding:"required"`
 }
 
 // CreateRoleFromTemplate creates a new role from a template
 func (h *RoleTemplateHandler) CreateRoleFromTemplate(w http.ResponseWriter, r *http.Request) {
 	tenantID := r.Context().Value("tenant_id").(string)
-	userID := r.Context().Value("user_id").(string)
 
 	var req CreateRoleFromTemplateRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -170,41 +115,66 @@ func (h *RoleTemplateHandler) CreateRoleFromTemplate(w http.ResponseWriter, r *h
 		return
 	}
 
-	customizationsJSON, _ := json.Marshal(req.Customizations)
-	instance := &models.TemplateInstance{
-		TenantID:       tenantID,
-		TemplateID:     req.TemplateID,
-		Customizations: string(customizationsJSON),
-	}
-
-	// Parse user ID and convert to int64
-	var createdBy int64
-	json.Unmarshal([]byte(`"`+userID+`"`), &createdBy)
-	instance.CreatedBy = createdBy
-
-	if err := h.svc.CreateInstanceFromTemplate(r.Context(), instance, req.RoleName); err != nil {
-		h.logger.Printf("Error creating role from template: %v", err)
+	roleID, err := h.svc.CreateRoleFromTemplate(r.Context(), tenantID, req.TemplateID, req.RoleName)
+	if err != nil {
+		h.logger.Error("Error creating role from template", "error", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(instance)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"role_id": roleID,
+		"message": "Role created successfully from template",
+	})
 }
 
-// ListTemplateInstances lists all template instances for a tenant
-func (h *RoleTemplateHandler) ListTemplateInstances(w http.ResponseWriter, r *http.Request) {
+// InitializeDefaultTemplates initializes default templates for a tenant
+func (h *RoleTemplateHandler) InitializeDefaultTemplates(w http.ResponseWriter, r *http.Request) {
 	tenantID := r.Context().Value("tenant_id").(string)
 
-	instances, err := h.svc.ListInstances(r.Context(), tenantID)
-	if err != nil {
-		h.logger.Printf("Error listing template instances: %v", err)
+	if err := h.svc.InitializeDefaultTemplates(r.Context(), tenantID); err != nil {
+		h.logger.Error("Error initializing default templates", "error", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(instances)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"message": "Default templates initialized successfully",
+	})
+}
+
+// SaveAsTemplateRequest for saving a role as a template
+type SaveAsTemplateRequest struct {
+	RoleID       string `json:"role_id" binding:"required"`
+	TemplateName string `json:"template_name" binding:"required"`
+	Description  string `json:"description"`
+	Category     string `json:"category"`
+}
+
+// SaveAsTemplate saves an existing role as a template
+func (h *RoleTemplateHandler) SaveAsTemplate(w http.ResponseWriter, r *http.Request) {
+	tenantID := r.Context().Value("tenant_id").(string)
+
+	var req SaveAsTemplateRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	templateID, err := h.svc.SaveAsTemplate(r.Context(), tenantID, req.RoleID, req.TemplateName, req.Description, req.Category)
+	if err != nil {
+		h.logger.Error("Error saving role as template", "error", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"template_id": templateID,
+		"message":     "Role saved as template successfully",
+	})
 }
 
 // GetDefaultTemplates returns the default role templates
