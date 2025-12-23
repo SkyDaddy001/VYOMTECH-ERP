@@ -31,6 +31,13 @@ CREATE TABLE IF NOT EXISTS `sales_lead` (
     `next_action_notes` TEXT,
     `created_by` VARCHAR(36),
     `gl_customer_account_id` VARCHAR(36),
+    `detailed_status` VARCHAR(100),
+    `pipeline_stage` VARCHAR(50),
+    `capture_date_a` TIMESTAMP NULL,
+    `capture_date_b` TIMESTAMP NULL,
+    `capture_date_c` TIMESTAMP NULL,
+    `capture_date_d` TIMESTAMP NULL,
+    `last_status_change` TIMESTAMP NULL,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (`tenant_id`) REFERENCES `tenant`(`id`) ON DELETE CASCADE,
@@ -38,7 +45,10 @@ CREATE TABLE IF NOT EXISTS `sales_lead` (
     KEY `idx_tenant` (`tenant_id`),
     KEY `idx_code` (`lead_code`),
     KEY `idx_status` (`status`),
-    KEY `idx_assigned` (`assigned_to`)
+    KEY `idx_assigned` (`assigned_to`),
+    KEY `idx_pipeline_stage` (`pipeline_stage`),
+    KEY `idx_detailed_status` (`detailed_status`),
+    KEY `idx_last_status_change` (`last_status_change`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================

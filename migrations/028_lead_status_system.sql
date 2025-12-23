@@ -7,24 +7,6 @@
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- ============================================================
--- ALTER SALES_LEAD TABLE - Add new status columns
--- ============================================================
-ALTER TABLE `sales_lead` 
-ADD COLUMN IF NOT EXISTS `detailed_status` VARCHAR(100),
-ADD COLUMN IF NOT EXISTS `pipeline_stage` VARCHAR(50),
-ADD COLUMN IF NOT EXISTS `capture_date_a` TIMESTAMP NULL,
-ADD COLUMN IF NOT EXISTS `capture_date_b` TIMESTAMP NULL,
-ADD COLUMN IF NOT EXISTS `capture_date_c` TIMESTAMP NULL,
-ADD COLUMN IF NOT EXISTS `capture_date_d` TIMESTAMP NULL,
-ADD COLUMN IF NOT EXISTS `last_status_change` TIMESTAMP NULL;
-
--- Add indexes for the new columns
-ALTER TABLE `sales_lead`
-ADD KEY IF NOT EXISTS `idx_pipeline_stage` (`pipeline_stage`),
-ADD KEY IF NOT EXISTS `idx_detailed_status` (`detailed_status`),
-ADD KEY IF NOT EXISTS `idx_last_status_change` (`last_status_change`);
-
--- ============================================================
 -- CREATE LEAD_STATUS_LOG TABLE - Track all status changes
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `lead_status_log` (
