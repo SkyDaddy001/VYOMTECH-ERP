@@ -1,0 +1,325 @@
+# RBAC API - Quick Reference Card
+
+## Endpoints Summary
+
+```
+GET    /api/v1/rbac/roles                    → List all roles
+GET    /api/v1/rbac/roles/:id                → Get specific role
+GET    /api/v1/rbac/permissions              → List permissions
+POST   /api/v1/rbac/roles                    → Create role (admin)
+PUT    /api/v1/rbac/roles/:id/permissions    → Assign permissions (admin)
+DELETE /api/v1/rbac/roles/:id                → Delete role (admin)
+```
+
+---
+
+## Required Headers
+
+```
+Authorization: Bearer <JWT_TOKEN>
+X-Tenant-ID: <TENANT_ID>
+Content-Type: application/json
+```
+
+---
+
+## Request Bodies
+
+### Create Role
+```json
+{
+  "role_name": "string (required)",
+  "description": "string (optional)",
+  "is_active": "boolean (optional)"
+}
+```
+
+### Assign Permissions
+```json
+{
+  "permission_ids": ["string array (required)"]
+}
+```
+
+---
+
+## Response Codes
+
+| Code | Meaning | When |
+|------|---------|------|
+| 200 | OK | GET, PUT, DELETE success |
+| 201 | Created | POST success |
+| 400 | Bad Request | Invalid input |
+| 401 | Unauthorized | No/invalid token |
+| 403 | Forbidden | Not admin/insufficient perms |
+| 404 | Not Found | Resource doesn't exist |
+| 409 | Conflict | Duplicate role name |
+| 500 | Server Error | Database/internal error |
+
+---
+
+## Success Response Format
+
+```json
+{
+  "message": "Operation description",
+  "data": {
+    // Response-specific data
+  }
+}
+```
+
+---
+
+## Error Response Format
+
+```json
+{
+  "error": "HTTP Status Text",
+  "message": "Detailed error message",
+  "code": 400
+}
+```
+
+---
+
+## Common cURL Commands
+
+### List Roles
+```bash
+curl -X GET http://localhost:8080/api/v1/rbac/roles \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-Tenant-ID: $TENANT"
+```
+
+### Get Specific Role
+```bash
+curl -X GET http://localhost:8080/api/v1/rbac/roles/role-id \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-Tenant-ID: $TENANT"
+```
+
+### List Permissions
+```bash
+curl -X GET http://localhost:8080/api/v1/rbac/permissions \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-Tenant-ID: $TENANT"
+```
+
+### Create Role (Admin)
+```bash
+curl -X POST http://localhost:8080/api/v1/rbac/roles \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H "X-Tenant-ID: $TENANT" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "role_name": "Manager",
+    "description": "Team manager role",
+    "is_active": true
+  }'
+```
+
+### Assign Permissions (Admin)
+```bash
+curl -X PUT http://localhost:8080/api/v1/rbac/roles/role-id/permissions \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H "X-Tenant-ID: $TENANT" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "permission_ids": ["perm-1", "perm-2", "perm-3"]
+  }'
+```
+
+### Delete Role (Admin)
+```bash
+curl -X DELETE http://localhost:8080/api/v1/rbac/roles/role-id \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H "X-Tenant-ID: $TENANT"
+```
+
+---
+
+## Authorization Matrix
+
+| Operation | GET | POST | PUT | DELETE |
+|-----------|-----|------|-----|--------|
+| /roles | ✅ All | 🔒 Admin | - | - |
+| /roles/:id | ✅ All | - | - | 🔒 Admin |
+| /roles/:id/permissions | - | - | 🔒 Admin | - |
+| /permissions | ✅ All | - | - | - |
+
+Legend: ✅ = All authenticated users, 🔒 = Admin only
+
+---
+
+## Error Troubleshooting
+
+### 401 Unauthorized
+- Check JWT token is valid
+- Verify token is in Authorization header
+- Check token hasn't expired
+
+### 403 Forbidden
+- Verify user role is 'admin' for write operations
+- Check user assignment in database: `user_role` table
+- Verify role has 'admin' name
+
+### 404 Not Found
+- Verify role/permission ID exists
+- Check role belongs to current tenant
+- Role might be soft-deleted (is_active = false)
+
+### 409 Conflict
+- Role name already exists in tenant
+- Choose different role_name
+- Role names must be unique per tenant
+
+### 400 Bad Request
+- Verify all required fields present
+- Check JSON syntax is valid
+- Verify field types match spec
+
+---
+
+## Database Tables
+
+### role
+```
+id (UUID)
+tenant_id (UUID)
+role_name (string, unique per tenant)
+description (text)
+is_active (boolean)
+created_at (timestamp)
+updated_at (timestamp)
+```
+
+### permission
+```
+id (UUID)
+tenant_id (UUID)
+permission_name (string, unique per tenant)
+description (text)
+resource (string)
+action (string)
+created_at (timestamp)
+```
+
+### role_permission
+```
+id (UUID)
+tenant_id (UUID)
+role_id (UUID)
+permission_id (UUID)
+created_at (timestamp)
+```
+
+---
+
+## Example Workflow
+
+### 1. Login and Get Token
+```bash
+TOKEN=$(curl -s -X POST http://localhost:8080/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@test.com","password":"password"}' \
+  | jq -r '.data.token')
+
+TENANT="test-tenant-001"
+```
+
+### 2. List Existing Roles
+```bash
+curl -X GET http://localhost:8080/api/v1/rbac/roles \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-Tenant-ID: $TENANT" | jq '.'
+```
+
+### 3. Get Available Permissions
+```bash
+curl -X GET http://localhost:8080/api/v1/rbac/permissions \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-Tenant-ID: $TENANT" | jq '.data[] | {id, permission_name}'
+```
+
+### 4. Create New Role
+```bash
+ROLE=$(curl -s -X POST http://localhost:8080/api/v1/rbac/roles \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-Tenant-ID: $TENANT" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "role_name": "Sales Lead",
+    "description": "Leads sales teams",
+    "is_active": true
+  }' | jq -r '.data.id')
+
+echo "Created role: $ROLE"
+```
+
+### 5. Assign Permissions
+```bash
+curl -X PUT http://localhost:8080/api/v1/rbac/roles/$ROLE/permissions \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-Tenant-ID: $TENANT" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "permission_ids": [
+      "perm-sales-create",
+      "perm-sales-read",
+      "perm-sales-update"
+    ]
+  }' | jq '.'
+```
+
+### 6. Verify Role
+```bash
+curl -X GET http://localhost:8080/api/v1/rbac/roles/$ROLE \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-Tenant-ID: $TENANT" | jq '.data | {id, role_name, permissions}'
+```
+
+---
+
+## Multi-Tenancy Notes
+
+- All operations automatically scoped to X-Tenant-ID
+- Role names can be identical across tenants
+- Users can only access their tenant's roles
+- Database queries include WHERE tenant_id = ?
+- Unique constraints: (tenant_id, role_name)
+
+---
+
+## Security Notes
+
+✓ All operations require JWT authentication  
+✓ Admin operations require role='admin'  
+✓ Input validation on all fields  
+✓ SQL injection prevented with parameterized queries  
+✓ Multi-tenant isolation enforced  
+✓ Soft deletes maintain audit trail  
+✓ Errors don't leak sensitive data  
+
+---
+
+## Performance Tips
+
+- List roles/permissions are O(n) queries
+- Consider pagination for large result sets
+- Assign permissions uses transactions
+- Role lookups benefit from indexing on (tenant_id, is_active)
+- Permission caching available (Phase 3.3)
+
+---
+
+## Status
+
+**Version:** 1.0.0  
+**Release:** December 23, 2025  
+**Status:** Production Ready  
+**Build:** ✅ Successful  
+
+---
+
+For complete documentation, see: `RBAC_API_DOCUMENTATION.md`

@@ -1,0 +1,124 @@
+syntax = "proto3";
+
+package vyomtech.rbac;
+
+option go_package = "vyomtech-backend/api/proto/rbac";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+// Role represents a role with permissions
+message Role {
+  string id = 1;
+  string tenant_id = 2;
+  string name = 3;
+  string description = 4;
+  repeated string permissions = 5;
+  bool is_active = 6;
+  google.protobuf.Timestamp created_at = 7;
+  google.protobuf.Timestamp updated_at = 8;
+}
+
+// Permission represents a permission
+message Permission {
+  string id = 1;
+  string tenant_id = 2;
+  string code = 3;
+  string description = 4;
+  string category = 5;
+  google.protobuf.Timestamp created_at = 6;
+}
+
+// CreateRoleRequest for creating a new role
+message CreateRoleRequest {
+  string tenant_id = 1;
+  string name = 2;
+  string description = 3;
+  bool is_active = 4;
+}
+
+// CreateRoleResponse for role creation
+message CreateRoleResponse {
+  string role_id = 1;
+  bool success = 2;
+  string message = 3;
+}
+
+// GetRoleRequest for retrieving a role
+message GetRoleRequest {
+  string tenant_id = 1;
+  string role_id = 2;
+}
+
+// GetRoleResponse for role retrieval
+message GetRoleResponse {
+  Role role = 1;
+  repeated Permission permissions = 2;
+}
+
+// ListRolesRequest for listing roles
+message ListRolesRequest {
+  string tenant_id = 1;
+  int32 limit = 2;
+  int32 offset = 3;
+}
+
+// ListRolesResponse for role listing
+message ListRolesResponse {
+  repeated Role roles = 1;
+  int32 total = 2;
+}
+
+// AssignPermissionsRequest for assigning permissions to a role
+message AssignPermissionsRequest {
+  string tenant_id = 1;
+  string role_id = 2;
+  repeated string permission_ids = 3;
+}
+
+// AssignPermissionsResponse for permission assignment
+message AssignPermissionsResponse {
+  bool success = 1;
+  string message = 2;
+  int32 assigned_count = 3;
+}
+
+// VerifyPermissionRequest for checking user permission
+message VerifyPermissionRequest {
+  string tenant_id = 1;
+  int64 user_id = 2;
+  string permission_code = 3;
+}
+
+// VerifyPermissionResponse for permission verification
+message VerifyPermissionResponse {
+  bool has_permission = 1;
+  string message = 2;
+}
+
+// RBAC Service for role-based access control
+service RBACService {
+  // CreateRole creates a new role
+  rpc CreateRole(CreateRoleRequest) returns (CreateRoleResponse);
+  
+  // GetRole retrieves a role with permissions
+  rpc GetRole(GetRoleRequest) returns (GetRoleResponse);
+  
+  // ListRoles lists all roles for a tenant
+  rpc ListRoles(ListRolesRequest) returns (ListRolesResponse);
+  
+  // AssignPermissions assigns permissions to a role
+  rpc AssignPermissions(AssignPermissionsRequest) returns (AssignPermissionsResponse);
+  
+  // VerifyPermission checks if a user has a specific permission
+  rpc VerifyPermission(VerifyPermissionRequest) returns (VerifyPermissionResponse);
+  
+  // GetUserPermissions retrieves all permissions for a user
+  rpc GetUserPermissions(VerifyPermissionRequest) returns (ListPermissionsResponse);
+}
+
+// ListPermissionsResponse for permissions listing
+message ListPermissionsResponse {
+  repeated Permission permissions = 1;
+  int32 total = 2;
+}

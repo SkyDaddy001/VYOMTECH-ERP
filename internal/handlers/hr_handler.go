@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"time"
 
+	"vyomtech-backend/internal/constants"
+	"vyomtech-backend/internal/middleware"
 	"vyomtech-backend/internal/models"
 	"vyomtech-backend/internal/services"
 
@@ -15,12 +17,16 @@ import (
 )
 
 type HRHandler struct {
-	Service *services.HRService
+	Service     *services.HRService
+	RBACService *services.RBACService
 }
 
 // NewHRHandler creates a new HR handler
-func NewHRHandler(service *services.HRService) *HRHandler {
-	return &HRHandler{Service: service}
+func NewHRHandler(service *services.HRService, rbacService *services.RBACService) *HRHandler {
+	return &HRHandler{
+		Service:     service,
+		RBACService: rbacService,
+	}
 }
 
 // ============================================================================
@@ -29,13 +35,31 @@ func NewHRHandler(service *services.HRService) *HRHandler {
 
 // CreateEmployee - POST /api/v1/hr/employees
 func (h *HRHandler) CreateEmployee(w http.ResponseWriter, r *http.Request) {
+	// Extract user and tenant from context
+	userID, ok := r.Context().Value(middleware.UserIDKey).(int64)
+	if !ok {
+		http.Error(w, `{"error": "User ID not found in context"}`, http.StatusUnauthorized)
+		return
+	}
+
+	tenant, ok := r.Context().Value(middleware.TenantIDKey).(string)
+	if !ok || tenant == "" {
+		http.Error(w, `{"error": "Tenant ID not found in context"}`, http.StatusForbidden)
+		return
+	}
+
+	// Verify permission
+	if err := h.RBACService.VerifyPermission(r.Context(), tenant, userID, constants.EmployeeCreate); err != nil {
+		http.Error(w, fmt.Sprintf(`{"error": "Permission denied: %s"}`, err.Error()), http.StatusForbidden)
+		return
+	}
+
 	var emp models.Employee
 	if err := json.NewDecoder(r.Body).Decode(&emp); err != nil {
 		http.Error(w, fmt.Sprintf(`{"error": "Invalid request: %s"}`, err.Error()), http.StatusBadRequest)
 		return
 	}
 
-	tenant := r.Header.Get("X-Tenant-ID")
 	emp.ID = uuid.New().String()
 	emp.Status = "active"
 
@@ -100,9 +124,27 @@ func (h *HRHandler) ListEmployees(w http.ResponseWriter, r *http.Request) {
 
 // UpdateEmployee - PUT /api/v1/hr/employees/{id}
 func (h *HRHandler) UpdateEmployee(w http.ResponseWriter, r *http.Request) {
+	// Extract user and tenant from context
+	userID, ok := r.Context().Value(middleware.UserIDKey).(int64)
+	if !ok {
+		http.Error(w, `{"error": "User ID not found in context"}`, http.StatusUnauthorized)
+		return
+	}
+
+	tenant, ok := r.Context().Value(middleware.TenantIDKey).(string)
+	if !ok || tenant == "" {
+		http.Error(w, `{"error": "Tenant ID not found in context"}`, http.StatusForbidden)
+		return
+	}
+
+	// Verify permission
+	if err := h.RBACService.VerifyPermission(r.Context(), tenant, userID, constants.EmployeeUpdate); err != nil {
+		http.Error(w, fmt.Sprintf(`{"error": "Permission denied: %s"}`, err.Error()), http.StatusForbidden)
+		return
+	}
+
 	vars := mux.Vars(r)
 	employeeID := vars["id"]
-	tenant := r.Header.Get("X-Tenant-ID")
 
 	var emp models.Employee
 	if err := json.NewDecoder(r.Body).Decode(&emp); err != nil {
@@ -124,9 +166,27 @@ func (h *HRHandler) UpdateEmployee(w http.ResponseWriter, r *http.Request) {
 
 // DeleteEmployee - DELETE /api/v1/hr/employees/{id}
 func (h *HRHandler) DeleteEmployee(w http.ResponseWriter, r *http.Request) {
+	// Extract user and tenant from context
+	userID, ok := r.Context().Value(middleware.UserIDKey).(int64)
+	if !ok {
+		http.Error(w, `{"error": "User ID not found in context"}`, http.StatusUnauthorized)
+		return
+	}
+
+	tenant, ok := r.Context().Value(middleware.TenantIDKey).(string)
+	if !ok || tenant == "" {
+		http.Error(w, `{"error": "Tenant ID not found in context"}`, http.StatusForbidden)
+		return
+	}
+
+	// Verify permission
+	if err := h.RBACService.VerifyPermission(r.Context(), tenant, userID, constants.EmployeeDelete); err != nil {
+		http.Error(w, fmt.Sprintf(`{"error": "Permission denied: %s"}`, err.Error()), http.StatusForbidden)
+		return
+	}
+
 	vars := mux.Vars(r)
 	employeeID := vars["id"]
-	tenant := r.Header.Get("X-Tenant-ID")
 
 	if err := h.Service.DeleteEmployee(tenant, employeeID); err != nil {
 		http.Error(w, fmt.Sprintf(`{"error": "Failed to delete employee: %s"}`, err.Error()), http.StatusInternalServerError)
@@ -384,8 +444,8 @@ func (h *HRHandler) GetLeaveBalance(w http.ResponseWriter, r *http.Request) {
 // ============================================================================
 
 // RegisterHRRoutes registers all HR routes
-func RegisterHRRoutes(r *mux.Router, hrService *services.HRService) {
-	handler := NewHRHandler(hrService)
+func RegisterHRRoutes(r *mux.Router, hrService *services.HRService, rbacService *services.RBACService) {
+	handler := NewHRHandler(hrService, rbacService)
 
 	// Employee routes
 	r.HandleFunc("/api/v1/hr/employees", handler.CreateEmployee).Methods("POST")

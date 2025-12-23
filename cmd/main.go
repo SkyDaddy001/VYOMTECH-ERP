@@ -94,6 +94,30 @@ func main() {
 	// Real Estate Service
 	realEstateService := services.NewRealEstateService(dbConn)
 
+	// Broker Service (Phase 1.2 Real Estate)
+	brokerService := services.NewBrokerService(dbConn)
+
+	// Joint Applicant Service (Phase 1.3 Real Estate)
+	jointApplicantService := services.NewJointApplicantService(dbConn)
+
+	// Document Management Service (Phase 1.4 Real Estate)
+	documentService := services.NewDocumentService(dbConn)
+
+	// Possession Management Service (Phase 2.1 Real Estate)
+	possessionService := services.NewPossessionService(dbConn)
+
+	// Title Clearance Management Service (Phase 2.2 Real Estate)
+	titleService := services.NewTitleService(dbConn)
+
+	// Customer Portal Service (Phase 2.3 Real Estate)
+	customerPortalService := services.NewCustomerPortalService(dbConn)
+
+	// Advanced Analytics Service (Phase 3.1 Enhancement)
+	analyticsService := services.NewAnalyticsService(dbConn)
+
+	// AI Recommendations Service (Phase 3.3)
+	aiService := services.NewAIService(dbConn)
+
 	// Civil Engineering Service
 	civilService := services.NewCivilService(dbConn)
 
@@ -129,6 +153,34 @@ func main() {
 	hrComplianceHandler := handlers.NewHRComplianceHandler(hrComplianceService)
 	taxComplianceHandler := handlers.NewTaxComplianceHandler(taxComplianceService)
 
+	// Broker Handler (Phase 1.2 Real Estate)
+	brokerHandler := handlers.NewBrokerHandler(brokerService)
+
+	// Joint Applicant Handler (Phase 1.3 Real Estate)
+	jointApplicantHandler := handlers.NewJointApplicantHandler(jointApplicantService)
+
+	// Document Management Handler (Phase 1.4 Real Estate)
+	documentHandler := handlers.NewDocumentHandler(documentService)
+
+	// Possession Management Handler (Phase 2.1 Real Estate)
+	possessionHandler := handlers.NewPossessionHandler(possessionService)
+
+	// Title Clearance Management Handler (Phase 2.2 Real Estate)
+	titleHandler := handlers.NewTitleHandler(titleService)
+
+	// Customer Portal Handler (Phase 2.3 Real Estate)
+	customerPortalHandler := handlers.NewCustomerPortalHandler(customerPortalService)
+
+	// Advanced Analytics Handler (Phase 3.1 Enhancement)
+	analyticsHandler := handlers.NewAnalyticsHandler(analyticsService, log)
+
+	// AI Recommendations Handler (Phase 3.3)
+	aiRecommendationsHandler := handlers.NewAIRecommendationsHandler(aiService, log)
+
+	// Phase 3.2: Mobile App Features Service & Handler
+	mobileService := services.NewMobileService(dbConn)
+	mobileHandler := handlers.NewMobileHandler(mobileService, log)
+
 	// Dashboard Handlers
 	financialDashboardHandler := handlers.NewFinancialDashboardHandler(glService)
 	hrDashboardHandler := handlers.NewHRDashboardHandler(hrService, hrComplianceService)
@@ -136,7 +188,7 @@ func main() {
 	salesDashboardHandler := handlers.NewSalesDashboardHandler(salesService)
 
 	// Setup router with all services
-	r := router.SetupRoutesWithPhase3C(authService, tenantService, passwordResetHandler, agentService, gamificationService, leadService, callService, campaignService, aiOrchestrator, webSocketHub, leadScoringService, dashboardService, taskService, notificationService, tenantCustomizationService, phase3cServices, salesService, realEstateService, civilService, constructionService, boqService, hrService, glService, rbacService, reraComplianceHandler, hrComplianceHandler, taxComplianceHandler, financialDashboardHandler, hrDashboardHandler, complianceDashboardHandler, salesDashboardHandler, userAdminHandler, tenantAdminHandler, log)
+	r := router.SetupRoutesWithPhase3C(authService, tenantService, passwordResetHandler, agentService, gamificationService, leadService, callService, campaignService, aiOrchestrator, webSocketHub, leadScoringService, dashboardService, taskService, notificationService, tenantCustomizationService, phase3cServices, salesService, realEstateService, civilService, constructionService, boqService, hrService, glService, rbacService, reraComplianceHandler, hrComplianceHandler, taxComplianceHandler, financialDashboardHandler, hrDashboardHandler, complianceDashboardHandler, salesDashboardHandler, brokerHandler, jointApplicantHandler, documentHandler, possessionHandler, titleHandler, customerPortalHandler, analyticsHandler, userAdminHandler, tenantAdminHandler, mobileHandler, aiRecommendationsHandler, log)
 
 	// Create HTTP server
 	server := &http.Server{

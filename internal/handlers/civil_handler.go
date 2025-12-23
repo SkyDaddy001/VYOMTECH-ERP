@@ -5,19 +5,22 @@ import (
 	"fmt"
 	"net/http"
 
+	"vyomtech-backend/internal/middleware"
 	"vyomtech-backend/internal/services"
 
 	"github.com/gorilla/mux"
 )
 
 type CivilHandler struct {
-	service *services.CivilService
+	service     *services.CivilService
+	RBACService *services.RBACService
 }
 
 // NewCivilHandler creates a new civil handler
-func NewCivilHandler(service *services.CivilService) *CivilHandler {
+func NewCivilHandler(service *services.CivilService, rbacService *services.RBACService) *CivilHandler {
 	return &CivilHandler{
-		service: service,
+		service:     service,
+		RBACService: rbacService,
 	}
 }
 
@@ -42,6 +45,25 @@ func (h *CivilHandler) GetDashboardMetrics(w http.ResponseWriter, r *http.Reques
 
 // CreateSite - POST /api/v1/civil/sites
 func (h *CivilHandler) CreateSite(w http.ResponseWriter, r *http.Request) {
+	// Extract user and tenant from context
+	userID, ok := r.Context().Value(middleware.UserIDKey).(int64)
+	if !ok {
+		http.Error(w, `{"error": "User ID not found in context"}`, http.StatusUnauthorized)
+		return
+	}
+
+	tenantID, ok := r.Context().Value(middleware.TenantIDKey).(string)
+	if !ok || tenantID == "" {
+		http.Error(w, `{"error": "Tenant ID not found in context"}`, http.StatusForbidden)
+		return
+	}
+
+	// Verify permission
+	if err := h.RBACService.VerifyPermission(r.Context(), tenantID, userID, "civil.sites.create"); err != nil {
+		http.Error(w, fmt.Sprintf(`{"error": "Permission denied: %s"}`, err.Error()), http.StatusForbidden)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(map[string]string{"message": "Site created"})
@@ -151,8 +173,8 @@ func (h *CivilHandler) UpdatePermitStatus(w http.ResponseWriter, r *http.Request
 }
 
 // RegisterCivilRoutes registers civil engineering routes
-func RegisterCivilRoutes(router *mux.Router, service *services.CivilService) {
-	handler := NewCivilHandler(service)
+func RegisterCivilRoutes(router *mux.Router, service *services.CivilService, rbacService *services.RBACService) {
+	handler := NewCivilHandler(service, rbacService)
 
 	// Dashboard
 	router.HandleFunc("/api/v1/civil/dashboard", handler.GetDashboardMetrics).Methods("GET")

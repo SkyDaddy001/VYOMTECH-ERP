@@ -6,11 +6,18 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 
 	"vyomtech-backend/internal/models"
 	"vyomtech-backend/pkg/logger"
 )
+
+// CacheEntry represents a cached permission entry with TTL
+type CacheEntry struct {
+	Data      interface{}
+	ExpiresAt time.Time
+}
 
 // RBACService handles role-based access control
 type RBACService struct {
@@ -18,6 +25,10 @@ type RBACService struct {
 	logger *logger.Logger
 	// Cache for permissions by role
 	permCache map[string][]string
+	// Advanced caching with TTL
+	cache     map[string]CacheEntry
+	cacheLock sync.RWMutex
+	cacheTTL  time.Duration
 }
 
 // NewRBACService creates a new RBAC service
@@ -26,7 +37,85 @@ func NewRBACService(db *sql.DB, log *logger.Logger) *RBACService {
 		db:        db,
 		logger:    log,
 		permCache: make(map[string][]string),
+		cache:     make(map[string]CacheEntry),
+		cacheTTL:  5 * time.Minute, // 5-minute cache TTL
 	}
+}
+
+// GetDB returns the database connection (for handlers that need direct DB access)
+func (rs *RBACService) GetDB() *sql.DB {
+	return rs.db
+}
+
+// GetCacheEntry retrieves a cached entry
+func (rs *RBACService) GetCacheEntry(key string) (interface{}, bool) {
+	rs.cacheLock.RLock()
+	defer rs.cacheLock.RUnlock()
+
+	entry, exists := rs.cache[key]
+	if !exists {
+		return nil, false
+	}
+
+	// Check if cache has expired
+	if time.Now().After(entry.ExpiresAt) {
+		// Don't delete here, let the cleanup routine handle it
+		return nil, false
+	}
+
+	return entry.Data, true
+}
+
+// SetCacheEntry sets a cache entry with TTL
+func (rs *RBACService) SetCacheEntry(key string, data interface{}) {
+	rs.cacheLock.Lock()
+	defer rs.cacheLock.Unlock()
+
+	rs.cache[key] = CacheEntry{
+		Data:      data,
+		ExpiresAt: time.Now().Add(rs.cacheTTL),
+	}
+}
+
+// InvalidateCache invalidates specific cache entries
+func (rs *RBACService) InvalidateCache(pattern string) {
+	rs.cacheLock.Lock()
+	defer rs.cacheLock.Unlock()
+
+	// Simple pattern matching - clear keys that contain the pattern
+	for key := range rs.cache {
+		if pattern == "*" || stringContains(key, pattern) {
+			delete(rs.cache, key)
+		}
+	}
+}
+
+// ClearCache clears all cache
+func (rs *RBACService) ClearCache() {
+	rs.cacheLock.Lock()
+	defer rs.cacheLock.Unlock()
+
+	rs.cache = make(map[string]CacheEntry)
+	rs.permCache = make(map[string][]string)
+}
+
+// CleanupExpiredCache removes expired cache entries
+func (rs *RBACService) CleanupExpiredCache() {
+	rs.cacheLock.Lock()
+	defer rs.cacheLock.Unlock()
+
+	now := time.Now()
+	for key, entry := range rs.cache {
+		if now.After(entry.ExpiresAt) {
+			delete(rs.cache, key)
+		}
+	}
+}
+
+// stringContains checks if a string contains a substring
+func stringContains(s, substr string) bool {
+	return len(s) >= len(substr) && s[:len(substr)] == substr ||
+		len(s) > len(substr) && s[len(s)-len(substr):] == substr
 }
 
 // CreateRole creates a new role with permissions
@@ -53,9 +142,120 @@ func (rs *RBACService) CreateRole(ctx context.Context, role *models.Role) error 
 	role.UpdatedAt = time.Now()
 
 	// Clear cache
-	rs.permCache = make(map[string][]string)
+	rs.InvalidateCache(fmt.Sprintf("role:%s", role.TenantID))
 
 	return nil
+}
+
+// VerifyPermission checks if a user has a specific permission
+// This method uses caching to optimize repeated checks
+func (rs *RBACService) VerifyPermission(ctx context.Context, tenantID string, userID int64, permissionCode string) error {
+	// Try cache first
+	cacheKey := fmt.Sprintf("perm:%s:%d:%s", tenantID, userID, permissionCode)
+	if cached, ok := rs.GetCacheEntry(cacheKey); ok {
+		if allowed, ok := cached.(bool); ok && allowed {
+			return nil
+		}
+	}
+
+	// Query database for permission
+	query := `
+		SELECT COUNT(*)
+		FROM user_role ur
+		JOIN role r ON ur.role_id = r.id
+		JOIN role_permission rp ON r.id = rp.role_id
+		JOIN permission p ON rp.permission_id = p.id
+		WHERE ur.user_id = ? 
+		  AND ur.tenant_id = ?
+		  AND p.tenant_id = ?
+		  AND (p.permission_name = ? OR p.permission_name LIKE ?)
+		  AND r.is_active = TRUE
+		  AND (ur.expires_at IS NULL OR ur.expires_at > NOW())
+	`
+
+	var count int
+	permWildcard := permissionCode + "%"
+	err := rs.db.QueryRowContext(ctx, query, userID, tenantID, tenantID, permissionCode, permWildcard).Scan(&count)
+
+	if err != nil && err != sql.ErrNoRows {
+		rs.logger.Error("Failed to verify permission",
+			"error", err,
+			"user_id", userID,
+			"permission", permissionCode,
+		)
+		return errors.New("failed to verify permission")
+	}
+
+	hasPermission := count > 0
+
+	// Cache the result
+	rs.SetCacheEntry(cacheKey, hasPermission)
+
+	if !hasPermission {
+		return errors.New("permission denied")
+	}
+
+	return nil
+}
+
+// GetRolePermissions retrieves all permissions for a role
+// Uses caching to optimize repeated calls
+func (rs *RBACService) GetRolePermissions(ctx context.Context, tenantID string, roleID string) ([]string, error) {
+	cacheKey := fmt.Sprintf("role:perms:%s:%s", tenantID, roleID)
+
+	// Check cache first
+	if cached, ok := rs.GetCacheEntry(cacheKey); ok {
+		if perms, ok := cached.([]string); ok {
+			return perms, nil
+		}
+	}
+
+	query := `
+		SELECT DISTINCT p.permission_name
+		FROM role_permission rp
+		JOIN permission p ON rp.permission_id = p.id
+		WHERE rp.role_id = ? 
+		  AND rp.tenant_id = ?
+		  AND p.tenant_id = ?
+	`
+
+	rows, err := rs.db.QueryContext(ctx, query, roleID, tenantID, tenantID)
+	if err != nil {
+		rs.logger.Error("Failed to get role permissions",
+			"error", err,
+			"role_id", roleID,
+		)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var permissions []string
+	for rows.Next() {
+		var perm string
+		if err := rows.Scan(&perm); err != nil {
+			continue
+		}
+		permissions = append(permissions, perm)
+	}
+
+	// Cache the result
+	rs.SetCacheEntry(cacheKey, permissions)
+
+	return permissions, nil
+}
+
+// GetCacheStats returns cache statistics
+func (rs *RBACService) GetCacheStats() map[string]interface{} {
+	rs.cacheLock.RLock()
+	defer rs.cacheLock.RUnlock()
+
+	stats := map[string]interface{}{
+		"total_entries": len(rs.cache),
+		"cache_ttl":     rs.cacheTTL.String(),
+		"last_cleanup":  time.Now().Format(time.RFC3339),
+	}
+
+	return stats
 }
 
 // GetRole retrieves a role by ID
@@ -373,20 +573,6 @@ func (rs *RBACService) SetupDefaultRoles(ctx context.Context, tenantID string) e
 			rs.logger.Warn("Failed to create default role", "role", r.name, "error", err)
 			// Continue with other roles
 		}
-	}
-
-	return nil
-}
-
-// VerifyPermission checks permission and returns error if denied
-func (rs *RBACService) VerifyPermission(ctx context.Context, tenantID string, userID int64, permissionCode string) error {
-	hasPermission, err := rs.HasPermission(ctx, tenantID, userID, permissionCode)
-	if err != nil {
-		return fmt.Errorf("permission check failed: %w", err)
-	}
-
-	if !hasPermission {
-		return fmt.Errorf("permission denied: %s", permissionCode)
 	}
 
 	return nil

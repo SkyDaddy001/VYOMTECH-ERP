@@ -811,6 +811,70 @@ export const financialDashboardService = {
   },
 }
 
+// Bank Financing Service
+export const financingService = {
+  async list(params?: { limit?: number; offset?: number; status?: string; loan_type?: string }) {
+    const query = new URLSearchParams()
+    if (params?.limit) query.append('limit', params.limit.toString())
+    if (params?.offset) query.append('offset', params.offset.toString())
+    if (params?.status) query.append('status', params.status)
+    if (params?.loan_type) query.append('loan_type', params.loan_type)
+    return apiClient.get(`/api/v1/financing${query.size > 0 ? '?' + query : ''}`)
+  },
+
+  async create(data: any) {
+    return apiClient.post('/api/v1/financing', data)
+  },
+
+  async get(id: number) {
+    return apiClient.get(`/api/v1/financing/${id}`)
+  },
+
+  async update(id: number, data: any) {
+    return apiClient.put(`/api/v1/financing/${id}`, data)
+  },
+
+  async delete(id: number) {
+    return apiClient.delete(`/api/v1/financing/${id}`)
+  },
+
+  async getSummary(id: number) {
+    return apiClient.get(`/api/v1/financing/${id}/summary`)
+  },
+
+  async getByBooking(bookingId: number) {
+    return apiClient.get(`/api/v1/bookings/${bookingId}/financing`)
+  },
+
+  async listDisbursements(financingId: number) {
+    return apiClient.get(`/api/v1/financing/${financingId}/disbursements`)
+  },
+
+  async createDisbursement(data: any) {
+    return apiClient.post('/api/v1/disbursements', data)
+  },
+
+  async updateDisbursement(id: number, data: any) {
+    return apiClient.put(`/api/v1/disbursements/${id}`, data)
+  },
+
+  async listNOCs(financingId: number) {
+    return apiClient.get(`/api/v1/financing/${financingId}/nocs`)
+  },
+
+  async createNOC(data: any) {
+    return apiClient.post('/api/v1/nocs', data)
+  },
+
+  async listCollections(financingId: number) {
+    return apiClient.get(`/api/v1/financing/${financingId}/collections`)
+  },
+
+  async createCollection(data: any) {
+    return apiClient.post('/api/v1/collections', data)
+  },
+}
+
 // Sales Dashboard Service
 export const salesDashboardService = {
   async getSalesOverview(startDate?: Date, endDate?: Date) {
@@ -1126,12 +1190,14 @@ export const api = {
   ...gamificationService,
   ...complianceService,
   ...aiService,
+  ...financingService,
   ...financialDashboardService,
   ...salesDashboardService,
   ...hrDashboardService,
   ...purchaseDashboardService,
   ...projectDashboardService,
   ...prealesDashboardService,
+  financing: financingService,
   get: (url: string) => apiClient.get(url),
   post: (url: string, data?: any) => apiClient.post(url, data),
   put: (url: string, data?: any) => apiClient.put(url, data),

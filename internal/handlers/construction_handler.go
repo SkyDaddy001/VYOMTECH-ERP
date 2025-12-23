@@ -5,19 +5,22 @@ import (
 	"fmt"
 	"net/http"
 
+	"vyomtech-backend/internal/middleware"
 	"vyomtech-backend/internal/services"
 
 	"github.com/gorilla/mux"
 )
 
 type ConstructionHandler struct {
-	service *services.ConstructionService
+	service     *services.ConstructionService
+	RBACService *services.RBACService
 }
 
 // NewConstructionHandler creates a new construction handler
-func NewConstructionHandler(service *services.ConstructionService) *ConstructionHandler {
+func NewConstructionHandler(service *services.ConstructionService, rbacService *services.RBACService) *ConstructionHandler {
 	return &ConstructionHandler{
-		service: service,
+		service:     service,
+		RBACService: rbacService,
 	}
 }
 
@@ -42,6 +45,25 @@ func (h *ConstructionHandler) GetDashboardMetrics(w http.ResponseWriter, r *http
 
 // CreateProject - POST /api/v1/construction/projects
 func (h *ConstructionHandler) CreateProject(w http.ResponseWriter, r *http.Request) {
+	// Extract user and tenant from context
+	userID, ok := r.Context().Value(middleware.UserIDKey).(int64)
+	if !ok {
+		http.Error(w, `{"error": "User ID not found in context"}`, http.StatusUnauthorized)
+		return
+	}
+
+	tenantID, ok := r.Context().Value(middleware.TenantIDKey).(string)
+	if !ok || tenantID == "" {
+		http.Error(w, `{"error": "Tenant ID not found in context"}`, http.StatusForbidden)
+		return
+	}
+
+	// Verify permission
+	if err := h.RBACService.VerifyPermission(r.Context(), tenantID, userID, "construction.projects.create"); err != nil {
+		http.Error(w, fmt.Sprintf(`{"error": "Permission denied: %s"}`, err.Error()), http.StatusForbidden)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(map[string]string{"message": "Project created"})
@@ -137,8 +159,8 @@ func (h *ConstructionHandler) ListQualityInspections(w http.ResponseWriter, r *h
 }
 
 // RegisterConstructionRoutes registers construction routes
-func RegisterConstructionRoutes(router *mux.Router, service *services.ConstructionService) {
-	handler := NewConstructionHandler(service)
+func RegisterConstructionRoutes(router *mux.Router, service *services.ConstructionService, rbacService *services.RBACService) {
+	handler := NewConstructionHandler(service, rbacService)
 
 	// Dashboard
 	router.HandleFunc("/api/v1/construction/dashboard", handler.GetDashboardMetrics).Methods("GET")

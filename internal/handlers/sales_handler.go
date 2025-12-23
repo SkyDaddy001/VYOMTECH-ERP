@@ -8,20 +8,25 @@ import (
 	"strings"
 	"time"
 
+	"vyomtech-backend/internal/constants"
+	"vyomtech-backend/internal/middleware"
 	"vyomtech-backend/internal/models"
+	"vyomtech-backend/internal/services"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 )
 
 type SalesHandler struct {
-	DB *sql.DB
+	DB          *sql.DB
+	RBACService *services.RBACService
 }
 
 // NewSalesHandler creates a new sales handler instance
-func NewSalesHandler(db *sql.DB) *SalesHandler {
+func NewSalesHandler(db *sql.DB, rbacService *services.RBACService) *SalesHandler {
 	return &SalesHandler{
-		DB: db,
+		DB:          db,
+		RBACService: rbacService,
 	}
 }
 
@@ -43,9 +48,22 @@ func (h *SalesHandler) respondError(w http.ResponseWriter, code int, message str
 
 // CreateSalesLead creates a new sales lead
 func (h *SalesHandler) CreateSalesLead(w http.ResponseWriter, r *http.Request) {
-	tenantID := r.Header.Get("X-Tenant-ID")
-	if tenantID == "" {
-		h.respondError(w, http.StatusBadRequest, "X-Tenant-ID header required")
+	// Extract user and tenant from context
+	userID, ok := r.Context().Value(middleware.UserIDKey).(int64)
+	if !ok {
+		h.respondError(w, http.StatusUnauthorized, "User ID not found in context")
+		return
+	}
+
+	tenantID, ok := r.Context().Value(middleware.TenantIDKey).(string)
+	if !ok || tenantID == "" {
+		h.respondError(w, http.StatusForbidden, "Tenant ID not found in context")
+		return
+	}
+
+	// Verify permission
+	if err := h.RBACService.VerifyPermission(r.Context(), tenantID, userID, constants.SalesLeadCreate); err != nil {
+		h.respondError(w, http.StatusForbidden, fmt.Sprintf("Permission denied: %s", err.Error()))
 		return
 	}
 
@@ -70,7 +88,7 @@ func (h *SalesHandler) CreateSalesLead(w http.ResponseWriter, r *http.Request) {
 	leadID := uuid.New().String()
 	leadCode := fmt.Sprintf("LEAD-%s-%d", time.Now().Format("20060102"), time.Now().Unix()%10000)
 	now := time.Now()
-	userID := r.Header.Get("X-User-ID")
+	userIDStr := fmt.Sprintf("%d", userID)
 
 	query := `
 		INSERT INTO sales_leads (
@@ -96,7 +114,7 @@ func (h *SalesHandler) CreateSalesLead(w http.ResponseWriter, r *http.Request) {
 		leadID, tenantID, leadCode, req.FirstName, req.LastName, req.Email, req.Phone,
 		req.CompanyName, req.Industry, "new", 0.0, req.Source, req.CampaignID,
 		req.AssignedTo, assignedDate, false, nextActionDate,
-		userID, now, now,
+		userIDStr, now, now,
 	)
 
 	if err != nil {
@@ -121,7 +139,7 @@ func (h *SalesHandler) CreateSalesLead(w http.ResponseWriter, r *http.Request) {
 		AssignedTo:          req.AssignedTo,
 		AssignedDate:        assignedDate,
 		ConvertedToCustomer: false,
-		CreatedBy:           &userID,
+		CreatedBy:           &userIDStr,
 		CreatedAt:           now,
 		UpdatedAt:           now,
 	}
@@ -219,9 +237,22 @@ func (h *SalesHandler) ListSalesLeads(w http.ResponseWriter, r *http.Request) {
 
 // UpdateSalesLead updates an existing sales lead
 func (h *SalesHandler) UpdateSalesLead(w http.ResponseWriter, r *http.Request) {
-	tenantID := r.Header.Get("X-Tenant-ID")
-	if tenantID == "" {
-		h.respondError(w, http.StatusBadRequest, "X-Tenant-ID header required")
+	// Extract user and tenant from context
+	userID, ok := r.Context().Value(middleware.UserIDKey).(int64)
+	if !ok {
+		h.respondError(w, http.StatusUnauthorized, "User ID not found in context")
+		return
+	}
+
+	tenantID, ok := r.Context().Value(middleware.TenantIDKey).(string)
+	if !ok || tenantID == "" {
+		h.respondError(w, http.StatusForbidden, "Tenant ID not found in context")
+		return
+	}
+
+	// Verify permission
+	if err := h.RBACService.VerifyPermission(r.Context(), tenantID, userID, constants.SalesLeadUpdate); err != nil {
+		h.respondError(w, http.StatusForbidden, fmt.Sprintf("Permission denied: %s", err.Error()))
 		return
 	}
 
@@ -241,22 +272,18 @@ func (h *SalesHandler) UpdateSalesLead(w http.ResponseWriter, r *http.Request) {
 
 	updateParts := []string{}
 	args := []interface{}{}
-	argIdx := 1
 
 	if req.Status != nil {
-		updateParts = append(updateParts, fmt.Sprintf("status = $%d", argIdx))
+		updateParts = append(updateParts, "status = ?")
 		args = append(args, *req.Status)
-		argIdx++
 	}
 	if req.Probability != nil {
-		updateParts = append(updateParts, fmt.Sprintf("probability = $%d", argIdx))
+		updateParts = append(updateParts, "probability = ?")
 		args = append(args, *req.Probability)
-		argIdx++
 	}
 	if req.AssignedTo != nil {
-		updateParts = append(updateParts, fmt.Sprintf("assigned_to = $%d", argIdx))
+		updateParts = append(updateParts, "assigned_to = ?")
 		args = append(args, *req.AssignedTo)
-		argIdx++
 	}
 
 	if len(updateParts) == 0 {
@@ -267,10 +294,8 @@ func (h *SalesHandler) UpdateSalesLead(w http.ResponseWriter, r *http.Request) {
 	args = append(args, id, tenantID)
 
 	query := fmt.Sprintf(
-		"UPDATE sales_leads SET %s, updated_at = NOW() WHERE id = $%d AND tenant_id = $%d",
+		"UPDATE sales_leads SET %s, updated_at = NOW() WHERE id = ? AND tenant_id = ?",
 		strings.Join(updateParts, ", "),
-		argIdx,
-		argIdx+1,
 	)
 
 	result, err := h.DB.Exec(query, args...)
@@ -290,16 +315,29 @@ func (h *SalesHandler) UpdateSalesLead(w http.ResponseWriter, r *http.Request) {
 
 // DeleteSalesLead deletes a sales lead (soft delete)
 func (h *SalesHandler) DeleteSalesLead(w http.ResponseWriter, r *http.Request) {
-	tenantID := r.Header.Get("X-Tenant-ID")
-	if tenantID == "" {
-		h.respondError(w, http.StatusBadRequest, "X-Tenant-ID header required")
+	// Extract user and tenant from context
+	userID, ok := r.Context().Value(middleware.UserIDKey).(int64)
+	if !ok {
+		h.respondError(w, http.StatusUnauthorized, "User ID not found in context")
+		return
+	}
+
+	tenantID, ok := r.Context().Value(middleware.TenantIDKey).(string)
+	if !ok || tenantID == "" {
+		h.respondError(w, http.StatusForbidden, "Tenant ID not found in context")
+		return
+	}
+
+	// Verify permission
+	if err := h.RBACService.VerifyPermission(r.Context(), tenantID, userID, constants.SalesLeadDelete); err != nil {
+		h.respondError(w, http.StatusForbidden, fmt.Sprintf("Permission denied: %s", err.Error()))
 		return
 	}
 
 	vars := mux.Vars(r)
 	id := vars["id"]
 
-	query := "UPDATE sales_leads SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2"
+	query := "UPDATE sales_leads SET deleted_at = NOW() WHERE id = ? AND tenant_id = ?"
 	result, err := h.DB.Exec(query, id, tenantID)
 	if err != nil {
 		h.respondError(w, http.StatusInternalServerError, "Failed to delete lead")
@@ -321,9 +359,22 @@ func (h *SalesHandler) DeleteSalesLead(w http.ResponseWriter, r *http.Request) {
 
 // CreateSalesCustomer creates a new sales customer
 func (h *SalesHandler) CreateSalesCustomer(w http.ResponseWriter, r *http.Request) {
-	tenantID := r.Header.Get("X-Tenant-ID")
-	if tenantID == "" {
-		h.respondError(w, http.StatusBadRequest, "X-Tenant-ID header required")
+	// Extract user and tenant from context
+	userID, ok := r.Context().Value(middleware.UserIDKey).(int64)
+	if !ok {
+		h.respondError(w, http.StatusUnauthorized, "User ID not found in context")
+		return
+	}
+
+	tenantID, ok := r.Context().Value(middleware.TenantIDKey).(string)
+	if !ok || tenantID == "" {
+		h.respondError(w, http.StatusForbidden, "Tenant ID not found in context")
+		return
+	}
+
+	// Verify permission
+	if err := h.RBACService.VerifyPermission(r.Context(), tenantID, userID, constants.SalesCustomerCreate); err != nil {
+		h.respondError(w, http.StatusForbidden, fmt.Sprintf("Permission denied: %s", err.Error()))
 		return
 	}
 
@@ -361,7 +412,7 @@ func (h *SalesHandler) CreateSalesCustomer(w http.ResponseWriter, r *http.Reques
 	customerID := uuid.New().String()
 	customerCode := fmt.Sprintf("CUST-%s-%d", time.Now().Format("20060102"), time.Now().Unix()%10000)
 	now := time.Now()
-	userID := r.Header.Get("X-User-ID")
+	userIDStr := fmt.Sprintf("%d", userID)
 
 	query := `
 		INSERT INTO sales_customers (
@@ -380,7 +431,7 @@ func (h *SalesHandler) CreateSalesCustomer(w http.ResponseWriter, r *http.Reques
 		req.BillingAddress, req.BillingCity, req.BillingState, req.BillingCountry, req.BillingZip,
 		req.ShippingAddress, req.ShippingCity, req.ShippingState, req.ShippingCountry, req.ShippingZip,
 		req.PANNumber, req.GSTNumber, req.CreditLimit, req.CreditDays, req.PaymentTerms,
-		req.CustomerCategory, "active", 0.0, &userID, now, now,
+		req.CustomerCategory, "active", 0.0, &userIDStr, now, now,
 	)
 
 	if err != nil {
@@ -417,7 +468,7 @@ func (h *SalesHandler) CreateSalesCustomer(w http.ResponseWriter, r *http.Reques
 		CustomerCategory:   req.CustomerCategory,
 		Status:             "active",
 		CurrentBalance:     0.0,
-		CreatedBy:          &userID,
+		CreatedBy:          &userIDStr,
 		CreatedAt:          now,
 		UpdatedAt:          now,
 	}

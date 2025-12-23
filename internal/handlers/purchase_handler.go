@@ -8,14 +8,26 @@ import (
 	"strconv"
 	"time"
 
+	"vyomtech-backend/internal/constants"
+	"vyomtech-backend/internal/middleware"
 	"vyomtech-backend/internal/models"
+	"vyomtech-backend/internal/services"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 )
 
 type PurchaseHandler struct {
-	DB *sql.DB
+	DB          *sql.DB
+	RBACService *services.RBACService
+}
+
+// NewPurchaseHandler creates a new purchase handler
+func NewPurchaseHandler(db *sql.DB, rbacService *services.RBACService) *PurchaseHandler {
+	return &PurchaseHandler{
+		DB:          db,
+		RBACService: rbacService,
+	}
 }
 
 // ============================================================================
@@ -24,13 +36,31 @@ type PurchaseHandler struct {
 
 // CreateVendor - POST /api/v1/purchase/vendors
 func (h *PurchaseHandler) CreateVendor(w http.ResponseWriter, r *http.Request) {
+	// Extract user and tenant from context
+	userID, ok := r.Context().Value(middleware.UserIDKey).(int64)
+	if !ok {
+		http.Error(w, `{"error": "User ID not found in context"}`, http.StatusUnauthorized)
+		return
+	}
+
+	tenant, ok := r.Context().Value(middleware.TenantIDKey).(string)
+	if !ok || tenant == "" {
+		http.Error(w, `{"error": "Tenant ID not found in context"}`, http.StatusForbidden)
+		return
+	}
+
+	// Verify permission
+	if err := h.RBACService.VerifyPermission(r.Context(), tenant, userID, constants.VendorCreate); err != nil {
+		http.Error(w, fmt.Sprintf(`{"error": "Permission denied: %s"}`, err.Error()), http.StatusForbidden)
+		return
+	}
+
 	var vendor models.Vendor
 	if err := json.NewDecoder(r.Body).Decode(&vendor); err != nil {
 		http.Error(w, fmt.Sprintf(`{"error": "%s"}`, err.Error()), http.StatusBadRequest)
 		return
 	}
 
-	tenant := r.Header.Get("X-Tenant-ID")
 	vendor.ID = uuid.New().String()
 	vendor.TenantID = tenant
 	vendor.Status = "active"

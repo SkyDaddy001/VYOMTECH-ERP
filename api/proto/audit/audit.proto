@@ -1,0 +1,66 @@
+syntax = "proto3";
+
+package vyomtech.audit;
+
+option go_package = "vyomtech-backend/api/proto/audit";
+
+import "google/protobuf/timestamp.proto";
+
+// AuditLog represents an audit log entry
+message AuditLog {
+  string id = 1;
+  string tenant_id = 2;
+  string user_id = 3;
+  string action = 4;
+  string resource_type = 5;
+  string resource_id = 6;
+  string changes = 7; // JSON format
+  string status = 8; // SUCCESS or FAILED
+  string ip_address = 9;
+  string user_agent = 10;
+  google.protobuf.Timestamp timestamp = 11;
+}
+
+// LogActionRequest for logging an action
+message LogActionRequest {
+  string tenant_id = 1;
+  string user_id = 2;
+  string action = 3;
+  string resource_type = 4;
+  string resource_id = 5;
+  string changes = 6; // JSON
+  string ip_address = 7;
+  string user_agent = 8;
+}
+
+// LogActionResponse for action logging
+message LogActionResponse {
+  bool success = 1;
+  string log_id = 2;
+  string message = 3;
+}
+
+// GetAuditLogsRequest for retrieving audit logs
+message GetAuditLogsRequest {
+  string tenant_id = 1;
+  string user_id = 2;
+  string action = 3;
+  string status = 4;
+  int32 limit = 5;
+  int32 offset = 6;
+}
+
+// GetAuditLogsResponse for audit logs retrieval
+message GetAuditLogsResponse {
+  repeated AuditLog logs = 1;
+  int32 total = 2;
+}
+
+// AuditService for audit logging and compliance tracking
+service AuditService {
+  // LogAction logs an action for audit trail
+  rpc LogAction(LogActionRequest) returns (LogActionResponse);
+  
+  // GetAuditLogs retrieves audit logs with optional filters
+  rpc GetAuditLogs(GetAuditLogsRequest) returns (GetAuditLogsResponse);
+}

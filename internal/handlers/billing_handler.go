@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	"vyomtech-backend/internal/middleware"
 	"vyomtech-backend/internal/models"
 	"vyomtech-backend/internal/services"
 	"vyomtech-backend/pkg/logger"
@@ -15,17 +16,38 @@ import (
 type BillingHandler struct {
 	billingService *services.BillingService
 	logger         *logger.Logger
+	RBACService    *services.RBACService
 }
 
-func NewBillingHandler(billingService *services.BillingService, logger *logger.Logger) *BillingHandler {
+func NewBillingHandler(billingService *services.BillingService, logger *logger.Logger, rbacService *services.RBACService) *BillingHandler {
 	return &BillingHandler{
 		billingService: billingService,
 		logger:         logger,
+		RBACService:    rbacService,
 	}
 }
 
 // CreatePricingPlan creates a new pricing plan (admin only)
 func (h *BillingHandler) CreatePricingPlan(w http.ResponseWriter, r *http.Request) {
+	// Extract user and tenant from context
+	userID, ok := r.Context().Value(middleware.UserIDKey).(int64)
+	if !ok {
+		http.Error(w, `{"error": "User ID not found in context"}`, http.StatusUnauthorized)
+		return
+	}
+
+	tenant, ok := r.Context().Value(middleware.TenantIDKey).(string)
+	if !ok || tenant == "" {
+		http.Error(w, `{"error": "Tenant ID not found in context"}`, http.StatusForbidden)
+		return
+	}
+
+	// Verify permission - billing requires special privileges
+	if err := h.RBACService.VerifyPermission(r.Context(), tenant, userID, "billing.plans.create"); err != nil {
+		http.Error(w, fmt.Sprintf(`{"error": "Permission denied: %s"}`, err.Error()), http.StatusForbidden)
+		return
+	}
+
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return

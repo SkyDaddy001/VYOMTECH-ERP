@@ -5,22 +5,25 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"vyomtech-backend/internal/middleware"
 	"vyomtech-backend/internal/models"
-	"net/http"
+	"vyomtech-backend/internal/services"
 
 	"github.com/gorilla/mux"
 )
 
 // RealEstateHandler handles all real estate related operations
 type RealEstateHandler struct {
-	DB *sql.DB
+	DB          *sql.DB
+	RBACService *services.RBACService
 }
 
 // NewRealEstateHandler creates a new real estate handler
-func NewRealEstateHandler(db *sql.DB) *RealEstateHandler {
+func NewRealEstateHandler(db *sql.DB, rbacService *services.RBACService) *RealEstateHandler {
 	return &RealEstateHandler{
-		DB: db,
+		DB:          db,
+		RBACService: rbacService,
 	}
 }
 
@@ -30,7 +33,25 @@ func NewRealEstateHandler(db *sql.DB) *RealEstateHandler {
 
 // CreateProject creates a new property project
 func (h *RealEstateHandler) CreateProject(w http.ResponseWriter, r *http.Request) {
-	tenantID := r.Context().Value(middleware.TenantIDKey).(string)
+	// Extract user and tenant from context
+	userID, ok := r.Context().Value(middleware.UserIDKey).(int64)
+	if !ok {
+		h.respondError(w, http.StatusUnauthorized, "User ID not found in context")
+		return
+	}
+
+	tenantID, ok := r.Context().Value(middleware.TenantIDKey).(string)
+	if !ok || tenantID == "" {
+		h.respondError(w, http.StatusForbidden, "Tenant ID not found in context")
+		return
+	}
+
+	// For real estate, create is combined with general property operations
+	// Using a generic property.create permission
+	if err := h.RBACService.VerifyPermission(r.Context(), tenantID, userID, "properties.create"); err != nil {
+		h.respondError(w, http.StatusForbidden, fmt.Sprintf("Permission denied: %s", err.Error()))
+		return
+	}
 
 	var req models.CreatePropertyProjectRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"time"
 
+	"vyomtech-backend/internal/constants"
+	"vyomtech-backend/internal/middleware"
 	"vyomtech-backend/internal/models"
 	"vyomtech-backend/internal/services"
 
@@ -14,12 +16,16 @@ import (
 )
 
 type GLHandler struct {
-	Service *services.GLService
+	Service     *services.GLService
+	RBACService *services.RBACService
 }
 
 // NewGLHandler creates a new GL handler
-func NewGLHandler(service *services.GLService) *GLHandler {
-	return &GLHandler{Service: service}
+func NewGLHandler(service *services.GLService, rbacService *services.RBACService) *GLHandler {
+	return &GLHandler{
+		Service:     service,
+		RBACService: rbacService,
+	}
 }
 
 // ============================================================================
@@ -28,13 +34,31 @@ func NewGLHandler(service *services.GLService) *GLHandler {
 
 // CreateAccount - POST /api/v1/gl/accounts
 func (h *GLHandler) CreateAccount(w http.ResponseWriter, r *http.Request) {
+	// Extract user and tenant from context
+	userID, ok := r.Context().Value(middleware.UserIDKey).(int64)
+	if !ok {
+		http.Error(w, `{"error": "User ID not found in context"}`, http.StatusUnauthorized)
+		return
+	}
+
+	tenant, ok := r.Context().Value(middleware.TenantIDKey).(string)
+	if !ok || tenant == "" {
+		http.Error(w, `{"error": "Tenant ID not found in context"}`, http.StatusForbidden)
+		return
+	}
+
+	// Verify permission
+	if err := h.RBACService.VerifyPermission(r.Context(), tenant, userID, constants.AccountCreate); err != nil {
+		http.Error(w, fmt.Sprintf(`{"error": "Permission denied: %s"}`, err.Error()), http.StatusForbidden)
+		return
+	}
+
 	var account models.ChartOfAccount
 	if err := json.NewDecoder(r.Body).Decode(&account); err != nil {
 		http.Error(w, fmt.Sprintf(`{"error": "Invalid request: %s"}`, err.Error()), http.StatusBadRequest)
 		return
 	}
 
-	tenant := r.Header.Get("X-Tenant-ID")
 	account.ID = uuid.New().String()
 
 	if err := h.Service.CreateAccount(tenant, &account); err != nil {
@@ -87,13 +111,31 @@ func (h *GLHandler) ListAccounts(w http.ResponseWriter, r *http.Request) {
 
 // CreateJournalEntry - POST /api/v1/gl/journal-entries
 func (h *GLHandler) CreateJournalEntry(w http.ResponseWriter, r *http.Request) {
+	// Extract user and tenant from context
+	userID, ok := r.Context().Value(middleware.UserIDKey).(int64)
+	if !ok {
+		http.Error(w, `{"error": "User ID not found in context"}`, http.StatusUnauthorized)
+		return
+	}
+
+	tenant, ok := r.Context().Value(middleware.TenantIDKey).(string)
+	if !ok || tenant == "" {
+		http.Error(w, `{"error": "Tenant ID not found in context"}`, http.StatusForbidden)
+		return
+	}
+
+	// Verify permission - entries need to be posted, so check EntryPost
+	if err := h.RBACService.VerifyPermission(r.Context(), tenant, userID, constants.EntryPost); err != nil {
+		http.Error(w, fmt.Sprintf(`{"error": "Permission denied: %s"}`, err.Error()), http.StatusForbidden)
+		return
+	}
+
 	var req models.JournalEntryRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, fmt.Sprintf(`{"error": "Invalid request: %s"}`, err.Error()), http.StatusBadRequest)
 		return
 	}
 
-	tenant := r.Header.Get("X-Tenant-ID")
 	entryID := uuid.New().String()
 
 	entry := &models.JournalEntry{
@@ -141,9 +183,27 @@ func (h *GLHandler) CreateJournalEntry(w http.ResponseWriter, r *http.Request) {
 
 // PostJournalEntry - POST /api/v1/gl/journal-entries/{id}/post
 func (h *GLHandler) PostJournalEntry(w http.ResponseWriter, r *http.Request) {
+	// Extract user and tenant from context
+	userID, ok := r.Context().Value(middleware.UserIDKey).(int64)
+	if !ok {
+		http.Error(w, `{"error": "User ID not found in context"}`, http.StatusUnauthorized)
+		return
+	}
+
+	tenant, ok := r.Context().Value(middleware.TenantIDKey).(string)
+	if !ok || tenant == "" {
+		http.Error(w, `{"error": "Tenant ID not found in context"}`, http.StatusForbidden)
+		return
+	}
+
+	// Verify permission
+	if err := h.RBACService.VerifyPermission(r.Context(), tenant, userID, constants.EntryPost); err != nil {
+		http.Error(w, fmt.Sprintf(`{"error": "Permission denied: %s"}`, err.Error()), http.StatusForbidden)
+		return
+	}
+
 	vars := mux.Vars(r)
 	entryID := vars["id"]
-	tenant := r.Header.Get("X-Tenant-ID")
 
 	var req models.PostJournalEntryRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -363,8 +423,8 @@ func (h *GLHandler) ClosePeriod(w http.ResponseWriter, r *http.Request) {
 // ============================================================================
 
 // RegisterGLRoutes registers all GL routes
-func RegisterGLRoutes(r *mux.Router, glService *services.GLService) {
-	handler := NewGLHandler(glService)
+func RegisterGLRoutes(r *mux.Router, glService *services.GLService, rbacService *services.RBACService) {
+	handler := NewGLHandler(glService, rbacService)
 
 	// Chart of Accounts routes
 	r.HandleFunc("/api/v1/gl/accounts", handler.CreateAccount).Methods("POST")

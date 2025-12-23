@@ -325,8 +325,8 @@ func TestDashboardAndReports(t *testing.T) {
 	assert.NotNil(t, handler)
 }
 
-// TestMultiTenantIsolation tests multi-tenant data isolation
-func TestMultiTenantIsolation(t *testing.T) {
+// TestProjectMultiTenantIsolation tests multi-tenant data isolation for projects
+func TestProjectMultiTenantIsolation(t *testing.T) {
 	handler := &ProjectManagementHandler{
 		Service: &services.ProjectManagementService{},
 		DB:      &sql.DB{},

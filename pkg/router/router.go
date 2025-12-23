@@ -18,7 +18,7 @@ func SetupRoutesWithServices(
 	agentService *services.AgentService,
 	log *logger.Logger,
 ) *mux.Router {
-	return setupRoutes(authService, nil, passwordResetHandler, agentService, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, log)
+	return setupRoutes(authService, nil, passwordResetHandler, agentService, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, log)
 }
 
 // SetupRoutesWithTenant configures all API routes with tenant service
@@ -29,7 +29,7 @@ func SetupRoutesWithTenant(
 	agentService *services.AgentService,
 	log *logger.Logger,
 ) *mux.Router {
-	return setupRoutes(authService, tenantService, passwordResetHandler, agentService, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, log)
+	return setupRoutes(authService, tenantService, passwordResetHandler, agentService, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, log)
 }
 
 // SetupRoutesWithGamification configures all API routes with gamification features
@@ -41,7 +41,7 @@ func SetupRoutesWithGamification(
 	gamificationService *services.GamificationService,
 	log *logger.Logger,
 ) *mux.Router {
-	return setupRoutes(authService, tenantService, passwordResetHandler, agentService, gamificationService, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, log)
+	return setupRoutes(authService, tenantService, passwordResetHandler, agentService, gamificationService, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, log)
 }
 
 // SetupRoutesWithCoreFeatures configures all API routes with core features and real-time support
@@ -57,7 +57,7 @@ func SetupRoutesWithCoreFeatures(
 	aiOrchestrator *services.AIOrchestrator,
 	log *logger.Logger,
 ) *mux.Router {
-	return setupRoutes(authService, tenantService, passwordResetHandler, agentService, gamificationService, leadService, callService, campaignService, aiOrchestrator, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, log)
+	return setupRoutes(authService, tenantService, passwordResetHandler, agentService, gamificationService, leadService, callService, campaignService, aiOrchestrator, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, log)
 }
 
 // SetupRoutesWithRealtime configures all API routes with realtime WebSocket support
@@ -79,10 +79,10 @@ func SetupRoutesWithRealtime(
 	customizationService services.TenantCustomizationService,
 	log *logger.Logger,
 ) *mux.Router {
-	return setupRoutes(authService, tenantService, passwordResetHandler, agentService, gamificationService, leadService, callService, campaignService, aiOrchestrator, webSocketHub, leadScoringService, dashboardService, taskService, notificationService, customizationService, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, log)
+	return setupRoutes(authService, tenantService, passwordResetHandler, agentService, gamificationService, leadService, callService, campaignService, aiOrchestrator, webSocketHub, leadScoringService, dashboardService, taskService, notificationService, customizationService, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, log)
 }
 
-// SetupRoutesWithPhase3C configures all API routes including Phase 3C (Modular Monetization)
+// SetupRoutesWithPhase3C configures all API routes including Phase 3C (Modular Monetization) and Phase 3.2 Mobile
 func SetupRoutesWithPhase3C(
 	authService *services.AuthService,
 	tenantService *services.TenantService,
@@ -115,11 +115,20 @@ func SetupRoutesWithPhase3C(
 	hrDashboardHandler *handlers.HRDashboardHandler,
 	complianceDashboardHandler *handlers.ComplianceDashboardHandler,
 	salesDashboardHandler *handlers.SalesDashboardHandler,
+	brokerHandler *handlers.BrokerHandler,
+	jointApplicantHandler *handlers.JointApplicantHandler,
+	documentHandler *handlers.DocumentHandler,
+	possessionHandler *handlers.PossessionHandler,
+	titleHandler *handlers.TitleHandler,
+	customerPortalHandler *handlers.CustomerPortalHandler,
+	analyticsHandler *handlers.AnalyticsHandler,
 	userAdminHandler *handlers.UserAdminHandler,
 	tenantAdminHandler *handlers.TenantAdminHandler,
+	mobileHandler *handlers.MobileHandler,
+	aiRecommendationsHandler *handlers.AIRecommendationsHandler,
 	log *logger.Logger,
 ) *mux.Router {
-	return setupRoutes(authService, tenantService, passwordResetHandler, agentService, gamificationService, leadService, callService, campaignService, aiOrchestrator, webSocketHub, leadScoringService, dashboardService, taskService, notificationService, customizationService, phase3cServices, salesService, realEstateService, civilService, constructionService, boqService, hrService, glService, rbacService, reraComplianceHandler, hrComplianceHandler, taxComplianceHandler, financialDashboardHandler, hrDashboardHandler, complianceDashboardHandler, salesDashboardHandler, userAdminHandler, tenantAdminHandler, log)
+	return setupRoutes(authService, tenantService, passwordResetHandler, agentService, gamificationService, leadService, callService, campaignService, aiOrchestrator, webSocketHub, leadScoringService, dashboardService, taskService, notificationService, customizationService, phase3cServices, salesService, realEstateService, civilService, constructionService, boqService, hrService, glService, rbacService, reraComplianceHandler, hrComplianceHandler, taxComplianceHandler, financialDashboardHandler, hrDashboardHandler, complianceDashboardHandler, salesDashboardHandler, brokerHandler, jointApplicantHandler, documentHandler, possessionHandler, titleHandler, customerPortalHandler, analyticsHandler, userAdminHandler, tenantAdminHandler, mobileHandler, aiRecommendationsHandler, log)
 }
 
 func setupRoutes(
@@ -154,8 +163,17 @@ func setupRoutes(
 	hrDashboardHandler *handlers.HRDashboardHandler,
 	complianceDashboardHandler *handlers.ComplianceDashboardHandler,
 	salesDashboardHandler *handlers.SalesDashboardHandler,
+	brokerHandler *handlers.BrokerHandler,
+	jointApplicantHandler *handlers.JointApplicantHandler,
+	documentHandler *handlers.DocumentHandler,
+	possessionHandler *handlers.PossessionHandler,
+	titleHandler *handlers.TitleHandler,
+	customerPortalHandler *handlers.CustomerPortalHandler,
+	analyticsHandler *handlers.AnalyticsHandler,
 	userAdminHandler *handlers.UserAdminHandler,
 	tenantAdminHandler *handlers.TenantAdminHandler,
+	mobileHandler *handlers.MobileHandler,
+	aiRecommendationsHandler *handlers.AIRecommendationsHandler,
 	log *logger.Logger,
 ) *mux.Router {
 	r := mux.NewRouter()
@@ -533,7 +551,7 @@ func setupRoutes(
 	if phase3cServices != nil {
 		moduleHandler := handlers.NewModuleHandler(phase3cServices.ModuleService, log)
 		companyHandler := handlers.NewCompanyHandler(phase3cServices.CompanyService, log)
-		billingHandler := handlers.NewBillingHandler(phase3cServices.BillingService, log)
+		billingHandler := handlers.NewBillingHandler(phase3cServices.BillingService, log, rbacService)
 
 		// Module routes
 		moduleRoutes := v1.PathPrefix("/modules").Subrouter()
@@ -621,7 +639,7 @@ func setupRoutes(
 
 	// Sales Module routes (protected)
 	if salesService != nil {
-		salesHandler := handlers.NewSalesHandler(salesService.DB)
+		salesHandler := handlers.NewSalesHandler(salesService.DB, rbacService)
 		salesRoutes := v1.PathPrefix("/sales").Subrouter()
 		salesRoutes.Use(middleware.AuthMiddleware(authService, log))
 		salesRoutes.Use(middleware.TenantIsolationMiddleware(log))
@@ -705,6 +723,46 @@ func setupRoutes(
 	}
 
 	// ============================================
+	// RBAC (ROLE-BASED ACCESS CONTROL) ROUTES
+	// ============================================
+	if rbacService != nil {
+		rbacHandler := handlers.NewRBACHandler(rbacService, rbacService.GetDB(), log)
+		rbacRoutes := v1.PathPrefix("/rbac").Subrouter()
+		rbacRoutes.Use(middleware.AuthMiddleware(authService, log))
+		rbacRoutes.Use(middleware.TenantIsolationMiddleware(log))
+
+		// List roles and permissions (accessible to all authenticated users)
+		rbacRoutes.HandleFunc("/roles", rbacHandler.ListRoles).Methods("GET")
+		rbacRoutes.HandleFunc("/permissions", rbacHandler.ListPermissions).Methods("GET")
+		rbacRoutes.HandleFunc("/roles/{id}", rbacHandler.GetRole).Methods("GET")
+
+		// Admin-only operations
+		adminRbacRoutes := rbacRoutes.PathPrefix("").Subrouter()
+		adminRbacRoutes.Use(middleware.PermissionBasedAccessMiddleware(
+			rbacService,
+			[]string{"admin"},
+			log,
+		))
+		adminRbacRoutes.HandleFunc("/roles", rbacHandler.CreateRole).Methods("POST")
+		adminRbacRoutes.HandleFunc("/roles/{id}/permissions", rbacHandler.AssignPermissions).Methods("PUT")
+		adminRbacRoutes.HandleFunc("/roles/{id}", rbacHandler.DeleteRole).Methods("DELETE")
+
+		// Phase 3.6: User Role Assignment & Membership
+		adminRbacRoutes.HandleFunc("/users/{user_id}/roles", rbacHandler.AssignRoleToUser).Methods("POST")
+		adminRbacRoutes.HandleFunc("/users/{user_id}/roles", rbacHandler.GetUserRoles).Methods("GET")
+		adminRbacRoutes.HandleFunc("/users/{user_id}/roles/{role_id}", rbacHandler.RemoveRoleFromUser).Methods("DELETE")
+		adminRbacRoutes.HandleFunc("/users/{user_id}/roles/{role_id}", rbacHandler.UpdateUserRole).Methods("PUT")
+		adminRbacRoutes.HandleFunc("/roles/{role_id}/members", rbacHandler.GetRoleMembers).Methods("GET")
+
+		// Phase 4: Advanced RBAC Features
+		adminRbacRoutes.HandleFunc("/resource-access", rbacHandler.GrantResourceAccess).Methods("POST")
+		adminRbacRoutes.HandleFunc("/time-based-permissions", rbacHandler.CreateTimeBasedPermission).Methods("POST")
+		adminRbacRoutes.HandleFunc("/field-permissions", rbacHandler.SetFieldLevelPermission).Methods("POST")
+		adminRbacRoutes.HandleFunc("/delegations", rbacHandler.DelegateRole).Methods("POST")
+		adminRbacRoutes.HandleFunc("/bulk-assign", rbacHandler.BulkAssignPermissions).Methods("POST")
+	}
+
+	// ============================================
 	// CIVIL ENGINEERING ROUTES
 	// ============================================
 	if civilService != nil {
@@ -716,7 +774,7 @@ func setupRoutes(
 			[]string{"admin", "manager"},
 			log,
 		))
-		handlers.RegisterCivilRoutes(civilRoutes, civilService)
+		handlers.RegisterCivilRoutes(civilRoutes, civilService, rbacService)
 	}
 
 	// ============================================
@@ -732,7 +790,7 @@ func setupRoutes(
 			[]string{"admin", "manager"},
 			log,
 		))
-		handlers.RegisterConstructionRoutes(constructionRoutes, constructionService)
+		handlers.RegisterConstructionRoutes(constructionRoutes, constructionService, rbacService)
 	}
 
 	// ============================================
@@ -762,12 +820,12 @@ func setupRoutes(
 			[]string{"admin", "manager", "supervisor"},
 			log,
 		))
-		handlers.RegisterHRRoutes(hrRoutes, hrService)
+		handlers.RegisterHRRoutes(hrRoutes, hrService, rbacService)
 	}
 
 	// ============================================
 	if realEstateService != nil {
-		realEstateHandler := handlers.NewRealEstateHandler(realEstateService.DB)
+		realEstateHandler := handlers.NewRealEstateHandler(realEstateService.DB, rbacService)
 		realEstateRoutes := v1.PathPrefix("/real-estate").Subrouter()
 		realEstateRoutes.Use(middleware.AuthMiddleware(authService, log))
 		realEstateRoutes.Use(middleware.TenantIsolationMiddleware(log))
@@ -847,6 +905,430 @@ func setupRoutes(
 
 	// ============================================
 	// ============================================
+	// BROKER MANAGEMENT (PHASE 1.2 - REAL ESTATE)
+	// ============================================
+	if brokerHandler != nil {
+		brokerRoutes := v1.PathPrefix("/brokers").Subrouter()
+		brokerRoutes.Use(middleware.AuthMiddleware(authService, log))
+		brokerRoutes.Use(middleware.TenantIsolationMiddleware(log))
+		brokerRoutes.Use(middleware.PermissionBasedAccessMiddleware(
+			rbacService,
+			[]string{"admin", "manager", "sales"},
+			log,
+		))
+
+		// Broker Profile endpoints
+		brokerRoutes.HandleFunc("", brokerHandler.CreateBroker).Methods("POST")
+		brokerRoutes.HandleFunc("", brokerHandler.ListBrokers).Methods("GET")
+		brokerRoutes.HandleFunc("/{brokerId}", brokerHandler.GetBroker).Methods("GET")
+		brokerRoutes.HandleFunc("/{brokerId}", brokerHandler.UpdateBroker).Methods("PUT")
+		brokerRoutes.HandleFunc("/{brokerId}", brokerHandler.DeleteBroker).Methods("DELETE")
+
+		// Commission Structure endpoints
+		brokerRoutes.HandleFunc("/{brokerId}/commission-structure", brokerHandler.CreateCommissionStructure).Methods("POST")
+		brokerRoutes.HandleFunc("/{brokerId}/commission-structure", brokerHandler.ListCommissionStructures).Methods("GET")
+
+		// Booking Link endpoints
+		brokerRoutes.HandleFunc("/booking-link", brokerHandler.CreateBookingLink).Methods("POST")
+		brokerRoutes.HandleFunc("/{brokerId}/bookings", brokerHandler.ListBookingLinks).Methods("GET")
+		brokerRoutes.HandleFunc("/{brokerId}/bookings/{linkId}/status", brokerHandler.UpdateBookingLinkStatus).Methods("PATCH")
+
+		// Commission Payout endpoints
+		brokerRoutes.HandleFunc("/payout", brokerHandler.CreatePayout).Methods("POST")
+		brokerRoutes.HandleFunc("/payouts", brokerHandler.ListPayouts).Methods("GET")
+		brokerRoutes.HandleFunc("/payouts/{payoutId}/status", brokerHandler.UpdatePayoutStatus).Methods("PATCH")
+
+		// Reporting & Analytics endpoints
+		brokerRoutes.HandleFunc("/{brokerId}/performance", brokerHandler.GetBrokerPerformance).Methods("GET")
+		brokerRoutes.HandleFunc("/reports/top-performers", brokerHandler.GetTopPerformers).Methods("GET")
+		brokerRoutes.HandleFunc("/reports/commission-due", brokerHandler.GetCommissionDueReport).Methods("GET")
+	}
+
+	// ============================================
+	// ============================================
+	// JOINT APPLICANTS (PHASE 1.3 - REAL ESTATE)
+	// ============================================
+	if jointApplicantHandler != nil {
+		jaRoutes := v1.PathPrefix("/joint-applicants").Subrouter()
+		jaRoutes.Use(middleware.AuthMiddleware(authService, log))
+		jaRoutes.Use(middleware.TenantIsolationMiddleware(log))
+		jaRoutes.Use(middleware.PermissionBasedAccessMiddleware(
+			rbacService,
+			[]string{"admin", "manager", "sales"},
+			log,
+		))
+
+		// Joint Applicant endpoints
+		jaRoutes.HandleFunc("", jointApplicantHandler.CreateJointApplicant).Methods("POST")
+		jaRoutes.HandleFunc("", jointApplicantHandler.ListJointApplicants).Methods("GET")
+		jaRoutes.HandleFunc("/{id}", jointApplicantHandler.GetJointApplicant).Methods("GET")
+		jaRoutes.HandleFunc("/{id}", jointApplicantHandler.UpdateJointApplicant).Methods("PUT")
+		jaRoutes.HandleFunc("/{id}", jointApplicantHandler.DeleteJointApplicant).Methods("DELETE")
+
+		// Document Management endpoints
+		jaRoutes.HandleFunc("/{applicant_id}/documents", jointApplicantHandler.UploadDocument).Methods("POST")
+		jaRoutes.HandleFunc("/{applicant_id}/documents/{document_id}/verify", jointApplicantHandler.VerifyDocument).Methods("PATCH")
+
+		// Co-ownership Agreement endpoints
+		jaRoutes.HandleFunc("/agreements", jointApplicantHandler.CreateCoOwnershipAgreement).Methods("POST")
+		jaRoutes.HandleFunc("/agreements", jointApplicantHandler.ListCoOwnershipAgreements).Methods("GET")
+		jaRoutes.HandleFunc("/agreements/{id}", jointApplicantHandler.GetCoOwnershipAgreement).Methods("GET")
+		jaRoutes.HandleFunc("/agreements/{id}/status", jointApplicantHandler.UpdateCoOwnershipAgreementStatus).Methods("PATCH")
+
+		// Income Verification endpoints
+		jaRoutes.HandleFunc("/{applicant_id}/income-verification", jointApplicantHandler.CreateIncomeVerification).Methods("POST")
+		jaRoutes.HandleFunc("/{applicant_id}/income-verification/{verification_id}/verify", jointApplicantHandler.VerifyIncome).Methods("PATCH")
+
+		// Liability Tracking endpoints
+		jaRoutes.HandleFunc("/{applicant_id}/liabilities", jointApplicantHandler.AddLiability).Methods("POST")
+
+		// Summary & Reporting endpoints
+		jaRoutes.HandleFunc("/summary/{booking_id}", jointApplicantHandler.GetJointApplicantSummary).Methods("GET")
+	}
+
+	// ============================================
+	// DOCUMENT MANAGEMENT ROUTES
+	// ============================================
+	if documentHandler != nil {
+		docRoutes := v1.PathPrefix("/documents").Subrouter()
+		docRoutes.Use(middleware.AuthMiddleware(authService, log))
+		docRoutes.Use(middleware.TenantIsolationMiddleware(log))
+		docRoutes.Use(middleware.PermissionBasedAccessMiddleware(
+			rbacService,
+			[]string{"admin", "manager", "sales", "user"},
+			log,
+		))
+
+		// Document CRUD endpoints
+		docRoutes.HandleFunc("", documentHandler.CreateDocument).Methods("POST")
+		docRoutes.HandleFunc("", documentHandler.ListDocuments).Methods("GET")
+		docRoutes.HandleFunc("/{id}", documentHandler.GetDocument).Methods("GET")
+		docRoutes.HandleFunc("/{id}", documentHandler.UpdateDocument).Methods("PUT")
+		docRoutes.HandleFunc("/{id}", documentHandler.DeleteDocument).Methods("DELETE")
+
+		// Document verification endpoint
+		docRoutes.HandleFunc("/{id}/verify", documentHandler.VerifyDocument).Methods("PATCH")
+
+		// Document search endpoints
+		docRoutes.HandleFunc("/by-type/{type_id}", documentHandler.GetDocumentsByType).Methods("GET")
+		docRoutes.HandleFunc("/expiring", documentHandler.CheckDocumentExpiry).Methods("GET")
+
+		// Document collection endpoints
+		docRoutes.HandleFunc("/collections", documentHandler.CreateDocumentCollection).Methods("POST")
+		docRoutes.HandleFunc("/collections", documentHandler.ListDocumentCollections).Methods("GET")
+		docRoutes.HandleFunc("/collections/{id}", documentHandler.GetDocumentCollection).Methods("GET")
+		docRoutes.HandleFunc("/collections/{id}/status", documentHandler.UpdateCollectionStatus).Methods("PATCH")
+		docRoutes.HandleFunc("/collections/{id}/items", documentHandler.AddDocumentToCollection).Methods("POST")
+		docRoutes.HandleFunc("/collections/{id}/items/{item_id}", documentHandler.RemoveDocumentFromCollection).Methods("DELETE")
+
+		// Document sharing endpoints
+		docRoutes.HandleFunc("/{id}/share", documentHandler.ShareDocument).Methods("POST")
+		docRoutes.HandleFunc("/{id}/shares", documentHandler.GetDocumentShares).Methods("GET")
+		docRoutes.HandleFunc("/{id}/shares/{share_id}", documentHandler.RevokeDocumentShare).Methods("DELETE")
+
+		// Document template endpoints
+		docRoutes.HandleFunc("/templates", documentHandler.CreateDocumentTemplate).Methods("POST")
+		docRoutes.HandleFunc("/templates", documentHandler.ListDocumentTemplates).Methods("GET")
+
+		// Document metadata endpoints
+		docRoutes.HandleFunc("/categories", documentHandler.ListDocumentCategories).Methods("GET")
+		docRoutes.HandleFunc("/types/{category_id}", documentHandler.ListDocumentTypes).Methods("GET")
+
+		// Document reporting endpoint
+		docRoutes.HandleFunc("/summary/{booking_id}", documentHandler.GetDocumentSummary).Methods("GET")
+	}
+
+	// ============================================
+	// POSSESSION MANAGEMENT ROUTES (Phase 2.1)
+	// ============================================
+	if possessionHandler != nil {
+		posRoutes := v1.PathPrefix("/possessions").Subrouter()
+		posRoutes.Use(middleware.AuthMiddleware(authService, log))
+		posRoutes.Use(middleware.TenantIsolationMiddleware(log))
+		posRoutes.Use(middleware.PermissionBasedAccessMiddleware(
+			rbacService,
+			[]string{"admin", "manager", "sales", "user"},
+			log,
+		))
+
+		// Possession status endpoints
+		posRoutes.HandleFunc("", possessionHandler.CreatePossession).Methods("POST")
+		posRoutes.HandleFunc("", possessionHandler.ListPossessions).Methods("GET")
+		posRoutes.HandleFunc("/{id}", possessionHandler.GetPossession).Methods("GET")
+		posRoutes.HandleFunc("/{id}", possessionHandler.UpdatePossession).Methods("PUT")
+		posRoutes.HandleFunc("/{id}", possessionHandler.DeletePossession).Methods("DELETE")
+
+		// Possession document endpoints
+		posRoutes.HandleFunc("/{possession_id}/documents", possessionHandler.CreatePossessionDocument).Methods("POST")
+		posRoutes.HandleFunc("/{possession_id}/documents", possessionHandler.ListPossessionDocuments).Methods("GET")
+		posRoutes.HandleFunc("/{possession_id}/documents/{doc_id}", possessionHandler.GetPossessionDocument).Methods("GET")
+		posRoutes.HandleFunc("/{possession_id}/documents/{doc_id}", possessionHandler.UpdatePossessionDocument).Methods("PUT")
+		posRoutes.HandleFunc("/{possession_id}/documents/{doc_id}/verify", possessionHandler.VerifyPossessionDocument).Methods("PATCH")
+
+		// Possession registration endpoints
+		posRoutes.HandleFunc("/{possession_id}/registrations", possessionHandler.CreateRegistration).Methods("POST")
+		posRoutes.HandleFunc("/{possession_id}/registrations", possessionHandler.ListRegistrations).Methods("GET")
+		posRoutes.HandleFunc("/{possession_id}/registrations/{reg_id}", possessionHandler.GetRegistration).Methods("GET")
+		posRoutes.HandleFunc("/{possession_id}/registrations/{reg_id}", possessionHandler.UpdateRegistration).Methods("PUT")
+		posRoutes.HandleFunc("/{possession_id}/registrations/{reg_id}/approve", possessionHandler.ApproveRegistration).Methods("PATCH")
+
+		// Possession certificate endpoints
+		posRoutes.HandleFunc("/{possession_id}/certificates", possessionHandler.CreateCertificate).Methods("POST")
+		posRoutes.HandleFunc("/{possession_id}/certificates", possessionHandler.ListCertificates).Methods("GET")
+		posRoutes.HandleFunc("/{possession_id}/certificates/{cert_id}", possessionHandler.GetCertificate).Methods("GET")
+		posRoutes.HandleFunc("/{possession_id}/certificates/{cert_id}/verify", possessionHandler.VerifyCertificate).Methods("PATCH")
+
+		// Possession approval endpoints
+		posRoutes.HandleFunc("/{possession_id}/approvals", possessionHandler.CreateApproval).Methods("POST")
+		posRoutes.HandleFunc("/{possession_id}/approvals", possessionHandler.ListApprovals).Methods("GET")
+		posRoutes.HandleFunc("/{possession_id}/approvals/{approval_id}", possessionHandler.GetApproval).Methods("GET")
+		posRoutes.HandleFunc("/{possession_id}/approvals/{approval_id}/approve", possessionHandler.ApprovePossession).Methods("PATCH")
+
+		// Possession summary endpoint
+		posRoutes.HandleFunc("/{possession_id}/summary", possessionHandler.GetPossessionSummary).Methods("GET")
+	}
+
+	// TITLE CLEARANCE MANAGEMENT ROUTES (Phase 2.2)
+	// ============================================
+	if titleHandler != nil {
+		titleRoutes := v1.PathPrefix("/title-clearances").Subrouter()
+		titleRoutes.Use(middleware.AuthMiddleware(authService, log))
+		titleRoutes.Use(middleware.TenantIsolationMiddleware(log))
+		titleRoutes.Use(middleware.PermissionBasedAccessMiddleware(
+			rbacService,
+			[]string{"admin", "manager", "legal", "user"},
+			log,
+		))
+
+		// Title clearance endpoints
+		titleRoutes.HandleFunc("", titleHandler.CreateTitleClearance).Methods("POST")
+		titleRoutes.HandleFunc("", titleHandler.ListTitleClearances).Methods("GET")
+		titleRoutes.HandleFunc("/{id}", titleHandler.GetTitleClearance).Methods("GET")
+		titleRoutes.HandleFunc("/{id}", titleHandler.UpdateTitleClearance).Methods("PUT")
+		titleRoutes.HandleFunc("/{id}/summary", titleHandler.GetClearanceSummary).Methods("GET")
+
+		// Title issue endpoints
+		titleRoutes.HandleFunc("/{clearance_id}/issues", titleHandler.CreateTitleIssue).Methods("POST")
+		titleRoutes.HandleFunc("/{clearance_id}/issues", titleHandler.ListTitleIssues).Methods("GET")
+		titleRoutes.HandleFunc("/{clearance_id}/issues/{issue_id}", titleHandler.GetTitleIssue).Methods("GET")
+		titleRoutes.HandleFunc("/{clearance_id}/issues/{issue_id}", titleHandler.UpdateTitleIssue).Methods("PUT")
+		titleRoutes.HandleFunc("/{clearance_id}/issues/{issue_id}/resolve", titleHandler.ResolveTitleIssue).Methods("PATCH")
+
+		// Title search report endpoints
+		titleRoutes.HandleFunc("/{clearance_id}/search-reports", titleHandler.CreateSearchReport).Methods("POST")
+		titleRoutes.HandleFunc("/{clearance_id}/search-reports", titleHandler.ListSearchReports).Methods("GET")
+		titleRoutes.HandleFunc("/{clearance_id}/search-reports/{report_id}", titleHandler.GetSearchReport).Methods("GET")
+		titleRoutes.HandleFunc("/{clearance_id}/search-reports/{report_id}/verify", titleHandler.VerifySearchReport).Methods("PATCH")
+
+		// Title legal opinion endpoints
+		titleRoutes.HandleFunc("/{clearance_id}/legal-opinions", titleHandler.CreateLegalOpinion).Methods("POST")
+		titleRoutes.HandleFunc("/{clearance_id}/legal-opinions", titleHandler.ListLegalOpinions).Methods("GET")
+		titleRoutes.HandleFunc("/{clearance_id}/legal-opinions/{opinion_id}", titleHandler.GetLegalOpinion).Methods("GET")
+		titleRoutes.HandleFunc("/{clearance_id}/legal-opinions/{opinion_id}/review", titleHandler.ReviewLegalOpinion).Methods("PATCH")
+
+		// Verification checklist endpoints
+		titleRoutes.HandleFunc("/{clearance_id}/checklists", titleHandler.ListVerificationChecklists).Methods("GET")
+		titleRoutes.HandleFunc("/{clearance_id}/checklists/{checklist_id}/verify", titleHandler.VerifyChecklistItem).Methods("PATCH")
+
+		// Approval endpoints
+		titleRoutes.HandleFunc("/{clearance_id}/approvals", titleHandler.ListClearanceApprovals).Methods("GET")
+		titleRoutes.HandleFunc("/{clearance_id}/approvals/{approval_id}/approve", titleHandler.ApproveClearance).Methods("PATCH")
+	}
+
+	// CUSTOMER PORTAL ROUTES (Phase 2.3)
+	// ============================================
+	if customerPortalHandler != nil {
+		customerRoutes := v1.PathPrefix("/customer").Subrouter()
+		customerRoutes.Use(middleware.AuthMiddleware(authService, log))
+		customerRoutes.Use(middleware.TenantIsolationMiddleware(log))
+
+		// Customer profile endpoints
+		profileRoutes := customerRoutes.PathPrefix("/profile").Subrouter()
+		profileRoutes.HandleFunc("", customerPortalHandler.CreateProfile).Methods("POST")
+		profileRoutes.HandleFunc("", customerPortalHandler.GetProfile).Methods("GET")
+		profileRoutes.HandleFunc("", customerPortalHandler.UpdateProfile).Methods("PUT")
+
+		// Customer notification endpoints
+		notifRoutes := customerRoutes.PathPrefix("/notifications").Subrouter()
+		notifRoutes.HandleFunc("", customerPortalHandler.GetNotifications).Methods("GET")
+		notifRoutes.HandleFunc("/{id}/read", customerPortalHandler.MarkNotificationAsRead).Methods("PATCH")
+
+		// Customer conversation endpoints
+		convRoutes := customerRoutes.PathPrefix("/conversations").Subrouter()
+		convRoutes.HandleFunc("", customerPortalHandler.CreateConversation).Methods("POST")
+		convRoutes.HandleFunc("/{conversation_id}/messages", customerPortalHandler.SendMessage).Methods("POST")
+		convRoutes.HandleFunc("/{conversation_id}/messages", customerPortalHandler.GetConversationMessages).Methods("GET")
+
+		// Customer document upload endpoints
+		docRoutes := customerRoutes.PathPrefix("/documents").Subrouter()
+		docRoutes.HandleFunc("", customerPortalHandler.UploadDocument).Methods("POST")
+
+		// Customer booking tracking endpoints
+		bookingRoutes := customerRoutes.PathPrefix("/bookings").Subrouter()
+		bookingRoutes.HandleFunc("/{booking_id}/tracking", customerPortalHandler.GetBookingTracking).Methods("GET")
+
+		// Customer payment tracking endpoints
+		paymentRoutes := customerRoutes.PathPrefix("/payments").Subrouter()
+		paymentRoutes.HandleFunc("/{booking_id}/history", customerPortalHandler.GetPayments).Methods("GET")
+
+		// Customer feedback endpoints
+		feedbackRoutes := customerRoutes.PathPrefix("/feedback").Subrouter()
+		feedbackRoutes.HandleFunc("", customerPortalHandler.CreateFeedback).Methods("POST")
+
+		// Customer preferences endpoints
+		prefRoutes := customerRoutes.PathPrefix("/preferences").Subrouter()
+		prefRoutes.HandleFunc("", customerPortalHandler.UpdatePreferences).Methods("PUT")
+	}
+
+	// ANALYTICS ROUTES (Phase 3.1)
+	// ============================================
+	if analyticsHandler != nil {
+		analyticsRoutes := v1.PathPrefix("/analytics").Subrouter()
+		analyticsRoutes.Use(middleware.AuthMiddleware(authService, log))
+		analyticsRoutes.Use(middleware.TenantIsolationMiddleware(log))
+
+		// Report generation endpoints
+		analyticsRoutes.HandleFunc("/reports", analyticsHandler.GenerateReport).Methods("POST")
+		analyticsRoutes.HandleFunc("/export", analyticsHandler.ExportReport).Methods("POST")
+
+		// Trends endpoints
+		analyticsRoutes.HandleFunc("/trends", analyticsHandler.GetTrends).Methods("GET")
+
+		// Custom metrics endpoints
+		analyticsRoutes.HandleFunc("/metrics", analyticsHandler.GetCustomMetrics).Methods("GET")
+	}
+
+	// ============================================
+	// ============================================
+	// MOBILE APP FEATURES (Phase 3.2) ROUTES
+	// ============================================
+	if mobileHandler != nil {
+		mobileRoutes := v1.PathPrefix("/mobile").Subrouter()
+		mobileRoutes.Use(middleware.AuthMiddleware(authService, log))
+		mobileRoutes.Use(middleware.TenantIsolationMiddleware(log))
+
+		// Mobile App Configuration endpoints
+		mobileRoutes.HandleFunc("/apps", mobileHandler.CreateApp).Methods("POST")
+		mobileRoutes.HandleFunc("/apps", mobileHandler.ListApps).Methods("GET")
+		mobileRoutes.HandleFunc("/apps/{id}", mobileHandler.GetApp).Methods("GET")
+
+		// Mobile Device Registration endpoints
+		mobileRoutes.HandleFunc("/devices", mobileHandler.RegisterDevice).Methods("POST")
+		mobileRoutes.HandleFunc("/devices/{id}", mobileHandler.GetDevice).Methods("GET")
+		mobileRoutes.HandleFunc("/my-devices", mobileHandler.ListUserDevices).Methods("GET")
+
+		// Mobile Session endpoints
+		mobileRoutes.HandleFunc("/sessions", mobileHandler.CreateSession).Methods("POST")
+
+		// Push Notification endpoints
+		mobileRoutes.HandleFunc("/notifications", mobileHandler.SendNotification).Methods("POST")
+		mobileRoutes.HandleFunc("/notifications", mobileHandler.GetUserNotifications).Methods("GET")
+		mobileRoutes.HandleFunc("/notifications/{id}/read", mobileHandler.MarkNotificationAsRead).Methods("PUT")
+
+		// Feature Flags endpoints
+		mobileRoutes.HandleFunc("/features", mobileHandler.GetAppFeatures).Methods("GET")
+
+		// Offline Data Sync endpoints
+		mobileRoutes.HandleFunc("/sync", mobileHandler.SyncOfflineData).Methods("POST")
+
+		// Crash Reporting endpoints
+		mobileRoutes.HandleFunc("/crashes", mobileHandler.ReportCrash).Methods("POST")
+
+		// Analytics endpoints
+		mobileRoutes.HandleFunc("/events", mobileHandler.TrackEvent).Methods("POST")
+
+		// App Update endpoints
+		mobileRoutes.HandleFunc("/updates/latest", mobileHandler.GetLatestUpdate).Methods("GET")
+
+		// User Settings endpoints
+		mobileRoutes.HandleFunc("/settings", mobileHandler.GetUserSettings).Methods("GET")
+
+		// Endpoints documentation:
+		// POST   /api/v1/mobile/apps - Create new app configuration
+		// GET    /api/v1/mobile/apps - List all apps
+		// GET    /api/v1/mobile/apps/{id} - Get app by ID
+		// POST   /api/v1/mobile/devices - Register mobile device
+		// GET    /api/v1/mobile/devices/{id} - Get device info
+		// GET    /api/v1/mobile/my-devices - Get user's devices
+		// POST   /api/v1/mobile/sessions - Create mobile session
+		// POST   /api/v1/mobile/notifications - Send notification
+		// GET    /api/v1/mobile/notifications - Get user notifications
+		// PUT    /api/v1/mobile/notifications/{id}/read - Mark as read
+		// GET    /api/v1/mobile/features - Get feature flags
+		// POST   /api/v1/mobile/sync - Sync offline data
+		// POST   /api/v1/mobile/crashes - Report crash
+		// POST   /api/v1/mobile/events - Track analytics event
+		// GET    /api/v1/mobile/updates/latest - Get latest update
+		// GET    /api/v1/mobile/settings - Get user settings
+	}
+
+	// ============================================
+	// AI POWERED RECOMMENDATIONS (PHASE 3.3)
+	// ============================================
+	if aiRecommendationsHandler != nil {
+		aiRoutes := v1.PathPrefix("/ai").Subrouter()
+		aiRoutes.Use(middleware.AuthMiddleware(authService, log))
+		aiRoutes.Use(middleware.TenantIsolationMiddleware(log))
+
+		// AI Models endpoints
+		aiRoutes.HandleFunc("/models", aiRecommendationsHandler.CreateAIModel).Methods("POST")
+		aiRoutes.HandleFunc("/models", aiRecommendationsHandler.ListAIModels).Methods("GET")
+		aiRoutes.HandleFunc("/models/{id}", aiRecommendationsHandler.GetAIModel).Methods("GET")
+
+		// Recommendation Engine endpoints
+		aiRoutes.HandleFunc("/engines", aiRecommendationsHandler.CreateRecommendationEngine).Methods("POST")
+		aiRoutes.HandleFunc("/engines/{id}", aiRecommendationsHandler.GetRecommendationEngine).Methods("GET")
+
+		// User Recommendations endpoints
+		aiRoutes.HandleFunc("/recommendations/generate", aiRecommendationsHandler.GenerateRecommendations).Methods("POST")
+		aiRoutes.HandleFunc("/recommendations", aiRecommendationsHandler.GetUserRecommendations).Methods("GET")
+
+		// Feedback endpoints
+		aiRoutes.HandleFunc("/feedback", aiRecommendationsHandler.SubmitRecommendationFeedback).Methods("POST")
+		aiRoutes.HandleFunc("/feedback", aiRecommendationsHandler.GetRecommendationFeedback).Methods("GET")
+
+		// Prediction endpoints
+		aiRoutes.HandleFunc("/predictions", aiRecommendationsHandler.MakePrediction).Methods("POST")
+		aiRoutes.HandleFunc("/predictions/{id}", aiRecommendationsHandler.GetPredictionResult).Methods("GET")
+
+		// Anomaly Detection endpoints
+		aiRoutes.HandleFunc("/anomalies/detect", aiRecommendationsHandler.DetectAnomalies).Methods("POST")
+		aiRoutes.HandleFunc("/anomalies", aiRecommendationsHandler.GetAnomalies).Methods("GET")
+
+		// AI Insights endpoints
+		aiRoutes.HandleFunc("/insights/generate", aiRecommendationsHandler.GenerateInsights).Methods("POST")
+		aiRoutes.HandleFunc("/insights", aiRecommendationsHandler.GetInsights).Methods("GET")
+
+		// Model Performance endpoints
+		aiRoutes.HandleFunc("/performance", aiRecommendationsHandler.GetModelPerformance).Methods("GET")
+
+		// Statistics endpoints
+		aiRoutes.HandleFunc("/stats", aiRecommendationsHandler.GetAIStats).Methods("GET")
+		aiRoutes.HandleFunc("/recommendations/stats", aiRecommendationsHandler.GetRecommendationStats).Methods("GET")
+
+		// Endpoints documentation:
+		// POST   /api/v1/ai/models - Create AI model
+		// GET    /api/v1/ai/models - List AI models
+		// GET    /api/v1/ai/models/{id} - Get AI model
+		// POST   /api/v1/ai/engines - Create recommendation engine
+		// GET    /api/v1/ai/engines/{id} - Get recommendation engine
+		// POST   /api/v1/ai/recommendations/generate - Generate recommendations
+		// GET    /api/v1/ai/recommendations - Get user recommendations
+		// POST   /api/v1/ai/feedback - Submit recommendation feedback
+		// GET    /api/v1/ai/feedback - Get recommendation feedback
+		// POST   /api/v1/ai/predictions - Make prediction
+		// GET    /api/v1/ai/predictions/{id} - Get prediction result
+		// POST   /api/v1/ai/anomalies/detect - Detect anomalies
+		// GET    /api/v1/ai/anomalies - Get anomalies
+		// POST   /api/v1/ai/insights/generate - Generate insights
+		// GET    /api/v1/ai/insights - Get insights
+		// GET    /api/v1/ai/performance - Get model performance
+		// GET    /api/v1/ai/stats - Get AI system statistics
+		// GET    /api/v1/ai/recommendations/stats - Get recommendation statistics
+	}
+
+	// ============================================
+	// ============================================
 	// GENERAL LEDGER (GL) ROUTES
 	// ============================================
 	if glService != nil {
@@ -858,7 +1340,7 @@ func setupRoutes(
 			[]string{"admin", "manager", "accountant"},
 			log,
 		))
-		handlers.RegisterGLRoutes(glRoutes, glService)
+		handlers.RegisterGLRoutes(glRoutes, glService, rbacService)
 	}
 
 	// Compliance Routes (RERA, HR, Tax)

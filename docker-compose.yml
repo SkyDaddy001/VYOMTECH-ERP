@@ -40,6 +40,9 @@ services:
       - ./migrations/026_sales_postsales_module.sql:/docker-entrypoint-initdb.d/26-sales-postsales-module.sql
       - ./migrations/027_sales_analytics_reporting.sql:/docker-entrypoint-initdb.d/27-sales-analytics-reporting.sql
       - ./migrations/028_lead_status_system.sql:/docker-entrypoint-initdb.d/28-lead-status-system.sql
+      - ./migrations/029_advanced_rbac.sql:/docker-entrypoint-initdb.d/29-advanced-rbac.sql
+      - ./migrations/030_audit_logging.sql:/docker-entrypoint-initdb.d/30-audit-logging.sql
+      - ./migrations/031_role_templates.sql:/docker-entrypoint-initdb.d/31-role-templates.sql
       - mysql_data:/var/lib/mysql
 
     healthcheck:
