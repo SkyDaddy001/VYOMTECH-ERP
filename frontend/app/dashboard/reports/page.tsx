@@ -1,244 +1,227 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { FiBarChart2, FiDownload, FiFilter, FiPlus } from 'react-icons/fi'
+import { useState } from 'react'
+import { ProtectedRoute } from '@/hooks/use-auth'
+import { Sidebar } from '@/components/layout/sidebar'
+import { Header } from '@/components/layout/header'
+import { FiDownload, FiPlus, FiFilter, FiBarChart3, FiCalendar } from 'react-icons/fi'
 import { format } from 'date-fns'
 
 interface Report {
-  id: string
+  id: string | number
   name: string
-  type: 'sales' | 'leads' | 'campaigns' | 'calls' | 'revenue'
-  period: string
-  generatedAt: string
-  size: string
-  format: 'pdf' | 'csv' | 'xlsx'
+  category: string
+  description: string
+  frequency: string
+  last_generated?: string
+  file_size?: string
+  format: string
+  icon: string
 }
 
+const mockReports: Report[] = [
+  {
+    id: 1,
+    name: 'Sales Pipeline Report',
+    category: 'Sales',
+    description: 'Detailed analysis of sales opportunities and pipeline status',
+    frequency: 'Weekly',
+    last_generated: new Date(Date.now() - 86400000).toISOString(),
+    file_size: '2.4 MB',
+    format: 'PDF',
+    icon: '📊',
+  },
+  {
+    id: 2,
+    name: 'Financial Summary',
+    category: 'Finance',
+    description: 'Monthly financial performance and balance sheet summary',
+    frequency: 'Monthly',
+    last_generated: new Date(Date.now() - 604800000).toISOString(),
+    file_size: '1.8 MB',
+    format: 'Excel',
+    icon: '💰',
+  },
+  {
+    id: 3,
+    name: 'Lead Conversion Analysis',
+    category: 'CRM',
+    description: 'Lead sources, conversion rates, and funnel analysis',
+    frequency: 'Bi-weekly',
+    last_generated: new Date(Date.now() - 1209600000).toISOString(),
+    file_size: '3.2 MB',
+    format: 'PDF',
+    icon: '👥',
+  },
+  {
+    id: 4,
+    name: 'Agent Performance Metrics',
+    category: 'Operations',
+    description: 'Call center agent KPIs, productivity, and quality metrics',
+    frequency: 'Daily',
+    last_generated: new Date(Date.now() - 3600000).toISOString(),
+    file_size: '1.2 MB',
+    format: 'Excel',
+    icon: '📈',
+  },
+  {
+    id: 5,
+    name: 'Property Inventory Report',
+    category: 'Real Estate',
+    description: 'Current property listings, occupancy, and market analysis',
+    frequency: 'Weekly',
+    last_generated: new Date(Date.now() - 172800000).toISOString(),
+    file_size: '2.8 MB',
+    format: 'PDF',
+    icon: '🏠',
+  },
+  {
+    id: 6,
+    name: 'HR Analytics Dashboard',
+    category: 'HR',
+    description: 'Employee data, payroll summary, and compliance reports',
+    frequency: 'Monthly',
+    last_generated: new Date(Date.now() - 1209600000).toISOString(),
+    file_size: '1.5 MB',
+    format: 'Excel',
+    icon: '👔',
+  },
+]
+
+const categories = ['All', 'Sales', 'Finance', 'CRM', 'Operations', 'Real Estate', 'HR']
+
 export default function ReportsPage() {
-  const [reports, setReports] = useState<Report[]>([])
-  const [loading, setLoading] = useState(true)
+  const [filterCategory, setFilterCategory] = useState('All')
 
-  useEffect(() => {
-    fetchReports()
-  }, [])
-
-  const fetchReports = async () => {
-    try {
-      setLoading(true)
-      const mockReports: Report[] = [
-        {
-          id: '1',
-          name: 'Q1 Sales Report',
-          type: 'sales',
-          period: 'Jan - Mar 2024',
-          generatedAt: new Date(Date.now() - 604800000).toISOString(),
-          size: '2.5 MB',
-          format: 'pdf'
-        },
-        {
-          id: '2',
-          name: 'Lead Generation Report',
-          type: 'leads',
-          period: 'Mar 2024',
-          generatedAt: new Date(Date.now() - 259200000).toISOString(),
-          size: '1.2 MB',
-          format: 'xlsx'
-        },
-        {
-          id: '3',
-          name: 'Campaign Performance',
-          type: 'campaigns',
-          period: 'Last 30 Days',
-          generatedAt: new Date(Date.now() - 86400000).toISOString(),
-          size: '3.1 MB',
-          format: 'csv'
-        },
-        {
-          id: '4',
-          name: 'Call Center Analytics',
-          type: 'calls',
-          period: 'Mar 2024',
-          generatedAt: new Date(Date.now() - 172800000).toISOString(),
-          size: '1.8 MB',
-          format: 'pdf'
-        },
-        {
-          id: '5',
-          name: 'Revenue Summary',
-          type: 'revenue',
-          period: 'Q1 2024',
-          generatedAt: new Date(Date.now() - 1209600000).toISOString(),
-          size: '0.9 MB',
-          format: 'xlsx'
-        }
-      ]
-      setReports(mockReports)
-    } catch (error) {
-      console.error('Error fetching reports:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const getTypeColor = (type: string) => {
-    const colors: Record<string, string> = {
-      sales: 'bg-blue-100 text-blue-800',
-      leads: 'bg-green-100 text-green-800',
-      campaigns: 'bg-purple-100 text-purple-800',
-      calls: 'bg-yellow-100 text-yellow-800',
-      revenue: 'bg-indigo-100 text-indigo-800'
-    }
-    return colors[type] || 'bg-gray-100 text-gray-800'
-  }
-
-  const getFormatIcon = (format: string) => {
-    const icons: Record<string, string> = {
-      pdf: '📄',
-      csv: '📊',
-      xlsx: '📈'
-    }
-    return icons[format] || '📁'
-  }
+  const filteredReports = filterCategory === 'All'
+    ? mockReports
+    : mockReports.filter(r => r.category === filterCategory)
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Header */}
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Reports</h1>
-          <p className="text-gray-600 mt-2">View and download your business reports</p>
-        </div>
-        <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center">
-          <FiPlus className="w-4 h-4 mr-2" />
-          Generate Report
-        </button>
-      </div>
+    <ProtectedRoute>
+      <div className="flex h-screen bg-gray-50">
+        <Sidebar />
+        <div className="flex-1 flex flex-col lg:ml-64">
+          <Header />
+          <main className="flex-1 overflow-auto pt-20 pb-6">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+              {/* Header */}
+              <div className="mb-8 flex items-center justify-between">
+                <div>
+                  <h1 className="text-3xl font-bold text-gray-900">Reports</h1>
+                  <p className="text-gray-600 mt-2">View, download, and schedule reports</p>
+                </div>
+                <button className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2 transition">
+                  <FiPlus className="text-lg" />
+                  Create Report
+                </button>
+              </div>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Total Reports</p>
-              <p className="text-3xl font-bold text-gray-900 mt-2">{reports.length}</p>
-            </div>
-            <FiBarChart2 className="w-10 h-10 text-blue-500 opacity-20" />
-          </div>
-        </div>
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">This Month</p>
-              <p className="text-3xl font-bold text-gray-900 mt-2">
-                {reports.filter(r => new Date(r.generatedAt).getMonth() === new Date().getMonth()).length}
-              </p>
-            </div>
-            <FiBarChart2 className="w-10 h-10 text-green-500 opacity-20" />
-          </div>
-        </div>
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Total Size</p>
-              <p className="text-3xl font-bold text-gray-900 mt-2">
-                {(reports.reduce((sum, r) => sum + parseFloat(r.size), 0)).toFixed(1)} MB
-              </p>
-            </div>
-            <FiBarChart2 className="w-10 h-10 text-purple-500 opacity-20" />
-          </div>
-        </div>
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Last Generated</p>
-              <p className="text-lg font-bold text-gray-900 mt-2">
-                {reports.length > 0 ? format(new Date(reports[0].generatedAt), 'MMM dd') : 'N/A'}
-              </p>
-            </div>
-            <FiBarChart2 className="w-10 h-10 text-orange-500 opacity-20" />
-          </div>
-        </div>
-      </div>
+              {/* Category Filter */}
+              <div className="mb-6 flex flex-wrap gap-2">
+                {categories.map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => setFilterCategory(cat)}
+                    className={`px-4 py-2 rounded-full font-medium transition ${
+                      filterCategory === cat
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-white text-gray-700 border border-gray-300 hover:border-gray-400'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
 
-      {/* Filters */}
-      <div className="bg-white rounded-lg shadow p-4 mb-6">
-        <div className="flex items-center gap-2">
-          <FiFilter className="w-4 h-4 text-gray-600" />
-          <button className="px-3 py-1 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">
-            All Types
-          </button>
-          <button className="px-3 py-1 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">
-            PDF
-          </button>
-          <button className="px-3 py-1 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">
-            XLSX
-          </button>
-          <button className="px-3 py-1 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">
-            CSV
-          </button>
-        </div>
-      </div>
-
-      {/* Reports List */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        {loading ? (
-          <div className="p-8 text-center">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          </div>
-        ) : reports.length === 0 ? (
-          <div className="p-8 text-center">
-            <p className="text-gray-600">No reports available</p>
-          </div>
-        ) : (
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b">
-              <tr>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Report Name</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Type</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Period</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Generated</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Size</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Format</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {reports.map((report) => (
-                <tr key={report.id} className="hover:bg-gray-50 transition">
-                  <td className="px-6 py-4">
-                    <p className="font-medium text-gray-900">{report.name}</p>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${getTypeColor(report.type)}`}>
-                      {report.type.charAt(0).toUpperCase() + report.type.slice(1)}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
-                    {report.period}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
-                    {format(new Date(report.generatedAt), 'MMM dd, yyyy')}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
-                    {report.size}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center">
-                      <span className="mr-2">{getFormatIcon(report.format)}</span>
-                      <p className="text-sm font-medium text-gray-900">{report.format.toUpperCase()}</p>
+              {/* Reports Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredReports.map((report) => (
+                  <div key={report.id} className="bg-white rounded-lg shadow hover:shadow-md transition p-6 flex flex-col">
+                    {/* Icon and Category */}
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="text-4xl">{report.icon}</div>
+                      <span className="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded-full">
+                        {report.category}
+                      </span>
                     </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <button className="p-2 hover:bg-gray-100 rounded-lg transition">
-                      <FiDownload className="w-4 h-4 text-gray-600" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+
+                    {/* Title and Description */}
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">{report.name}</h3>
+                    <p className="text-sm text-gray-600 mb-4 flex-1">{report.description}</p>
+
+                    {/* Metadata */}
+                    <div className="space-y-2 mb-6 py-4 border-t border-gray-200">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-600">Frequency</span>
+                        <span className="font-semibold text-gray-900">{report.frequency}</span>
+                      </div>
+                      {report.last_generated && (
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600">Last Generated</span>
+                          <span className="font-semibold text-gray-900">
+                            {format(new Date(report.last_generated), 'MMM d, yyyy')}
+                          </span>
+                        </div>
+                      )}
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-600">Format</span>
+                        <span className="px-2 py-1 bg-gray-100 text-gray-900 rounded text-xs font-semibold">
+                          {report.format}
+                        </span>
+                      </div>
+                      {report.file_size && (
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600">Size</span>
+                          <span className="font-semibold text-gray-900">{report.file_size}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex gap-2 pt-4 border-t border-gray-200">
+                      <button className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium text-sm transition flex items-center justify-center gap-2">
+                        <FiDownload className="text-lg" />
+                        Download
+                      </button>
+                      <button className="flex-1 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium text-sm transition">
+                        Preview
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Quick Insights Section */}
+              <div className="mt-12">
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">Quick Insights</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  <div className="bg-white rounded-lg shadow p-6">
+                    <p className="text-gray-600 text-sm font-medium">Total Reports Generated</p>
+                    <p className="text-3xl font-bold text-gray-900 mt-2">24</p>
+                    <p className="text-xs text-gray-500 mt-2">This month</p>
+                  </div>
+                  <div className="bg-white rounded-lg shadow p-6">
+                    <p className="text-gray-600 text-sm font-medium">Average File Size</p>
+                    <p className="text-3xl font-bold text-gray-900 mt-2">2.1 MB</p>
+                    <p className="text-xs text-gray-500 mt-2">Across all reports</p>
+                  </div>
+                  <div className="bg-white rounded-lg shadow p-6">
+                    <p className="text-gray-600 text-sm font-medium">Most Popular Category</p>
+                    <p className="text-3xl font-bold text-gray-900 mt-2">Sales</p>
+                    <p className="text-xs text-gray-500 mt-2">8 reports generated</p>
+                  </div>
+                  <div className="bg-white rounded-lg shadow p-6">
+                    <p className="text-gray-600 text-sm font-medium">Scheduled Reports</p>
+                    <p className="text-3xl font-bold text-gray-900 mt-2">12</p>
+                    <p className="text-xs text-gray-500 mt-2">Auto-generated</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </main>
+        </div>
       </div>
-    </div>
+    </ProtectedRoute>
   )
 }
