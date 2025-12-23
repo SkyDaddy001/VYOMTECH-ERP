@@ -50,7 +50,7 @@ func (cs *CallService) CreateCall(ctx context.Context, call *models.Call) error 
 func (cs *CallService) GetCall(ctx context.Context, id string, tenantID string) (*models.Call, error) {
 	query := `
 		SELECT id, tenant_id, lead_id, agent_id, status, duration_seconds, recording_url, notes, outcome, started_at, ended_at, created_at, updated_at
-		FROM call
+		FROM ` + "`call`" + `
 		WHERE id = ? AND tenant_id = ?
 	`
 
@@ -125,15 +125,15 @@ func (cs *CallService) EndCall(ctx context.Context, id string, tenantID string, 
 // GetCalls retrieves calls with filtering and pagination
 func (cs *CallService) GetCalls(ctx context.Context, tenantID string, filter *models.CallFilter) ([]*models.Call, error) {
 	query := `
-		SELECT id, tenant_id, lead_id, agent_id, status, duration_seconds, recording_url, notes, outcome, started_at, ended_at, created_at, updated_at
-		FROM call
+		SELECT id, tenant_id, lead_id, agent_id, call_status, duration_seconds, recording_url, notes, outcome, started_at, ended_at, created_at, updated_at
+		FROM ` + "`call`" + `
 		WHERE tenant_id = ?
 	`
 
 	args := []interface{}{tenantID}
 
 	if filter.Status != "" {
-		query += " AND status = ?"
+		query += " AND `call_status` = ?"
 		args = append(args, filter.Status)
 	}
 	if filter.Outcome != "" {
@@ -183,12 +183,12 @@ func (cs *CallService) GetCallStats(ctx context.Context, tenantID string) (*mode
 	query := `
 		SELECT
 			COUNT(*) as total,
-			SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active,
-			SUM(CASE WHEN status = 'ended' THEN 1 ELSE 0 END) as completed,
-			SUM(CASE WHEN outcome = 'failed' THEN 1 ELSE 0 END) as failed,
-			AVG(CASE WHEN duration_seconds > 0 THEN duration_seconds ELSE 0 END) as avg_duration,
-			SUM(duration_seconds) as total_duration
-		FROM call
+		SUM(CASE WHEN call_status = 'active' THEN 1 ELSE 0 END) as active,
+		SUM(CASE WHEN call_status = 'ended' THEN 1 ELSE 0 END) as completed,
+		SUM(CASE WHEN outcome = 'failed' THEN 1 ELSE 0 END) as failed,
+		AVG(CASE WHEN duration_seconds > 0 THEN duration_seconds ELSE 0 END) as avg_duration,
+		SUM(duration_seconds) as total_duration
+		FROM ` + "`call`" + `
 		WHERE tenant_id = ?
 	`
 

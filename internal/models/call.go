@@ -8,7 +8,7 @@ type Call struct {
 	TenantID        string     `json:"tenant_id" db:"tenant_id"`
 	LeadID          string     `json:"lead_id" db:"lead_id"`
 	AgentID         string     `json:"agent_id" db:"agent_id"`
-	Status          string     `json:"status" db:"status"` // initiated, ringing, active, ended
+	Status          string     `json:"status" db:"call_status"` // initiated, ringing, active, ended
 	DurationSeconds int        `json:"duration_seconds" db:"duration_seconds"`
 	RecordingURL    string     `json:"recording_url" db:"recording_url"`
 	Notes           string     `json:"notes" db:"notes"`

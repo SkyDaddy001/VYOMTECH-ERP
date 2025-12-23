@@ -40,8 +40,33 @@ export function useData<T>(
         setData(result as T[])
         setTotal(result.length)
       } else if (result && typeof result === 'object') {
-        setData(result.data || result)
-        setTotal(result.total || result.data?.length || 0)
+        // Handle different API response formats
+        // Format 1: { data: [...], total: number }
+        if (result.data) {
+          setData(Array.isArray(result.data) ? result.data : [result.data])
+          setTotal(result.total || (Array.isArray(result.data) ? result.data.length : 1))
+        }
+        // Format 2: { agents: [...], count: number } or similar
+        else if (result.agents || result.leads || result.calls || result.campaigns || result.properties || result.opportunities) {
+          const key = Object.keys(result).find(k => Array.isArray(result[k]))
+          const items = key ? result[key] : []
+          setData(items as T[])
+          setTotal(result.count || result.total || items.length)
+        }
+        // Format 3: Direct array in response
+        else if (Object.keys(result).length > 0) {
+          const values = Object.values(result).find(v => Array.isArray(v))
+          if (Array.isArray(values)) {
+            setData(values as T[])
+            setTotal(values.length)
+          } else {
+            setData([result] as T[])
+            setTotal(1)
+          }
+        } else {
+          setData([])
+          setTotal(0)
+        }
       } else {
         setData([])
         setTotal(0)

@@ -154,13 +154,13 @@ func (as *AnalyticsService) buildCallReport(ctx context.Context, req *ReportRequ
 	query := `
 		SELECT 
 			COUNT(*) as total_calls,
-			SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active,
-			SUM(CASE WHEN status = 'ended' THEN 1 ELSE 0 END) as completed,
+			SUM(CASE WHEN call_status = 'active' THEN 1 ELSE 0 END) as active,
+			SUM(CASE WHEN call_status = 'ended' THEN 1 ELSE 0 END) as completed,
 			SUM(CASE WHEN outcome = 'failed' THEN 1 ELSE 0 END) as failed,
 			AVG(duration_seconds) as avg_duration,
 			SUM(duration_seconds) as total_duration,
 			COUNT(DISTINCT agent_id) as unique_agents
-		FROM call
+		FROM ` + "`call`" + `
 		WHERE tenant_id = ? AND created_at BETWEEN ? AND ?
 	`
 
@@ -292,7 +292,7 @@ func (as *AnalyticsService) GetTrends(ctx context.Context, tenantID string, metr
 			trend.Value = float64(count)
 
 		case "calls":
-			query := `SELECT COUNT(*) FROM call WHERE tenant_id = ? AND DATE(created_at) = DATE(?)`
+			query := `SELECT COUNT(*) FROM ` + "`call`" + ` WHERE tenant_id = ? AND DATE(created_at) = DATE(?)`
 			var count int
 			as.db.QueryRowContext(ctx, query, tenantID, currentDate).Scan(&count)
 			trend.Value = float64(count)
