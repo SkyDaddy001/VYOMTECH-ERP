@@ -1,439 +1,327 @@
 package services
 
 import (
-	"fmt"
+	"context"
+	"database/sql"
 	"time"
 
 	"vyomtech-backend/internal/models"
-
-	"gorm.io/gorm"
+	"vyomtech-backend/pkg/logger"
 )
 
 // ============================================================================
-// BankFinancingService
+// BANK FINANCING SERVICE
 // ============================================================================
+
 type BankFinancingService struct {
-	db *gorm.DB
+	db     *sql.DB
+	logger *logger.Logger
 }
 
 // NewBankFinancingService creates new bank financing service
-func NewBankFinancingService(db *gorm.DB) *BankFinancingService {
-	return &BankFinancingService{db: db}
+func NewBankFinancingService(db *sql.DB, log *logger.Logger) *BankFinancingService {
+	return &BankFinancingService{
+		db:     db,
+		logger: log,
+	}
 }
 
 // ============================================================================
-// Financing Management
+// BANK FINANCING METHODS
 // ============================================================================
 
-// CreateFinancing creates new financing record
-func (s *BankFinancingService) CreateFinancing(tenantID int64, req *models.CreateFinancingRequest, userID int64) (*models.BankFinancing, error) {
-	financing := &models.BankFinancing{
-		TenantID:         tenantID,
-		BookingID:        req.BookingID,
-		BankID:           req.BankID,
-		LoanAmount:       req.LoanAmount,
-		SanctionedAmount: req.SanctionedAmount,
-		LoanType:         req.LoanType,
-		InterestRate:     req.InterestRate,
-		TenureMonths:     req.TenureMonths,
-		ApplicationRefNo: req.ApplicationRefNo,
-		Status:           "pending",
-		CreatedBy:        &userID,
-		CreatedAt:        time.Now(),
-	}
+// CreateBankFinancing creates new financing record
+func (s *BankFinancingService) CreateBankFinancing(ctx context.Context, financing *models.BankFinancing) (*models.BankFinancing, error) {
+	financing.ID = generateUUID()
+	financing.CreatedAt = time.Now()
+	financing.UpdatedAt = time.Now()
 
-	// Calculate EMI if tenure and interest rate provided
-	if req.TenureMonths != nil && req.InterestRate != nil && *req.TenureMonths > 0 {
-		emi := s.calculateEMI(req.LoanAmount, *req.InterestRate, *req.TenureMonths)
-		financing.EMIAmount = &emi
-	}
+	query := `
+		INSERT INTO bank_financing (
+			id, tenant_id, booking_id, bank_id, loan_amount, sanctioned_amount,
+			disbursed_amount, outstanding_amount, loan_type, interest_rate,
+			tenure_months, emi_amount, status, application_date, approval_date,
+			sanction_date, expected_completion_date, application_ref_no,
+			sanction_letter_url, created_by, created_at, updated_by, updated_at
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+	`
 
-	if err := s.db.Create(financing).Error; err != nil {
-		return nil, fmt.Errorf("failed to create financing: %w", err)
+	_, err := s.db.ExecContext(ctx, query,
+		financing.ID, financing.TenantID, financing.BookingID, financing.BankID,
+		financing.LoanAmount, financing.SanctionedAmount, financing.DisbursedAmount,
+		financing.OutstandingAmount, financing.LoanType, financing.InterestRate,
+		financing.TenureMonths, financing.EMIAmount, financing.Status,
+		financing.ApplicationDate, financing.ApprovalDate, financing.SanctionDate,
+		financing.ExpectedCompletionDate, financing.ApplicationRefNo,
+		financing.SanctionLetterURL, financing.CreatedBy, financing.CreatedAt,
+		financing.UpdatedBy, financing.UpdatedAt,
+	)
+
+	if err != nil {
+		s.logger.Error("Failed to create bank financing", "error", err)
+		return nil, err
 	}
 
 	return financing, nil
 }
 
-// GetFinancingByID retrieves financing by ID
-func (s *BankFinancingService) GetFinancingByID(tenantID, financingID int64) (*models.BankFinancing, error) {
-	var financing models.BankFinancing
-	if err := s.db.
-		Where("tenant_id = ? AND id = ? AND deleted_at IS NULL", tenantID, financingID).
-		Preload("Bank").
-		Preload("Disbursements").
-		Preload("NOCs").
-		First(&financing).Error; err != nil {
-		return nil, fmt.Errorf("financing not found: %w", err)
-	}
-	return &financing, nil
-}
+// GetBankFinancing retrieves a financing record
+func (s *BankFinancingService) GetBankFinancing(ctx context.Context, tenantID, financingID string) (*models.BankFinancing, error) {
+	query := `
+		SELECT id, tenant_id, booking_id, bank_id, loan_amount, sanctioned_amount,
+		       disbursed_amount, outstanding_amount, loan_type, interest_rate,
+		       tenure_months, emi_amount, status, application_date, approval_date,
+		       sanction_date, expected_completion_date, application_ref_no,
+		       sanction_letter_url, created_by, created_at, updated_by, updated_at, deleted_at
+		FROM bank_financing
+		WHERE id = ? AND tenant_id = ? AND deleted_at IS NULL
+	`
 
-// GetFinancingByBookingID retrieves financing by booking ID
-func (s *BankFinancingService) GetFinancingByBookingID(tenantID, bookingID int64) (*models.BankFinancing, error) {
-	var financing models.BankFinancing
-	if err := s.db.
-		Where("tenant_id = ? AND booking_id = ? AND deleted_at IS NULL", tenantID, bookingID).
-		Preload("Bank").
-		First(&financing).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
+	financing := &models.BankFinancing{}
+	err := s.db.QueryRowContext(ctx, query, financingID, tenantID).Scan(
+		&financing.ID, &financing.TenantID, &financing.BookingID, &financing.BankID,
+		&financing.LoanAmount, &financing.SanctionedAmount, &financing.DisbursedAmount,
+		&financing.OutstandingAmount, &financing.LoanType, &financing.InterestRate,
+		&financing.TenureMonths, &financing.EMIAmount, &financing.Status,
+		&financing.ApplicationDate, &financing.ApprovalDate, &financing.SanctionDate,
+		&financing.ExpectedCompletionDate, &financing.ApplicationRefNo,
+		&financing.SanctionLetterURL, &financing.CreatedBy, &financing.CreatedAt,
+		&financing.UpdatedBy, &financing.UpdatedAt, &financing.DeletedAt,
+	)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
 			return nil, nil
 		}
-		return nil, fmt.Errorf("failed to get financing: %w", err)
+		s.logger.Error("Failed to get bank financing", "error", err)
+		return nil, err
 	}
-	return &financing, nil
+
+	return financing, nil
 }
 
-// ListFinancing lists all financing records
-func (s *BankFinancingService) ListFinancing(tenantID int64, filters map[string]interface{}, limit, offset int) ([]models.BankFinancing, int64, error) {
+// ListBankFinancing lists financing records
+func (s *BankFinancingService) ListBankFinancing(ctx context.Context, tenantID string) ([]models.BankFinancing, error) {
+	query := `
+		SELECT id, tenant_id, booking_id, bank_id, loan_amount, sanctioned_amount,
+		       disbursed_amount, outstanding_amount, loan_type, interest_rate,
+		       tenure_months, emi_amount, status, application_date, approval_date,
+		       sanction_date, expected_completion_date, application_ref_no,
+		       sanction_letter_url, created_by, created_at, updated_by, updated_at, deleted_at
+		FROM bank_financing
+		WHERE tenant_id = ? AND deleted_at IS NULL
+		ORDER BY created_at DESC
+	`
+
+	rows, err := s.db.QueryContext(ctx, query, tenantID)
+	if err != nil {
+		s.logger.Error("Failed to list bank financing", "error", err)
+		return nil, err
+	}
+	defer rows.Close()
+
 	var financings []models.BankFinancing
-	var total int64
-
-	query := s.db.Where("tenant_id = ? AND deleted_at IS NULL", tenantID)
-
-	// Apply filters
-	if status, ok := filters["status"]; ok {
-		query = query.Where("status = ?", status)
-	}
-	if loanType, ok := filters["loan_type"]; ok {
-		query = query.Where("loan_type = ?", loanType)
-	}
-	if bankID, ok := filters["bank_id"]; ok {
-		query = query.Where("bank_id = ?", bankID)
-	}
-
-	if err := query.Model(&models.BankFinancing{}).Count(&total).Error; err != nil {
-		return nil, 0, err
-	}
-
-	if err := query.
-		Preload("Bank").
-		Limit(limit).
-		Offset(offset).
-		Order("created_at DESC").
-		Find(&financings).Error; err != nil {
-		return nil, 0, err
+	for rows.Next() {
+		financing := models.BankFinancing{}
+		err := rows.Scan(
+			&financing.ID, &financing.TenantID, &financing.BookingID, &financing.BankID,
+			&financing.LoanAmount, &financing.SanctionedAmount, &financing.DisbursedAmount,
+			&financing.OutstandingAmount, &financing.LoanType, &financing.InterestRate,
+			&financing.TenureMonths, &financing.EMIAmount, &financing.Status,
+			&financing.ApplicationDate, &financing.ApprovalDate, &financing.SanctionDate,
+			&financing.ExpectedCompletionDate, &financing.ApplicationRefNo,
+			&financing.SanctionLetterURL, &financing.CreatedBy, &financing.CreatedAt,
+			&financing.UpdatedBy, &financing.UpdatedAt, &financing.DeletedAt,
+		)
+		if err != nil {
+			continue
+		}
+		financings = append(financings, financing)
 	}
 
-	return financings, total, nil
-}
-
-// UpdateFinancing updates financing record
-func (s *BankFinancingService) UpdateFinancing(tenantID, financingID int64, req *models.UpdateFinancingRequest, userID int64) (*models.BankFinancing, error) {
-	financing, err := s.GetFinancingByID(tenantID, financingID)
-	if err != nil {
-		return nil, err
-	}
-
-	updates := map[string]interface{}{
-		"updated_by": userID,
-		"updated_at": time.Now(),
-	}
-
-	if req.SanctionedAmount != nil {
-		updates["sanctioned_amount"] = *req.SanctionedAmount
-	}
-	if req.LoanType != nil {
-		updates["loan_type"] = *req.LoanType
-	}
-	if req.InterestRate != nil {
-		updates["interest_rate"] = *req.InterestRate
-	}
-	if req.TenureMonths != nil {
-		updates["tenure_months"] = *req.TenureMonths
-	}
-	if req.Status != nil {
-		updates["status"] = *req.Status
-	}
-	if req.ApprovalDate != nil {
-		updates["approval_date"] = *req.ApprovalDate
-	}
-	if req.SanctionDate != nil {
-		updates["sanction_date"] = *req.SanctionDate
-	}
-
-	if err := s.db.Model(financing).Updates(updates).Error; err != nil {
-		return nil, fmt.Errorf("failed to update financing: %w", err)
-	}
-
-	return s.GetFinancingByID(tenantID, financingID)
-}
-
-// DeleteFinancing soft deletes financing record
-func (s *BankFinancingService) DeleteFinancing(tenantID, financingID int64, userID int64) error {
-	financing, err := s.GetFinancingByID(tenantID, financingID)
-	if err != nil {
-		return err
-	}
-
-	if err := s.db.Model(financing).Updates(map[string]interface{}{
-		"deleted_at": time.Now(),
-		"updated_by": userID,
-		"updated_at": time.Now(),
-	}).Error; err != nil {
-		return fmt.Errorf("failed to delete financing: %w", err)
-	}
-
-	return nil
+	return financings, nil
 }
 
 // ============================================================================
-// Disbursement Management
+// BANK DISBURSEMENT METHODS
 // ============================================================================
 
-// CreateDisbursement creates disbursement schedule
-func (s *BankFinancingService) CreateDisbursement(tenantID int64, req *models.CreateDisbursementRequest, userID int64) (*models.BankDisbursement, error) {
-	// Verify financing exists
-	if _, err := s.GetFinancingByID(tenantID, req.FinancingID); err != nil {
+// CreateBankDisbursement creates new disbursement record
+func (s *BankFinancingService) CreateBankDisbursement(ctx context.Context, disbursement *models.BankDisbursement) (*models.BankDisbursement, error) {
+	disbursement.ID = generateUUID()
+	disbursement.CreatedAt = time.Now()
+	disbursement.UpdatedAt = time.Now()
+
+	query := `
+		INSERT INTO bank_disbursement (
+			id, tenant_id, financing_id, disbursement_number, scheduled_amount,
+			actual_amount, milestone_id, milestone_percentage, status,
+			scheduled_date, actual_date, bank_reference_no, claim_document_url,
+			release_approval_by, release_approval_date, created_by, created_at,
+			updated_by, updated_at
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+	`
+
+	_, err := s.db.ExecContext(ctx, query,
+		disbursement.ID, disbursement.TenantID, disbursement.FinancingID,
+		disbursement.DisbursementNumber, disbursement.ScheduledAmount,
+		disbursement.ActualAmount, disbursement.MilestoneID, disbursement.MilestonePercentage,
+		disbursement.Status, disbursement.ScheduledDate, disbursement.ActualDate,
+		disbursement.BankReferenceNo, disbursement.ClaimDocumentURL,
+		disbursement.ReleaseApprovalBy, disbursement.ReleaseApprovalDate,
+		disbursement.CreatedBy, disbursement.CreatedAt, disbursement.UpdatedBy, disbursement.UpdatedAt,
+	)
+
+	if err != nil {
+		s.logger.Error("Failed to create bank disbursement", "error", err)
 		return nil, err
-	}
-
-	// Get next disbursement number
-	var maxNumber int
-	s.db.
-		Where("tenant_id = ? AND financing_id = ? AND deleted_at IS NULL", tenantID, req.FinancingID).
-		Model(&models.BankDisbursement{}).
-		Select("COALESCE(MAX(disbursement_number), 0)").
-		Scan(&maxNumber)
-
-	disbursement := &models.BankDisbursement{
-		TenantID:            tenantID,
-		FinancingID:         req.FinancingID,
-		DisbursementNumber:  maxNumber + 1,
-		ScheduledAmount:     req.ScheduledAmount,
-		MilestoneID:         req.MilestoneID,
-		MilestonePercentage: req.MilestonePercentage,
-		ScheduledDate:       req.ScheduledDate,
-		Status:              "pending",
-		CreatedBy:           &userID,
-		CreatedAt:           time.Now(),
-	}
-
-	if err := s.db.Create(disbursement).Error; err != nil {
-		return nil, fmt.Errorf("failed to create disbursement: %w", err)
 	}
 
 	return disbursement, nil
 }
 
-// GetDisbursement retrieves disbursement by ID
-func (s *BankFinancingService) GetDisbursement(tenantID, disbursementID int64) (*models.BankDisbursement, error) {
-	var disbursement models.BankDisbursement
-	if err := s.db.
-		Where("tenant_id = ? AND id = ? AND deleted_at IS NULL", tenantID, disbursementID).
-		First(&disbursement).Error; err != nil {
-		return nil, fmt.Errorf("disbursement not found: %w", err)
-	}
-	return &disbursement, nil
-}
+// ============================================================================
+// BANK NOC METHODS
+// ============================================================================
 
-// ListDisbursements lists disbursements for financing
-func (s *BankFinancingService) ListDisbursements(tenantID, financingID int64) ([]models.BankDisbursement, error) {
-	var disbursements []models.BankDisbursement
-	if err := s.db.
-		Where("tenant_id = ? AND financing_id = ? AND deleted_at IS NULL", tenantID, financingID).
-		Order("disbursement_number ASC").
-		Find(&disbursements).Error; err != nil {
-		return nil, err
-	}
-	return disbursements, nil
-}
+// CreateBankNOC creates new NOC record
+func (s *BankFinancingService) CreateBankNOC(ctx context.Context, noc *models.BankNOC) (*models.BankNOC, error) {
+	noc.ID = generateUUID()
+	noc.CreatedAt = time.Now()
+	noc.UpdatedAt = time.Now()
 
-// UpdateDisbursementStatus updates disbursement status
-func (s *BankFinancingService) UpdateDisbursementStatus(tenantID, disbursementID int64, status string, actualAmount *float64, userID int64) (*models.BankDisbursement, error) {
-	updates := map[string]interface{}{
-		"status":     status,
-		"updated_by": userID,
-		"updated_at": time.Now(),
-	}
+	query := `
+		INSERT INTO bank_noc (
+			id, tenant_id, financing_id, noc_type, noc_request_date,
+			noc_received_date, noc_document_url, noc_amount, status,
+			issued_by_bank, valid_till_date, remarks, created_by, created_at,
+			updated_by, updated_at
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+	`
 
-	if actualAmount != nil {
-		updates["actual_amount"] = *actualAmount
-	}
+	_, err := s.db.ExecContext(ctx, query,
+		noc.ID, noc.TenantID, noc.FinancingID, noc.NOCType, noc.NOCRequestDate,
+		noc.NOCReceivedDate, noc.NOCDocumentURL, noc.NOCAmount, noc.Status,
+		noc.IssuedByBank, noc.ValidTillDate, noc.Remarks, noc.CreatedBy,
+		noc.CreatedAt, noc.UpdatedBy, noc.UpdatedAt,
+	)
 
-	if status == "credited" {
-		updates["actual_date"] = time.Now()
-	}
-
-	disbursement, err := s.GetDisbursement(tenantID, disbursementID)
 	if err != nil {
+		s.logger.Error("Failed to create bank NOC", "error", err)
 		return nil, err
-	}
-
-	if err := s.db.Model(disbursement).Updates(updates).Error; err != nil {
-		return nil, err
-	}
-
-	return s.GetDisbursement(tenantID, disbursementID)
-}
-
-// ============================================================================
-// NOC Management
-// ============================================================================
-
-// CreateNOC creates NOC record
-func (s *BankFinancingService) CreateNOC(tenantID int64, req *models.CreateNOCRequest, userID int64) (*models.BankNOC, error) {
-	if _, err := s.GetFinancingByID(tenantID, req.FinancingID); err != nil {
-		return nil, err
-	}
-
-	noc := &models.BankNOC{
-		TenantID:       tenantID,
-		FinancingID:    req.FinancingID,
-		NOCType:        req.NOCType,
-		NOCRequestDate: req.NOCRequestDate,
-		NOCAmount:      req.NOCAmount,
-		Status:         "requested",
-		CreatedBy:      &userID,
-		CreatedAt:      time.Now(),
-	}
-
-	if err := s.db.Create(noc).Error; err != nil {
-		return nil, fmt.Errorf("failed to create NOC: %w", err)
 	}
 
 	return noc, nil
 }
 
-// GetNOC retrieves NOC by ID
-func (s *BankFinancingService) GetNOC(tenantID, nocID int64) (*models.BankNOC, error) {
-	var noc models.BankNOC
-	if err := s.db.
-		Where("tenant_id = ? AND id = ? AND deleted_at IS NULL", tenantID, nocID).
-		First(&noc).Error; err != nil {
-		return nil, fmt.Errorf("NOC not found: %w", err)
-	}
-	return &noc, nil
-}
-
-// ListNOCs lists NOCs for financing
-func (s *BankFinancingService) ListNOCs(tenantID, financingID int64) ([]models.BankNOC, error) {
-	var nocs []models.BankNOC
-	if err := s.db.
-		Where("tenant_id = ? AND financing_id = ? AND deleted_at IS NULL", tenantID, financingID).
-		Order("created_at DESC").
-		Find(&nocs).Error; err != nil {
-		return nil, err
-	}
-	return nocs, nil
-}
-
 // ============================================================================
-// Collection Management
+// BANK COLLECTION METHODS
 // ============================================================================
 
-// CreateCollection creates collection record
-func (s *BankFinancingService) CreateCollection(tenantID int64, req *models.CreateCollectionRequest, userID int64) (*models.BankCollectionTracking, error) {
-	if _, err := s.GetFinancingByID(tenantID, req.FinancingID); err != nil {
+// CreateBankCollection creates new collection record
+func (s *BankFinancingService) CreateBankCollection(ctx context.Context, collection *models.BankCollectionTracking) (*models.BankCollectionTracking, error) {
+	collection.ID = generateUUID()
+	collection.CreatedAt = time.Now()
+	collection.UpdatedAt = time.Now()
+
+	query := `
+		INSERT INTO bank_collection_tracking (
+			id, tenant_id, financing_id, collection_type, collection_amount,
+			collection_date, payment_mode, payment_reference_no, emi_month,
+			emi_number, principal_amount, interest_amount, status,
+			bank_confirmation_date, created_by, created_at, updated_by, updated_at
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+	`
+
+	_, err := s.db.ExecContext(ctx, query,
+		collection.ID, collection.TenantID, collection.FinancingID,
+		collection.CollectionType, collection.CollectionAmount, collection.CollectionDate,
+		collection.PaymentMode, collection.PaymentReferenceNo, collection.EMIMonth,
+		collection.EMINumber, collection.PrincipalAmount, collection.InterestAmount,
+		collection.Status, collection.BankConfirmationDate, collection.CreatedBy,
+		collection.CreatedAt, collection.UpdatedBy, collection.UpdatedAt,
+	)
+
+	if err != nil {
+		s.logger.Error("Failed to create bank collection", "error", err)
 		return nil, err
-	}
-
-	collection := &models.BankCollectionTracking{
-		TenantID:         tenantID,
-		FinancingID:      req.FinancingID,
-		CollectionType:   req.CollectionType,
-		CollectionAmount: req.CollectionAmount,
-		CollectionDate:   req.CollectionDate,
-		PaymentMode:      req.PaymentMode,
-		EMIMonth:         req.EMIMonth,
-		EMINumber:        req.EMINumber,
-		Status:           "pending",
-		CreatedBy:        &userID,
-		CreatedAt:        time.Now(),
-	}
-
-	if err := s.db.Create(collection).Error; err != nil {
-		return nil, fmt.Errorf("failed to create collection: %w", err)
 	}
 
 	return collection, nil
 }
 
-// ListCollections lists collections for financing
-func (s *BankFinancingService) ListCollections(tenantID, financingID int64) ([]models.BankCollectionTracking, error) {
-	var collections []models.BankCollectionTracking
-	if err := s.db.
-		Where("tenant_id = ? AND financing_id = ? AND deleted_at IS NULL", tenantID, financingID).
-		Order("collection_date DESC").
-		Find(&collections).Error; err != nil {
-		return nil, err
-	}
-	return collections, nil
-}
-
 // ============================================================================
-// Helper Methods
+// BANK MASTER METHODS
 // ============================================================================
 
-// calculateEMI calculates EMI (Equated Monthly Installment)
-// Formula: EMI = P * r * (1 + r)^n / ((1 + r)^n - 1)
-// where P = principal, r = monthly rate, n = tenure in months
-func (s *BankFinancingService) calculateEMI(principal float64, annualRate float64, tenureMonths int) float64 {
-	monthlyRate := annualRate / 12 / 100
-	if monthlyRate == 0 {
-		return principal / float64(tenureMonths)
-	}
+// CreateBank creates new bank record
+func (s *BankFinancingService) CreateBank(ctx context.Context, bank *models.Bank) (*models.Bank, error) {
+	bank.ID = generateUUID()
+	bank.CreatedAt = time.Now()
+	bank.UpdatedAt = time.Now()
 
-	numerator := principal * monthlyRate * func() float64 {
-		base := 1 + monthlyRate
-		result := 1.0
-		for i := 0; i < tenureMonths; i++ {
-			result *= base
-		}
-		return result
-	}()
+	query := `
+		INSERT INTO bank (
+			id, tenant_id, bank_name, branch_name, ifsc_code, branch_contact,
+			branch_email, relationship_manager_name, relationship_manager_phone,
+			relationship_manager_email, status, created_at, updated_at
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+	`
 
-	denominator := func() float64 {
-		base := 1 + monthlyRate
-		result := 1.0
-		for i := 0; i < tenureMonths; i++ {
-			result *= base
-		}
-		return result - 1
-	}()
+	_, err := s.db.ExecContext(ctx, query,
+		bank.ID, bank.TenantID, bank.BankName, bank.BranchName, bank.IFSCCode,
+		bank.BranchContact, bank.BranchEmail, bank.RelationshipManagerName,
+		bank.RelationshipManagerPhone, bank.RelationshipManagerEmail,
+		bank.Status, bank.CreatedAt, bank.UpdatedAt,
+	)
 
-	return numerator / denominator
-}
-
-// GetFinancingSummary gets comprehensive financing summary
-func (s *BankFinancingService) GetFinancingSummary(tenantID, financingID int64) (map[string]interface{}, error) {
-	financing, err := s.GetFinancingByID(tenantID, financingID)
 	if err != nil {
+		s.logger.Error("Failed to create bank", "error", err)
 		return nil, err
 	}
 
-	// Get total disbursed
-	var totalDisbursed float64
-	s.db.
-		Where("tenant_id = ? AND financing_id = ? AND status != 'cancelled' AND deleted_at IS NULL", tenantID, financingID).
-		Model(&models.BankDisbursement{}).
-		Select("COALESCE(SUM(actual_amount), 0)").
-		Scan(&totalDisbursed)
+	return bank, nil
+}
 
-	// Get total collected
-	var totalCollected float64
-	s.db.
-		Where("tenant_id = ? AND financing_id = ? AND status = 'credited' AND deleted_at IS NULL", tenantID, financingID).
-		Model(&models.BankCollectionTracking{}).
-		Select("COALESCE(SUM(collection_amount), 0)").
-		Scan(&totalCollected)
+// ListBanks lists all bank records
+func (s *BankFinancingService) ListBanks(ctx context.Context, tenantID string) ([]models.Bank, error) {
+	query := `
+		SELECT id, tenant_id, bank_name, branch_name, ifsc_code, branch_contact,
+		       branch_email, relationship_manager_name, relationship_manager_phone,
+		       relationship_manager_email, status, created_at, updated_at
+		FROM bank
+		WHERE tenant_id = ?
+		ORDER BY bank_name
+	`
 
-	// Get pending disbursements
-	var pendingDisbursements int64
-	s.db.
-		Where("tenant_id = ? AND financing_id = ? AND status = 'pending' AND deleted_at IS NULL", tenantID, financingID).
-		Model(&models.BankDisbursement{}).
-		Count(&pendingDisbursements)
+	rows, err := s.db.QueryContext(ctx, query, tenantID)
+	if err != nil {
+		s.logger.Error("Failed to list banks", "error", err)
+		return nil, err
+	}
+	defer rows.Close()
 
-	return map[string]interface{}{
-		"financing_id":            financing.ID,
-		"loan_amount":             financing.LoanAmount,
-		"sanctioned_amount":       financing.SanctionedAmount,
-		"total_disbursed":         totalDisbursed,
-		"total_collected":         totalCollected,
-		"outstanding_amount":      financing.OutstandingAmount,
-		"disbursement_percentage": (totalDisbursed / financing.SanctionedAmount) * 100,
-		"pending_disbursements":   pendingDisbursements,
-		"status":                  financing.Status,
-	}, nil
+	var banks []models.Bank
+	for rows.Next() {
+		bank := models.Bank{}
+		err := rows.Scan(
+			&bank.ID, &bank.TenantID, &bank.BankName, &bank.BranchName, &bank.IFSCCode,
+			&bank.BranchContact, &bank.BranchEmail, &bank.RelationshipManagerName,
+			&bank.RelationshipManagerPhone, &bank.RelationshipManagerEmail,
+			&bank.Status, &bank.CreatedAt, &bank.UpdatedAt,
+		)
+		if err != nil {
+			continue
+		}
+		banks = append(banks, bank)
+	}
+
+	return banks, nil
+}
+
+// Helper function to generate UUID
+func generateUUID() string {
+	// This should be replaced with actual UUID generation
+	// For now, returning a placeholder
+	return "uuid-" + time.Now().Format("20060102150405")
 }

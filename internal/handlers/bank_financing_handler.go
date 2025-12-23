@@ -23,357 +23,324 @@ func NewBankFinancingHandler(financingService *services.BankFinancingService) *B
 	}
 }
 
-// Helper functions
-func (h *BankFinancingHandler) getTenantID(r *http.Request) int64 {
-	if id, ok := r.Context().Value("tenant_id").(int64); ok {
-		return id
-	}
-	return 0
-}
-
-func (h *BankFinancingHandler) getUserID(r *http.Request) int64 {
-	if id, ok := r.Context().Value("user_id").(int64); ok {
-		return id
-	}
-	return 0
-}
-
-func (h *BankFinancingHandler) writeJSON(w http.ResponseWriter, status int, data interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(data)
-}
-
-func (h *BankFinancingHandler) writeError(w http.ResponseWriter, status int, message string) {
-	h.writeJSON(w, status, map[string]string{"error": message})
-}
-
 // ============================================================================
-// Financing Endpoints
+// BANK FINANCING ENDPOINTS
 // ============================================================================
 
-// CreateFinancing creates new financing record
-func (h *BankFinancingHandler) CreateFinancing(w http.ResponseWriter, r *http.Request) {
-	tenantID := h.getTenantID(r)
-	userID := h.getUserID(r)
+// CreateBankFinancing POST /api/v1/financing
+func (h *BankFinancingHandler) CreateBankFinancing(c *gin.Context) {
+	tenantID := c.GetString("tenant_id")
+	userID := c.GetString("user_id")
 
-	var req models.CreateFinancingRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.writeError(w, http.StatusBadRequest, "Invalid request body")
+	var req struct {
+		BookingID                string  `json:"booking_id" binding:"required"`
+		BankID                   string  `json:"bank_id" binding:"required"`
+		LoanAmount               float64 `json:"loan_amount" binding:"required"`
+		SanctionedAmount         float64 `json:"sanctioned_amount"`
+		LoanType                 string  `json:"loan_type"`
+		InterestRate             float64 `json:"interest_rate"`
+		TenureMonths             int     `json:"tenure_months"`
+		ApplicationDate          string  `json:"application_date"`
+		SanctionDate             string  `json:"sanction_date"`
+		ApplicationRefNo         string  `json:"application_ref_no"`
+		SanctionLetterURL        string  `json:"sanction_letter_url"`
+		ExpectedCompletionDate   string  `json:"expected_completion_date"`
+	}
+
+	if err := c.BindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
 	}
 
-	financing, err := h.financingService.CreateFinancing(tenantID, &req, userID)
+	financing := &models.BankFinancing{
+		TenantID:               tenantID,
+		BookingID:              req.BookingID,
+		BankID:                 req.BankID,
+		LoanAmount:             req.LoanAmount,
+		SanctionedAmount:       req.SanctionedAmount,
+		LoanType:               req.LoanType,
+		InterestRate:           req.InterestRate,
+		TenureMonths:           req.TenureMonths,
+		ApplicationRefNo:       req.ApplicationRefNo,
+		SanctionLetterURL:      req.SanctionLetterURL,
+		ExpectedCompletionDate: req.ExpectedCompletionDate,
+		Status:                 "draft",
+		CreatedBy:              userID,
+		UpdatedBy:              userID,
+	}
+
+	created, err := h.financingService.CreateBankFinancing(c.Request.Context(), financing)
 	if err != nil {
-		h.writeError(w, http.StatusBadRequest, err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create financing"})
 		return
 	}
 
-	h.writeJSON(w, http.StatusCreated, financing)
+	c.JSON(http.StatusCreated, gin.H{
+		"success": true,
+		"data":    created,
+		"message": "Financing created successfully",
+	})
 }
 
-// GetFinancing retrieves financing by ID
-func (h *BankFinancingHandler) GetFinancing(w http.ResponseWriter, r *http.Request) {
-	tenantID := h.getTenantID(r)
-	idStr := r.PathValue("id")
-	id, err := strconv.ParseInt(idStr, 10, 64)
-	if err != nil {
-		h.writeError(w, http.StatusBadRequest, "Invalid ID")
-		return
-	}
+// GetBankFinancing GET /api/v1/financing/:id
+func (h *BankFinancingHandler) GetBankFinancing(c *gin.Context) {
+	tenantID := c.GetString("tenant_id")
+	financingID := c.Param("id")
 
-	financing, err := h.financingService.GetFinancingByID(tenantID, id)
+	financing, err := h.financingService.GetBankFinancing(c.Request.Context(), tenantID, financingID)
 	if err != nil {
-		h.writeError(w, http.StatusNotFound, err.Error())
-		return
-	}
-
-	h.writeJSON(w, http.StatusOK, financing)
-}
-
-// GetFinancingByBooking retrieves financing by booking ID
-func (h *BankFinancingHandler) GetFinancingByBooking(w http.ResponseWriter, r *http.Request) {
-	tenantID := h.getTenantID(r)
-	bookingIDStr := r.PathValue("bookingId")
-	bookingID, err := strconv.ParseInt(bookingIDStr, 10, 64)
-	if err != nil {
-		h.writeError(w, http.StatusBadRequest, "Invalid booking ID")
-		return
-	}
-
-	financing, err := h.financingService.GetFinancingByBookingID(tenantID, bookingID)
-	if err != nil {
-		h.writeError(w, http.StatusNotFound, err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch financing"})
 		return
 	}
 
 	if financing == nil {
-		h.writeError(w, http.StatusNotFound, "No financing found for this booking")
+		c.JSON(http.StatusNotFound, gin.H{"error": "Financing not found"})
 		return
 	}
 
-	h.writeJSON(w, http.StatusOK, financing)
-}
-
-// ListFinancing lists all financing records
-func (h *BankFinancingHandler) ListFinancing(w http.ResponseWriter, r *http.Request) {
-	tenantID := h.getTenantID(r)
-
-	limit := 20
-	if l := r.URL.Query().Get("limit"); l != "" {
-		if parsed, err := strconv.Atoi(l); err == nil && parsed > 0 {
-			limit = parsed
-		}
-	}
-
-	offset := 0
-	if o := r.URL.Query().Get("offset"); o != "" {
-		if parsed, err := strconv.Atoi(o); err == nil && parsed >= 0 {
-			offset = parsed
-		}
-	}
-
-	filters := make(map[string]interface{})
-	if status := r.URL.Query().Get("status"); status != "" {
-		filters["status"] = status
-	}
-	if loanType := r.URL.Query().Get("loan_type"); loanType != "" {
-		filters["loan_type"] = loanType
-	}
-
-	financings, total, err := h.financingService.ListFinancing(tenantID, filters, limit, offset)
-	if err != nil {
-		h.writeError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	h.writeJSON(w, http.StatusOK, map[string]interface{}{
-		"data":   financings,
-		"total":  total,
-		"limit":  limit,
-		"offset": offset,
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    financing,
 	})
 }
 
-// UpdateFinancing updates financing record
-func (h *BankFinancingHandler) UpdateFinancing(w http.ResponseWriter, r *http.Request) {
-	tenantID := h.getTenantID(r)
-	userID := h.getUserID(r)
-	idStr := r.PathValue("id")
-	id, err := strconv.ParseInt(idStr, 10, 64)
+// ListBankFinancing GET /api/v1/financing
+func (h *BankFinancingHandler) ListBankFinancing(c *gin.Context) {
+	tenantID := c.GetString("tenant_id")
+
+	financings, err := h.financingService.ListBankFinancing(c.Request.Context(), tenantID)
 	if err != nil {
-		h.writeError(w, http.StatusBadRequest, "Invalid ID")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to list financing"})
 		return
 	}
 
-	var req models.UpdateFinancingRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.writeError(w, http.StatusBadRequest, "Invalid request body")
-		return
-	}
-
-	financing, err := h.financingService.UpdateFinancing(tenantID, id, &req, userID)
-	if err != nil {
-		h.writeError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	h.writeJSON(w, http.StatusOK, financing)
-}
-
-// DeleteFinancing soft deletes financing record
-func (h *BankFinancingHandler) DeleteFinancing(w http.ResponseWriter, r *http.Request) {
-	tenantID := h.getTenantID(r)
-	userID := h.getUserID(r)
-	idStr := r.PathValue("id")
-	id, err := strconv.ParseInt(idStr, 10, 64)
-	if err != nil {
-		h.writeError(w, http.StatusBadRequest, "Invalid ID")
-		return
-	}
-
-	if err := h.financingService.DeleteFinancing(tenantID, id, userID); err != nil {
-		h.writeError(w, http.StatusNotFound, err.Error())
-		return
-	}
-
-	w.WriteHeader(http.StatusNoContent)
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    financings,
+		"count":   len(financings),
+	})
 }
 
 // ============================================================================
-// Disbursement Endpoints
+// BANK DISBURSEMENT ENDPOINTS
 // ============================================================================
 
-// CreateDisbursement creates disbursement schedule
-func (h *BankFinancingHandler) CreateDisbursement(w http.ResponseWriter, r *http.Request) {
-	tenantID := h.getTenantID(r)
-	userID := h.getUserID(r)
-
-	var req models.CreateDisbursementRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.writeError(w, http.StatusBadRequest, "Invalid request body")
-		return
-	}
-
-	disbursement, err := h.financingService.CreateDisbursement(tenantID, &req, userID)
-	if err != nil {
-		h.writeError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	h.writeJSON(w, http.StatusCreated, disbursement)
-}
-
-// ListDisbursements lists disbursements for financing
-func (h *BankFinancingHandler) ListDisbursements(w http.ResponseWriter, r *http.Request) {
-	tenantID := h.getTenantID(r)
-	financingIDStr := r.PathValue("financingId")
-	financingID, err := strconv.ParseInt(financingIDStr, 10, 64)
-	if err != nil {
-		h.writeError(w, http.StatusBadRequest, "Invalid financing ID")
-		return
-	}
-
-	disbursements, err := h.financingService.ListDisbursements(tenantID, financingID)
-	if err != nil {
-		h.writeError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	h.writeJSON(w, http.StatusOK, disbursements)
-}
-
-// UpdateDisbursementStatus updates disbursement status
-func (h *BankFinancingHandler) UpdateDisbursementStatus(w http.ResponseWriter, r *http.Request) {
-	tenantID := h.getTenantID(r)
-	userID := h.getUserID(r)
-	idStr := r.PathValue("id")
-	id, err := strconv.ParseInt(idStr, 10, 64)
-	if err != nil {
-		h.writeError(w, http.StatusBadRequest, "Invalid ID")
-		return
-	}
+// CreateBankDisbursement POST /api/v1/financing/:id/disbursement
+func (h *BankFinancingHandler) CreateBankDisbursement(c *gin.Context) {
+	tenantID := c.GetString("tenant_id")
+	userID := c.GetString("user_id")
+	financingID := c.Param("id")
 
 	var req struct {
-		Status       string   `json:"status"`
-		ActualAmount *float64 `json:"actual_amount"`
+		DisbursementNumber    int     `json:"disbursement_number" binding:"required"`
+		ScheduledAmount       float64 `json:"scheduled_amount" binding:"required"`
+		MilestoneID           string  `json:"milestone_id"`
+		MilestonePercentage   float64 `json:"milestone_percentage"`
+		ScheduledDate         string  `json:"scheduled_date"`
+		ClaimDocumentURL      string  `json:"claim_document_url"`
 	}
 
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.writeError(w, http.StatusBadRequest, "Invalid request body")
+	if err := c.BindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
 	}
 
-	disbursement, err := h.financingService.UpdateDisbursementStatus(tenantID, id, req.Status, req.ActualAmount, userID)
+	disbursement := &models.BankDisbursement{
+		TenantID:             tenantID,
+		FinancingID:          financingID,
+		DisbursementNumber:   req.DisbursementNumber,
+		ScheduledAmount:      req.ScheduledAmount,
+		MilestoneID:          req.MilestoneID,
+		MilestonePercentage:  req.MilestonePercentage,
+		ScheduledDate:        req.ScheduledDate,
+		ClaimDocumentURL:     req.ClaimDocumentURL,
+		Status:               "pending",
+		CreatedBy:            userID,
+		UpdatedBy:            userID,
+	}
+
+	created, err := h.financingService.CreateBankDisbursement(c.Request.Context(), disbursement)
 	if err != nil {
-		h.writeError(w, http.StatusBadRequest, err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create disbursement"})
 		return
 	}
 
-	h.writeJSON(w, http.StatusOK, disbursement)
+	c.JSON(http.StatusCreated, gin.H{
+		"success": true,
+		"data":    created,
+		"message": "Disbursement created successfully",
+	})
 }
 
 // ============================================================================
-// NOC Endpoints
+// BANK NOC ENDPOINTS
 // ============================================================================
 
-// CreateNOC creates NOC record
-func (h *BankFinancingHandler) CreateNOC(w http.ResponseWriter, r *http.Request) {
-	tenantID := h.getTenantID(r)
-	userID := h.getUserID(r)
+// CreateBankNOC POST /api/v1/financing/:id/noc
+func (h *BankFinancingHandler) CreateBankNOC(c *gin.Context) {
+	tenantID := c.GetString("tenant_id")
+	userID := c.GetString("user_id")
+	financingID := c.Param("id")
 
-	var req models.CreateNOCRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.writeError(w, http.StatusBadRequest, "Invalid request body")
+	var req struct {
+		NOCType       string `json:"noc_type" binding:"required"`
+		NOCRequestDate string `json:"noc_request_date"`
+		NOCAmount     float64 `json:"noc_amount"`
+		ValidTillDate string `json:"valid_till_date"`
+		Remarks       string `json:"remarks"`
+	}
+
+	if err := c.BindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
 	}
 
-	noc, err := h.financingService.CreateNOC(tenantID, &req, userID)
+	noc := &models.BankNOC{
+		TenantID:       tenantID,
+		FinancingID:    financingID,
+		NOCType:        req.NOCType,
+		NOCRequestDate: req.NOCRequestDate,
+		NOCAmount:      req.NOCAmount,
+		ValidTillDate:  req.ValidTillDate,
+		Remarks:        req.Remarks,
+		Status:         "requested",
+		CreatedBy:      userID,
+		UpdatedBy:      userID,
+	}
+
+	created, err := h.financingService.CreateBankNOC(c.Request.Context(), noc)
 	if err != nil {
-		h.writeError(w, http.StatusBadRequest, err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create NOC"})
 		return
 	}
 
-	h.writeJSON(w, http.StatusCreated, noc)
-}
-
-// ListNOCs lists NOCs for financing
-func (h *BankFinancingHandler) ListNOCs(w http.ResponseWriter, r *http.Request) {
-	tenantID := h.getTenantID(r)
-	financingIDStr := r.PathValue("financingId")
-	financingID, err := strconv.ParseInt(financingIDStr, 10, 64)
-	if err != nil {
-		h.writeError(w, http.StatusBadRequest, "Invalid financing ID")
-		return
-	}
-
-	nocs, err := h.financingService.ListNOCs(tenantID, financingID)
-	if err != nil {
-		h.writeError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	h.writeJSON(w, http.StatusOK, nocs)
+	c.JSON(http.StatusCreated, gin.H{
+		"success": true,
+		"data":    created,
+		"message": "NOC created successfully",
+	})
 }
 
 // ============================================================================
-// Collection Endpoints
+// BANK COLLECTION ENDPOINTS
 // ============================================================================
 
-// CreateCollection creates collection record
-func (h *BankFinancingHandler) CreateCollection(w http.ResponseWriter, r *http.Request) {
-	tenantID := h.getTenantID(r)
-	userID := h.getUserID(r)
+// CreateBankCollection POST /api/v1/financing/:id/collection
+func (h *BankFinancingHandler) CreateBankCollection(c *gin.Context) {
+	tenantID := c.GetString("tenant_id")
+	userID := c.GetString("user_id")
+	financingID := c.Param("id")
 
-	var req models.CreateCollectionRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.writeError(w, http.StatusBadRequest, "Invalid request body")
+	var req struct {
+		CollectionType        string  `json:"collection_type" binding:"required"`
+		CollectionAmount      float64 `json:"collection_amount" binding:"required"`
+		CollectionDate        string  `json:"collection_date"`
+		PaymentMode           string  `json:"payment_mode"`
+		PaymentReferenceNo    string  `json:"payment_reference_no"`
+		EMIMonth              string  `json:"emi_month"`
+		EMINumber             int     `json:"emi_number"`
+		PrincipalAmount       float64 `json:"principal_amount"`
+		InterestAmount        float64 `json:"interest_amount"`
+	}
+
+	if err := c.BindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
 	}
 
-	collection, err := h.financingService.CreateCollection(tenantID, &req, userID)
+	collection := &models.BankCollectionTracking{
+		TenantID:            tenantID,
+		FinancingID:         financingID,
+		CollectionType:      req.CollectionType,
+		CollectionAmount:    req.CollectionAmount,
+		CollectionDate:      req.CollectionDate,
+		PaymentMode:         req.PaymentMode,
+		PaymentReferenceNo:  req.PaymentReferenceNo,
+		EMIMonth:            req.EMIMonth,
+		EMINumber:           req.EMINumber,
+		PrincipalAmount:     req.PrincipalAmount,
+		InterestAmount:      req.InterestAmount,
+		Status:              "recorded",
+		CreatedBy:           userID,
+		UpdatedBy:           userID,
+	}
+
+	created, err := h.financingService.CreateBankCollection(c.Request.Context(), collection)
 	if err != nil {
-		h.writeError(w, http.StatusBadRequest, err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to record collection"})
 		return
 	}
 
-	h.writeJSON(w, http.StatusCreated, collection)
+	c.JSON(http.StatusCreated, gin.H{
+		"success": true,
+		"data":    created,
+		"message": "Collection recorded successfully",
+	})
 }
 
-// ListCollections lists collections for financing
-func (h *BankFinancingHandler) ListCollections(w http.ResponseWriter, r *http.Request) {
-	tenantID := h.getTenantID(r)
-	financingIDStr := r.PathValue("financingId")
-	financingID, err := strconv.ParseInt(financingIDStr, 10, 64)
-	if err != nil {
-		h.writeError(w, http.StatusBadRequest, "Invalid financing ID")
+// ============================================================================
+// BANK MASTER ENDPOINTS
+// ============================================================================
+
+// CreateBank POST /api/v1/banks
+func (h *BankFinancingHandler) CreateBank(c *gin.Context) {
+	tenantID := c.GetString("tenant_id")
+
+	var req struct {
+		BankName                   string `json:"bank_name" binding:"required"`
+		BranchName                 string `json:"branch_name" binding:"required"`
+		IFSCCode                   string `json:"ifsc_code" binding:"required"`
+		BranchContact              string `json:"branch_contact"`
+		BranchEmail                string `json:"branch_email"`
+		RelationshipManagerName    string `json:"relationship_manager_name"`
+		RelationshipManagerPhone   string `json:"relationship_manager_phone"`
+		RelationshipManagerEmail   string `json:"relationship_manager_email"`
+	}
+
+	if err := c.BindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
 	}
 
-	collections, err := h.financingService.ListCollections(tenantID, financingID)
+	bank := &models.Bank{
+		TenantID:                   tenantID,
+		BankName:                   req.BankName,
+		BranchName:                 req.BranchName,
+		IFSCCode:                   req.IFSCCode,
+		BranchContact:              req.BranchContact,
+		BranchEmail:                req.BranchEmail,
+		RelationshipManagerName:    req.RelationshipManagerName,
+		RelationshipManagerPhone:   req.RelationshipManagerPhone,
+		RelationshipManagerEmail:   req.RelationshipManagerEmail,
+		Status:                     "active",
+	}
+
+	created, err := h.financingService.CreateBank(c.Request.Context(), bank)
 	if err != nil {
-		h.writeError(w, http.StatusInternalServerError, err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create bank"})
 		return
 	}
 
-	h.writeJSON(w, http.StatusOK, collections)
+	c.JSON(http.StatusCreated, gin.H{
+		"success": true,
+		"data":    created,
+		"message": "Bank created successfully",
+	})
 }
 
-// GetFinancingSummary retrieves comprehensive financing summary
-func (h *BankFinancingHandler) GetFinancingSummary(w http.ResponseWriter, r *http.Request) {
-	tenantID := h.getTenantID(r)
-	idStr := r.PathValue("id")
-	id, err := strconv.ParseInt(idStr, 10, 64)
+// ListBanks GET /api/v1/banks
+func (h *BankFinancingHandler) ListBanks(c *gin.Context) {
+	tenantID := c.GetString("tenant_id")
+
+	banks, err := h.financingService.ListBanks(c.Request.Context(), tenantID)
 	if err != nil {
-		h.writeError(w, http.StatusBadRequest, "Invalid ID")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to list banks"})
 		return
 	}
 
-	summary, err := h.financingService.GetFinancingSummary(tenantID, id)
-	if err != nil {
-		h.writeError(w, http.StatusNotFound, err.Error())
-		return
-	}
-
-	h.writeJSON(w, http.StatusOK, summary)
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    banks,
+		"count":   len(banks),
+	})
 }
