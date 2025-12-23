@@ -398,6 +398,31 @@ export const leadService = {
   async getLeadStats() {
     return apiClient.get('/api/v1/leads/stats')
   },
+
+  // New methods for lead status and pipeline management
+  async updateLeadStatus(id: number | string, data: any) {
+    return apiClient.put(`/api/v1/leads/${id}/status`, data)
+  },
+
+  async getLeadStatusLog(id: number | string) {
+    return apiClient.get(`/api/v1/leads/${id}/status-log`)
+  },
+
+  async getPipelineConfig() {
+    return apiClient.get('/api/v1/leads/pipeline-config')
+  },
+
+  async updatePipelineConfig(id: string, data: any) {
+    return apiClient.put(`/api/v1/leads/pipeline-config/${id}`, data)
+  },
+
+  async getLeadsByPipelineStage(stage: string) {
+    return apiClient.get(`/api/v1/leads/pipeline/${stage}`)
+  },
+
+  async getLeadsByDetailedStatus(status: string) {
+    return apiClient.get(`/api/v1/leads/status/${status}`)
+  },
 }
 
 // Call Service - Feature: Call Management

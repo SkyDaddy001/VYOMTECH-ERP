@@ -520,9 +520,4 @@ type LeadPipelineConfig struct {
 	SortOrder     int       `json:"sort_order" db:"sort_order"`
 	CreatedAt     time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt     time.Time `json:"updated_at" db:"updated_at"`
-	Remarks       *string   `json:"remarks" db:"remarks"`
-	Status        string    `json:"status" db:"status"` // active, reversed, cancelled
-	CreatedBy     *string   `json:"created_by" db:"created_by"`
-	CreatedAt     time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt     time.Time `json:"updated_at" db:"updated_at"`
 }
