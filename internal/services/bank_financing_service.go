@@ -32,7 +32,7 @@ func NewBankFinancingService(db *sql.DB, log *logger.Logger) *BankFinancingServi
 
 // CreateBankFinancing creates new financing record
 func (s *BankFinancingService) CreateBankFinancing(ctx context.Context, financing *models.BankFinancing) (*models.BankFinancing, error) {
-	financing.ID = generateUUID()
+	financing.ID = generateBankFinancingUUID()
 	financing.CreatedAt = time.Now()
 	financing.UpdatedAt = time.Now()
 
@@ -148,7 +148,7 @@ func (s *BankFinancingService) ListBankFinancing(ctx context.Context, tenantID s
 
 // CreateBankDisbursement creates new disbursement record
 func (s *BankFinancingService) CreateBankDisbursement(ctx context.Context, disbursement *models.BankDisbursement) (*models.BankDisbursement, error) {
-	disbursement.ID = generateUUID()
+	disbursement.ID = generateBankFinancingUUID()
 	disbursement.CreatedAt = time.Now()
 	disbursement.UpdatedAt = time.Now()
 
@@ -186,7 +186,7 @@ func (s *BankFinancingService) CreateBankDisbursement(ctx context.Context, disbu
 
 // CreateBankNOC creates new NOC record
 func (s *BankFinancingService) CreateBankNOC(ctx context.Context, noc *models.BankNOC) (*models.BankNOC, error) {
-	noc.ID = generateUUID()
+	noc.ID = generateBankFinancingUUID()
 	noc.CreatedAt = time.Now()
 	noc.UpdatedAt = time.Now()
 
@@ -220,7 +220,7 @@ func (s *BankFinancingService) CreateBankNOC(ctx context.Context, noc *models.Ba
 
 // CreateBankCollection creates new collection record
 func (s *BankFinancingService) CreateBankCollection(ctx context.Context, collection *models.BankCollectionTracking) (*models.BankCollectionTracking, error) {
-	collection.ID = generateUUID()
+	collection.ID = generateBankFinancingUUID()
 	collection.CreatedAt = time.Now()
 	collection.UpdatedAt = time.Now()
 
@@ -256,7 +256,7 @@ func (s *BankFinancingService) CreateBankCollection(ctx context.Context, collect
 
 // CreateBank creates new bank record
 func (s *BankFinancingService) CreateBank(ctx context.Context, bank *models.Bank) (*models.Bank, error) {
-	bank.ID = generateUUID()
+	bank.ID = generateBankFinancingUUID()
 	bank.CreatedAt = time.Now()
 	bank.UpdatedAt = time.Now()
 
@@ -319,9 +319,9 @@ func (s *BankFinancingService) ListBanks(ctx context.Context, tenantID string) (
 	return banks, nil
 }
 
-// Helper function to generate UUID
-func generateUUID() string {
+// Helper function to generate UUID - using time-based UUID for now
+// TODO: Replace with proper UUID generation (github.com/google/uuid)
+func generateBankFinancingUUID() string {
 	// This should be replaced with actual UUID generation
-	// For now, returning a placeholder
 	return "uuid-" + time.Now().Format("20060102150405")
 }

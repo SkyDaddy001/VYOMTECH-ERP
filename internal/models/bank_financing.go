@@ -57,23 +57,23 @@ type BankDisbursement struct {
 }
 
 type BankNOC struct {
-	ID                 string     `json:"id" db:"id"`
-	TenantID           string     `json:"tenant_id" db:"tenant_id"`
-	FinancingID        string     `json:"financing_id" db:"financing_id"`
-	NOCType            string     `json:"noc_type" db:"noc_type"` // Pre-sanction, Post-completion, Full-settlement
-	NOCRequestDate     time.Time  `json:"noc_request_date" db:"noc_request_date"`
-	NOCReceivedDate    *time.Time `json:"noc_received_date" db:"noc_received_date"`
-	NOCDocumentURL     *string    `json:"noc_document_url" db:"noc_document_url"`
-	NOCAmount          *float64   `json:"noc_amount" db:"noc_amount"`
-	Status             string     `json:"status" db:"status"` // requested, issued, expired, cancelled
-	IssuedByBank       *string    `json:"issued_by_bank" db:"issued_by_bank"`
-	ValidTillDate      *time.Time `json:"valid_till_date" db:"valid_till_date"`
-	Remarks            *string    `json:"remarks" db:"remarks"`
-	CreatedBy          *string    `json:"created_by" db:"created_by"`
-	CreatedAt          time.Time  `json:"created_at" db:"created_at"`
-	UpdatedBy          *string    `json:"updated_by" db:"updated_by"`
-	UpdatedAt          time.Time  `json:"updated_at" db:"updated_at"`
-	DeletedAt          *time.Time `json:"deleted_at" db:"deleted_at"`
+	ID              string     `json:"id" db:"id"`
+	TenantID        string     `json:"tenant_id" db:"tenant_id"`
+	FinancingID     string     `json:"financing_id" db:"financing_id"`
+	NOCType         string     `json:"noc_type" db:"noc_type"` // Pre-sanction, Post-completion, Full-settlement
+	NOCRequestDate  time.Time  `json:"noc_request_date" db:"noc_request_date"`
+	NOCReceivedDate *time.Time `json:"noc_received_date" db:"noc_received_date"`
+	NOCDocumentURL  *string    `json:"noc_document_url" db:"noc_document_url"`
+	NOCAmount       *float64   `json:"noc_amount" db:"noc_amount"`
+	Status          string     `json:"status" db:"status"` // requested, issued, expired, cancelled
+	IssuedByBank    *string    `json:"issued_by_bank" db:"issued_by_bank"`
+	ValidTillDate   *time.Time `json:"valid_till_date" db:"valid_till_date"`
+	Remarks         *string    `json:"remarks" db:"remarks"`
+	CreatedBy       *string    `json:"created_by" db:"created_by"`
+	CreatedAt       time.Time  `json:"created_at" db:"created_at"`
+	UpdatedBy       *string    `json:"updated_by" db:"updated_by"`
+	UpdatedAt       time.Time  `json:"updated_at" db:"updated_at"`
+	DeletedAt       *time.Time `json:"deleted_at" db:"deleted_at"`
 }
 
 type BankCollectionTracking struct {
@@ -99,96 +99,17 @@ type BankCollectionTracking struct {
 }
 
 type Bank struct {
-	ID                      string    `json:"id" db:"id"`
-	TenantID                string    `json:"tenant_id" db:"tenant_id"`
-	BankName                string    `json:"bank_name" db:"bank_name"`
-	BranchName              string    `json:"branch_name" db:"branch_name"`
-	IFSCCode                *string   `json:"ifsc_code" db:"ifsc_code"`
-	BranchContact           *string   `json:"branch_contact" db:"branch_contact"`
-	BranchEmail             *string   `json:"branch_email" db:"branch_email"`
+	ID                       string    `json:"id" db:"id"`
+	TenantID                 string    `json:"tenant_id" db:"tenant_id"`
+	BankName                 string    `json:"bank_name" db:"bank_name"`
+	BranchName               string    `json:"branch_name" db:"branch_name"`
+	IFSCCode                 *string   `json:"ifsc_code" db:"ifsc_code"`
+	BranchContact            *string   `json:"branch_contact" db:"branch_contact"`
+	BranchEmail              *string   `json:"branch_email" db:"branch_email"`
 	RelationshipManagerName  *string   `json:"relationship_manager_name" db:"relationship_manager_name"`
 	RelationshipManagerPhone *string   `json:"relationship_manager_phone" db:"relationship_manager_phone"`
 	RelationshipManagerEmail *string   `json:"relationship_manager_email" db:"relationship_manager_email"`
-	Status                  string    `json:"status" db:"status"` // active, inactive
-	CreatedAt               time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt               time.Time `json:"updated_at" db:"updated_at"`
-}
-	NOCs          []BankNOC                `gorm:"foreignKey:FinancingID" json:"nocs,omitempty"`
-	Collections   []BankCollectionTracking `gorm:"foreignKey:FinancingID" json:"collections,omitempty"`
-}
-
-// TableName specifies the table name
-func (BankFinancing) TableName() string {
-	return "bank_financing"
-}
-
-// ============================================================================
-// BankDisbursement Model
-// ============================================================================
-type BankDisbursement struct {
-	ID          int64 `gorm:"primaryKey" json:"id"`
-}
-}
-
-// ============================================================================
-// DTO Models for API Requests/Responses
-// ============================================================================
-
-// CreateFinancingRequest request to create new financing
-type CreateFinancingRequest struct {
-	BookingID        int64    `json:"booking_id" binding:"required"`
-	BankID           *int64   `json:"bank_id"`
-	LoanAmount       float64  `json:"loan_amount" binding:"required"`
-	SanctionedAmount float64  `json:"sanctioned_amount" binding:"required"`
-	LoanType         string   `json:"loan_type" binding:"required"`
-	InterestRate     *float64 `json:"interest_rate"`
-	TenureMonths     *int     `json:"tenure_months"`
-	ApplicationRefNo *string  `json:"application_ref_no"`
-}
-
-// UpdateFinancingRequest request to update financing
-type UpdateFinancingRequest struct {
-	SanctionedAmount *float64   `json:"sanctioned_amount"`
-	LoanType         *string    `json:"loan_type"`
-	InterestRate     *float64   `json:"interest_rate"`
-	TenureMonths     *int       `json:"tenure_months"`
-	Status           *string    `json:"status"`
-	ApprovalDate     *time.Time `json:"approval_date"`
-	SanctionDate     *time.Time `json:"sanction_date"`
-}
-
-// CreateDisbursementRequest request to create disbursement
-type CreateDisbursementRequest struct {
-	FinancingID         int64     `json:"financing_id" binding:"required"`
-	ScheduledAmount     float64   `json:"scheduled_amount" binding:"required"`
-	MilestoneID         *int64    `json:"milestone_id"`
-	MilestonePercentage *int      `json:"milestone_percentage"`
-	ScheduledDate       time.Time `json:"scheduled_date" binding:"required"`
-}
-
-// CreateNOCRequest request to create NOC
-type CreateNOCRequest struct {
-	FinancingID    int64     `json:"financing_id" binding:"required"`
-	NOCType        string    `json:"noc_type" binding:"required"`
-	NOCRequestDate time.Time `json:"noc_request_date" binding:"required"`
-	NOCAmount      *float64  `json:"noc_amount"`
-}
-
-// CreateCollectionRequest request to create collection
-type CreateCollectionRequest struct {
-	FinancingID      int64     `json:"financing_id" binding:"required"`
-	CollectionType   string    `json:"collection_type" binding:"required"`
-	CollectionAmount float64   `json:"collection_amount" binding:"required"`
-	CollectionDate   time.Time `json:"collection_date" binding:"required"`
-	PaymentMode      *string   `json:"payment_mode"`
-	EMIMonth         *string   `json:"emi_month"`
-	EMINumber        *int      `json:"emi_number"`
-}
-
-// BankFinancingResponse response with financing details
-type BankFinancingResponse struct {
-	*BankFinancing
-	RemainingBalance       float64 `json:"remaining_balance"`
-	DisbursementPercentage float64 `json:"disbursement_percentage"`
-	CollectionPercentage   float64 `json:"collection_percentage"`
+	Status                   string    `json:"status" db:"status"` // active, inactive
+	CreatedAt                time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt                time.Time `json:"updated_at" db:"updated_at"`
 }
