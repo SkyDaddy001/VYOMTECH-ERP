@@ -78,7 +78,7 @@ SELECT
     SUM(COALESCE(p.amount, 0)) as collections_done,
     SUM(CASE WHEN b.status = 'active' THEN (ucs.apartment_cost_excluding_govt + COALESCE(rd.gst_cost, 0)) ELSE 0 END) - SUM(COALESCE(p.amount, 0)) as pending_due
 FROM booking b
-LEFT JOIN unit u ON b.unit_id = u.id
+LEFT JOIN property_unit u ON b.unit_id = u.id
 LEFT JOIN unit_cost_sheet ucs ON u.id = ucs.unit_id
 LEFT JOIN registration_details rd ON b.id = rd.booking_id
 LEFT JOIN payment p ON b.id = p.booking_id
@@ -125,7 +125,7 @@ SELECT
     COALESCE(ac.corpus_charge, 0) as corpus_amount,
     (ucs.apartment_cost_excluding_govt + COALESCE(rd.gst_cost, 0) + COALESCE(rd.registration_cost, 0) + COALESCE(ac.other_works_charge, 0) + COALESCE(ac.maintenance_charge, 0) + COALESCE(ac.corpus_charge, 0)) as total_receivable
 FROM booking b
-LEFT JOIN unit u ON b.unit_id = u.id
+LEFT JOIN property_unit u ON b.unit_id = u.id
 LEFT JOIN unit_cost_sheet ucs ON u.id = ucs.unit_id
 LEFT JOIN registration_details rd ON b.id = rd.booking_id
 LEFT JOIN additional_charges ac ON b.id = ac.booking_id
@@ -150,7 +150,7 @@ SELECT
     ps.amount_due - COALESCE(SUM(p.amount), 0) as amount_pending,
     ROUND((COALESCE(SUM(p.amount), 0) / ps.amount_due) * 100, 2) as payment_percentage
 FROM booking b
-LEFT JOIN unit u ON b.unit_id = u.id
+LEFT JOIN property_unit u ON b.unit_id = u.id
 LEFT JOIN sales_lead sl ON b.lead_id = sl.id
 LEFT JOIN unit_cost_sheet ucs ON u.id = ucs.unit_id
 LEFT JOIN payment_schedule ps ON b.id = ps.booking_id
@@ -180,7 +180,7 @@ SELECT
     COALESCE(SUM(p.amount), 0) as stage_received,
     CURDATE() as as_on_date
 FROM booking b
-LEFT JOIN unit u ON b.unit_id = u.id
+LEFT JOIN property_unit u ON b.unit_id = u.id
 LEFT JOIN sales_lead sl ON b.lead_id = sl.id
 LEFT JOIN unit_cost_sheet ucs ON u.id = ucs.unit_id
 LEFT JOIN registration_details rd ON b.id = rd.booking_id
@@ -208,7 +208,7 @@ SELECT
     COALESCE(SUM(p.amount), 0) as collected_amount,
     (ucs.apartment_cost_excluding_govt + COALESCE(rd.gst_cost, 0)) - COALESCE(SUM(p.amount), 0) as pending_due
 FROM booking b
-LEFT JOIN unit u ON b.unit_id = u.id
+LEFT JOIN property_unit u ON b.unit_id = u.id
 LEFT JOIN sales_lead sl ON b.lead_id = sl.id
 LEFT JOIN unit_cost_sheet ucs ON u.id = ucs.unit_id
 LEFT JOIN registration_details rd ON b.id = rd.booking_id
@@ -234,7 +234,7 @@ SELECT
     COUNT(DISTINCT CASE WHEN b.agreement_date IS NULL THEN b.id END) as agreements_pending,
     ROUND((SUM(COALESCE(p.amount, 0)) / SUM(ucs.apartment_cost_excluding_govt + COALESCE(rd.gst_cost, 0))) * 100, 2) as collection_percentage,
     ROUND((COUNT(DISTINCT CASE WHEN b.status = 'active' THEN u.id END) / COUNT(DISTINCT u.id)) * 100, 2) as occupancy_percentage
-FROM unit u
+FROM property_unit u
 LEFT JOIN booking b ON u.id = b.unit_id
 LEFT JOIN unit_cost_sheet ucs ON u.id = ucs.unit_id
 LEFT JOIN registration_details rd ON b.id = rd.booking_id
