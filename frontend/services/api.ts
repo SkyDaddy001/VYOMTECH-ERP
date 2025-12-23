@@ -1108,3 +1108,37 @@ export const generalLedgerService = {
     return apiClient.get(`/api/v1/gl/journal-vouchers?${params}`)
   },
 }
+
+// Export combined API object with all services
+export const api = {
+  ...authService,
+  ...agentService,
+  ...tenantService,
+  ...adminTenantService,
+  ...adminUserService,
+  ...leadService,
+  ...callService,
+  ...campaignService,
+  ...webSocketService,
+  ...analyticsService,
+  ...automationService,
+  ...communicationService,
+  ...gamificationService,
+  ...complianceService,
+  ...aiService,
+  ...financialDashboardService,
+  ...salesDashboardService,
+  ...hrDashboardService,
+  ...purchaseDashboardService,
+  ...projectDashboardService,
+  ...prealesDashboardService,
+  get: (url: string) => apiClient.get(url),
+  post: (url: string, data?: any) => apiClient.post(url, data),
+  put: (url: string, data?: any) => apiClient.put(url, data),
+  delete: (url: string) => apiClient.delete(url),
+  setToken: (token: string) => apiClient.setToken(token),
+  getToken: () => apiClient.getToken(),
+  clearToken: () => apiClient.clearToken(),
+}
+
+export default api
