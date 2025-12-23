@@ -97,6 +97,85 @@ message VerifyPermissionResponse {
 }
 
 // RBAC Service for role-based access control
+// RoleTemplate represents a pre-built role template
+message RoleTemplate {
+  string id = 1;
+  string tenant_id = 2;
+  string name = 3;
+  string description = 4;
+  string category = 5;
+  bool is_system_template = 6;
+  bool is_active = 7;
+  repeated string permission_ids = 8;
+  string metadata = 9;
+  google.protobuf.Timestamp created_at = 10;
+  google.protobuf.Timestamp updated_at = 11;
+}
+
+// TemplateInstance represents a role created from a template
+message TemplateInstance {
+  string id = 1;
+  string tenant_id = 2;
+  string template_id = 3;
+  string role_id = 4;
+  int64 created_by = 5;
+  string customizations = 6;
+  google.protobuf.Timestamp created_at = 7;
+}
+
+// CreateRoleTemplateRequest for creating a role template
+message CreateRoleTemplateRequest {
+  string tenant_id = 1;
+  string name = 2;
+  string description = 3;
+  string category = 4;
+  bool is_system_template = 5;
+  repeated string permission_ids = 6;
+  string metadata = 7;
+}
+
+// CreateRoleTemplateResponse for role template creation
+message CreateRoleTemplateResponse {
+  string template_id = 1;
+  bool success = 2;
+  string message = 3;
+}
+
+// GetRoleTemplateRequest for retrieving a role template
+message GetRoleTemplateRequest {
+  string tenant_id = 1;
+  string template_id = 2;
+}
+
+// ListRoleTemplatesRequest for listing role templates
+message ListRoleTemplatesRequest {
+  string tenant_id = 1;
+  int32 page = 2;
+  int32 page_size = 3;
+}
+
+// ListRoleTemplatesResponse for templates listing
+message ListRoleTemplatesResponse {
+  repeated RoleTemplate templates = 1;
+  int32 total = 2;
+}
+
+// CreateRoleFromTemplateRequest for creating a role from a template
+message CreateRoleFromTemplateRequest {
+  string tenant_id = 1;
+  string template_id = 2;
+  string role_name = 3;
+  string customizations = 4;
+}
+
+// CreateRoleFromTemplateResponse
+message CreateRoleFromTemplateResponse {
+  string role_id = 1;
+  string instance_id = 2;
+  bool success = 3;
+  string message = 4;
+}
+
 service RBACService {
   // CreateRole creates a new role
   rpc CreateRole(CreateRoleRequest) returns (CreateRoleResponse);
@@ -115,6 +194,18 @@ service RBACService {
   
   // GetUserPermissions retrieves all permissions for a user
   rpc GetUserPermissions(VerifyPermissionRequest) returns (ListPermissionsResponse);
+
+  // CreateRoleTemplate creates a new role template
+  rpc CreateRoleTemplate(CreateRoleTemplateRequest) returns (CreateRoleTemplateResponse);
+
+  // GetRoleTemplate retrieves a role template
+  rpc GetRoleTemplate(GetRoleTemplateRequest) returns (RoleTemplate);
+
+  // ListRoleTemplates lists all role templates for a tenant
+  rpc ListRoleTemplates(ListRoleTemplatesRequest) returns (ListRoleTemplatesResponse);
+
+  // CreateRoleFromTemplate creates a role from a template
+  rpc CreateRoleFromTemplate(CreateRoleFromTemplateRequest) returns (CreateRoleFromTemplateResponse);
 }
 
 // ListPermissionsResponse for permissions listing

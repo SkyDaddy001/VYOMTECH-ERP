@@ -1197,6 +1197,51 @@ export const generalLedgerService = {
     return apiClient.get(`/api/v1/gl/journal-vouchers?${params}`)
   },
 }
+// ============================================================================
+// ROLE TEMPLATE SERVICE
+// ============================================================================
+
+const roleTemplateService = {
+  // Get all role templates
+  async getRoleTemplates() {
+    return apiClient.get('/api/v1/role-templates')
+  },
+
+  // Get a specific role template
+  async getRoleTemplate(templateId: string) {
+    return apiClient.get(`/api/v1/role-templates/${templateId}`)
+  },
+
+  // Create a new role template
+  async createRoleTemplate(data: any) {
+    return apiClient.post('/api/v1/role-templates', data)
+  },
+
+  // Update a role template
+  async updateRoleTemplate(templateId: string, data: any) {
+    return apiClient.put(`/api/v1/role-templates/${templateId}`, data)
+  },
+
+  // Delete a role template
+  async deleteRoleTemplate(templateId: string) {
+    return apiClient.delete(`/api/v1/role-templates/${templateId}`)
+  },
+
+  // Get default templates
+  async getDefaultTemplates() {
+    return apiClient.get('/api/v1/role-templates/defaults')
+  },
+
+  // Create a role from a template
+  async createRoleFromTemplate(data: any) {
+    return apiClient.post('/api/v1/role-templates/create-from-template', data)
+  },
+
+  // Get template instances
+  async getTemplateInstances() {
+    return apiClient.get('/api/v1/role-templates/instances')
+  },
+}
 
 // Export combined API object with all services
 export const api = {
@@ -1222,6 +1267,7 @@ export const api = {
   ...purchaseDashboardService,
   ...projectDashboardService,
   ...prealesDashboardService,
+  ...roleTemplateService,
   financing: financingService,
   get: (url: string) => apiClient.get(url),
   post: (url: string, data?: any) => apiClient.post(url, data),

@@ -135,3 +135,46 @@ export interface LeadPipelineConfig {
   created_at: string
   updated_at: string
 }
+
+// ============================================================================
+// ROLE TEMPLATE TYPES
+// ============================================================================
+
+export interface RoleTemplate {
+  id: string
+  tenant_id: string
+  name: string
+  description?: string
+  category: string
+  is_system_template: boolean
+  is_active: boolean
+  permission_ids: string[]
+  metadata?: Record<string, any>
+  created_at: string
+  updated_at: string
+}
+
+export interface TemplateInstance {
+  id: string
+  tenant_id: string
+  template_id: string
+  role_id: string
+  created_by: number
+  customizations?: Record<string, any>
+  created_at: string
+}
+
+export interface CreateRoleTemplateRequest {
+  name: string
+  description?: string
+  category: string
+  is_system_template: boolean
+  permission_ids: string[]
+  metadata?: Record<string, any>
+}
+
+export interface CreateRoleFromTemplateRequest {
+  template_id: string
+  role_name: string
+  customizations?: Record<string, any>
+}

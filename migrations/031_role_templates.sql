@@ -35,9 +35,9 @@ CREATE TABLE IF NOT EXISTS `role_template` (
 CREATE TABLE IF NOT EXISTS `template_instance` (
     `id` VARCHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
-    `template_id` VARCHAR(36) NOT NULL,
+    `template_id` VARCHAR(36),
     `role_id` VARCHAR(36) NOT NULL,
-    `created_by` INT NOT NULL,
+    `created_by` INT,
     `customizations` LONGTEXT,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
