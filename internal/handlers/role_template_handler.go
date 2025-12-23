@@ -45,16 +45,14 @@ func (h *RoleTemplateHandler) CreateRoleTemplate(w http.ResponseWriter, r *http.
 		return
 	}
 
-	template := &models.RoleTemplate{
-		TenantID:      tenantID,
-		Name:          req.Name,
-		Description:   req.Description,
-		Category:      req.Category,
-		PermissionIDs: req.Permissions,
-		IsActive:      true,
-	}
-
-	if err := h.svc.CreateCustomTemplate(r.Context(), template); err != nil {
+	template, err := h.svc.CreateCustomTemplate(
+		r.Context(),
+		tenantID,
+		req.Name,
+		req.Description,
+		req.Permissions,
+	)
+	if err != nil {
 		h.logger.Error("Error creating role template", "error", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -115,7 +113,7 @@ func (h *RoleTemplateHandler) CreateRoleFromTemplate(w http.ResponseWriter, r *h
 		return
 	}
 
-	roleID, err := h.svc.CreateRoleFromTemplate(r.Context(), tenantID, req.TemplateID, req.RoleName)
+	roleID, err := h.svc.CreateRoleFromTemplate(r.Context(), tenantID, req.TemplateID, req.RoleName, []string{})
 	if err != nil {
 		h.logger.Error("Error creating role from template", "error", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -163,7 +161,7 @@ func (h *RoleTemplateHandler) SaveAsTemplate(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	templateID, err := h.svc.SaveAsTemplate(r.Context(), tenantID, req.RoleID, req.TemplateName, req.Description, req.Category)
+	template, err := h.svc.SaveAsTemplate(r.Context(), tenantID, req.RoleID, req.TemplateName)
 	if err != nil {
 		h.logger.Error("Error saving role as template", "error", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -172,7 +170,7 @@ func (h *RoleTemplateHandler) SaveAsTemplate(w http.ResponseWriter, r *http.Requ
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"template_id": templateID,
+		"template_id": template.ID,
 		"message":     "Role saved as template successfully",
 	})
 }

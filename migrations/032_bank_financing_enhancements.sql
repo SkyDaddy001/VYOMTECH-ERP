@@ -7,10 +7,10 @@
 -- Description: Main bank financing records linked to bookings
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS bank_financing (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    tenant_id BIGINT NOT NULL,
-    booking_id BIGINT NOT NULL,
-    bank_id BIGINT,
+    id VARCHAR(36) PRIMARY KEY,
+    tenant_id VARCHAR(36) NOT NULL,
+    booking_id VARCHAR(36) NOT NULL,
+    bank_id VARCHAR(36),
     
     -- Financing Details
     loan_amount DECIMAL(15, 2) NOT NULL,
@@ -36,9 +36,9 @@ CREATE TABLE IF NOT EXISTS bank_financing (
     sanction_letter_url VARCHAR(500),
     
     -- Metadata
-    created_by BIGINT,
+    created_by VARCHAR(36),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_by BIGINT,
+    updated_by VARCHAR(36),
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP NULL,
     
@@ -57,9 +57,9 @@ CREATE TABLE IF NOT EXISTS bank_financing (
 -- Description: Tracks disbursement schedule and actual disbursements
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS bank_disbursement (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    tenant_id BIGINT NOT NULL,
-    financing_id BIGINT NOT NULL,
+    id VARCHAR(36) PRIMARY KEY,
+    tenant_id VARCHAR(36) NOT NULL,
+    financing_id VARCHAR(36) NOT NULL,
     
     -- Disbursement Details
     disbursement_number INT NOT NULL,
@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS bank_disbursement (
     actual_amount DECIMAL(15, 2),
     
     -- Milestone Linked
-    milestone_id BIGINT, -- Construction milestone for which disbursement is scheduled
+    milestone_id VARCHAR(36), -- Construction milestone for which disbursement is scheduled
     milestone_percentage INT, -- e.g., 25%, 50%, 75%, 100%
     
     -- Status & Dates
@@ -78,13 +78,13 @@ CREATE TABLE IF NOT EXISTS bank_disbursement (
     
     -- Documentation
     claim_document_url VARCHAR(500),
-    release_approval_by BIGINT,
+    release_approval_by VARCHAR(36),
     release_approval_date DATETIME,
     
     -- Metadata
-    created_by BIGINT,
+    created_by VARCHAR(36),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_by BIGINT,
+    updated_by VARCHAR(36),
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP NULL,
     
@@ -103,9 +103,9 @@ CREATE TABLE IF NOT EXISTS bank_disbursement (
 -- Description: No Objection Certificate (NOC) tracking from banks
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS bank_noc (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    tenant_id BIGINT NOT NULL,
-    financing_id BIGINT NOT NULL,
+    id VARCHAR(36) PRIMARY KEY,
+    tenant_id VARCHAR(36) NOT NULL,
+    financing_id VARCHAR(36) NOT NULL,
     
     -- NOC Details
     noc_type VARCHAR(50) NOT NULL, -- 'Pre-sanction', 'Post-completion', 'Full-settlement'
@@ -125,9 +125,9 @@ CREATE TABLE IF NOT EXISTS bank_noc (
     remarks TEXT,
     
     -- Metadata
-    created_by BIGINT,
+    created_by VARCHAR(36),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_by BIGINT,
+    updated_by VARCHAR(36),
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP NULL,
     
@@ -144,9 +144,9 @@ CREATE TABLE IF NOT EXISTS bank_noc (
 -- Description: Collection of loan amounts with EMI and prepayment tracking
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS bank_collection_tracking (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    tenant_id BIGINT NOT NULL,
-    financing_id BIGINT NOT NULL,
+    id VARCHAR(36) PRIMARY KEY,
+    tenant_id VARCHAR(36) NOT NULL,
+    financing_id VARCHAR(36) NOT NULL,
     
     -- Collection Details
     collection_type VARCHAR(50) NOT NULL, -- 'EMI', 'Prepayment', 'Partial', 'Full-Settlement'
@@ -168,9 +168,9 @@ CREATE TABLE IF NOT EXISTS bank_collection_tracking (
     bank_confirmation_date DATETIME,
     
     -- Metadata
-    created_by BIGINT,
+    created_by VARCHAR(36),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_by BIGINT,
+    updated_by VARCHAR(36),
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP NULL,
     
@@ -187,8 +187,8 @@ CREATE TABLE IF NOT EXISTS bank_collection_tracking (
 -- Description: Bank master list (if not already exists)
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS bank (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    tenant_id BIGINT NOT NULL,
+    id VARCHAR(36) PRIMARY KEY,
+    tenant_id VARCHAR(36) NOT NULL,
     
     bank_name VARCHAR(100) NOT NULL,
     branch_name VARCHAR(100),

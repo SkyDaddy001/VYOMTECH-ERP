@@ -1198,6 +1198,97 @@ export const generalLedgerService = {
   },
 }
 // ============================================================================
+// BANK FINANCING SERVICE
+// ============================================================================
+
+const bankFinancingService = {
+  // Bank Financing
+  async getBankFinancing(financingId: string) {
+    return apiClient.get(`/api/v1/bank-financing/${financingId}`)
+  },
+
+  async listBankFinancing() {
+    return apiClient.get('/api/v1/bank-financing')
+  },
+
+  async createBankFinancing(data: any) {
+    return apiClient.post('/api/v1/bank-financing', data)
+  },
+
+  async updateBankFinancing(financingId: string, data: any) {
+    return apiClient.put(`/api/v1/bank-financing/${financingId}`, data)
+  },
+
+  // Disbursements
+  async getBankDisbursement(disbursementId: string) {
+    return apiClient.get(`/api/v1/bank-disbursement/${disbursementId}`)
+  },
+
+  async listBankDisbursements(financingId: string) {
+    return apiClient.get(`/api/v1/bank-disbursement?financing_id=${financingId}`)
+  },
+
+  async createBankDisbursement(data: any) {
+    return apiClient.post('/api/v1/bank-disbursement', data)
+  },
+
+  async updateBankDisbursement(disbursementId: string, data: any) {
+    return apiClient.put(`/api/v1/bank-disbursement/${disbursementId}`, data)
+  },
+
+  // NOC (No Objection Certificate)
+  async getBankNOC(nocId: string) {
+    return apiClient.get(`/api/v1/bank-noc/${nocId}`)
+  },
+
+  async listBankNOCs(financingId: string) {
+    return apiClient.get(`/api/v1/bank-noc?financing_id=${financingId}`)
+  },
+
+  async createBankNOC(data: any) {
+    return apiClient.post('/api/v1/bank-noc', data)
+  },
+
+  async updateBankNOC(nocId: string, data: any) {
+    return apiClient.put(`/api/v1/bank-noc/${nocId}`, data)
+  },
+
+  // Collection Tracking
+  async getBankCollection(collectionId: string) {
+    return apiClient.get(`/api/v1/bank-collection/${collectionId}`)
+  },
+
+  async listBankCollections(financingId: string) {
+    return apiClient.get(`/api/v1/bank-collection?financing_id=${financingId}`)
+  },
+
+  async createBankCollection(data: any) {
+    return apiClient.post('/api/v1/bank-collection', data)
+  },
+
+  async updateBankCollection(collectionId: string, data: any) {
+    return apiClient.put(`/api/v1/bank-collection/${collectionId}`, data)
+  },
+
+  // Bank Master
+  async getBank(bankId: string) {
+    return apiClient.get(`/api/v1/bank/${bankId}`)
+  },
+
+  async listBanks() {
+    return apiClient.get('/api/v1/bank')
+  },
+
+  async createBank(data: any) {
+    return apiClient.post('/api/v1/bank', data)
+  },
+
+  async updateBank(bankId: string, data: any) {
+    return apiClient.put(`/api/v1/bank/${bankId}`, data)
+  },
+}
+
+// ============================================================================
 // ROLE TEMPLATE SERVICE
 // ============================================================================
 
@@ -1268,7 +1359,9 @@ export const api = {
   ...projectDashboardService,
   ...prealesDashboardService,
   ...roleTemplateService,
+  ...bankFinancingService,
   financing: financingService,
+  bankFinancing: bankFinancingService,
   get: (url: string) => apiClient.get(url),
   post: (url: string, data?: any) => apiClient.post(url, data),
   put: (url: string, data?: any) => apiClient.put(url, data),

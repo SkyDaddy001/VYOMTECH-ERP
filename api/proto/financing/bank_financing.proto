@@ -1,0 +1,252 @@
+syntax = "proto3";
+
+package vyomtech.financing;
+
+option go_package = "vyomtech-backend/api/proto/financing";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+// ============================================================================
+// BANK FINANCING MESSAGES
+// ============================================================================
+
+message BankFinancing {
+  string id = 1;
+  string tenant_id = 2;
+  string booking_id = 3;
+  optional string bank_id = 4;
+  double loan_amount = 5;
+  double sanctioned_amount = 6;
+  double disbursed_amount = 7;
+  double outstanding_amount = 8;
+  string loan_type = 9; // Home Loan, Construction Loan, Bridge Loan
+  optional double interest_rate = 10;
+  optional int32 tenure_months = 11;
+  optional double emi_amount = 12;
+  string status = 13; // pending, approved, sanctioned, disbursing, completed, rejected
+  optional google.protobuf.Timestamp application_date = 14;
+  optional google.protobuf.Timestamp approval_date = 15;
+  optional google.protobuf.Timestamp sanction_date = 16;
+  optional google.protobuf.Timestamp expected_completion_date = 17;
+  optional string application_ref_no = 18;
+  optional string sanction_letter_url = 19;
+  optional string created_by = 20;
+  google.protobuf.Timestamp created_at = 21;
+  optional string updated_by = 22;
+  google.protobuf.Timestamp updated_at = 23;
+  optional google.protobuf.Timestamp deleted_at = 24;
+}
+
+message BankDisbursement {
+  string id = 1;
+  string tenant_id = 2;
+  string financing_id = 3;
+  int32 disbursement_number = 4;
+  double scheduled_amount = 5;
+  optional double actual_amount = 6;
+  optional string milestone_id = 7;
+  optional int32 milestone_percentage = 8;
+  string status = 9; // pending, released, credited, delayed, cancelled
+  google.protobuf.Timestamp scheduled_date = 10;
+  optional google.protobuf.Timestamp actual_date = 11;
+  optional string bank_reference_no = 12;
+  optional string claim_document_url = 13;
+  optional string release_approval_by = 14;
+  optional google.protobuf.Timestamp release_approval_date = 15;
+  optional string created_by = 16;
+  google.protobuf.Timestamp created_at = 17;
+  optional string updated_by = 18;
+  google.protobuf.Timestamp updated_at = 19;
+  optional google.protobuf.Timestamp deleted_at = 20;
+}
+
+message BankNOC {
+  string id = 1;
+  string tenant_id = 2;
+  string financing_id = 3;
+  string noc_type = 4; // Pre-sanction, Post-completion, Full-settlement
+  google.protobuf.Timestamp noc_request_date = 5;
+  optional google.protobuf.Timestamp noc_received_date = 6;
+  optional string noc_document_url = 7;
+  optional double noc_amount = 8;
+  string status = 9; // requested, issued, expired, cancelled
+  optional string issued_by_bank = 10;
+  optional google.protobuf.Timestamp valid_till_date = 11;
+  optional string remarks = 12;
+  optional string created_by = 13;
+  google.protobuf.Timestamp created_at = 14;
+  optional string updated_by = 15;
+  google.protobuf.Timestamp updated_at = 16;
+  optional google.protobuf.Timestamp deleted_at = 17;
+}
+
+message BankCollectionTracking {
+  string id = 1;
+  string tenant_id = 2;
+  string financing_id = 3;
+  string collection_type = 4; // EMI, Prepayment, Partial, Full-Settlement
+  double collection_amount = 5;
+  google.protobuf.Timestamp collection_date = 6;
+  optional string payment_mode = 7; // Bank Transfer, Cheque, NEFT, RTGS
+  optional string payment_reference_no = 8;
+  optional string emi_month = 9;
+  optional int32 emi_number = 10;
+  optional double principal_amount = 11;
+  optional double interest_amount = 12;
+  string status = 13; // pending, verified, credited, failed
+  optional google.protobuf.Timestamp bank_confirmation_date = 14;
+  optional string created_by = 15;
+  google.protobuf.Timestamp created_at = 16;
+  optional string updated_by = 17;
+  google.protobuf.Timestamp updated_at = 18;
+  optional google.protobuf.Timestamp deleted_at = 19;
+}
+
+message Bank {
+  string id = 1;
+  string tenant_id = 2;
+  string bank_name = 3;
+  string branch_name = 4;
+  optional string ifsc_code = 5;
+  optional string branch_contact = 6;
+  optional string branch_email = 7;
+  optional string relationship_manager_name = 8;
+  optional string relationship_manager_phone = 9;
+  optional string relationship_manager_email = 10;
+  string status = 11; // active, inactive
+  google.protobuf.Timestamp created_at = 12;
+  google.protobuf.Timestamp updated_at = 13;
+}
+
+// ============================================================================
+// REQUEST/RESPONSE MESSAGES
+// ============================================================================
+
+message CreateBankFinancingRequest {
+  string tenant_id = 1;
+  string booking_id = 2;
+  optional string bank_id = 3;
+  double loan_amount = 4;
+  double sanctioned_amount = 5;
+  string loan_type = 6;
+  optional double interest_rate = 7;
+  optional int32 tenure_months = 8;
+  optional string application_ref_no = 9;
+}
+
+message CreateBankFinancingResponse {
+  string financing_id = 1;
+  bool success = 2;
+  string message = 3;
+}
+
+message CreateBankDisbursementRequest {
+  string tenant_id = 1;
+  string financing_id = 2;
+  int32 disbursement_number = 3;
+  double scheduled_amount = 4;
+  google.protobuf.Timestamp scheduled_date = 5;
+  optional string milestone_id = 6;
+  optional int32 milestone_percentage = 7;
+}
+
+message CreateBankDisbursementResponse {
+  string disbursement_id = 1;
+  bool success = 2;
+  string message = 3;
+}
+
+message CreateBankNOCRequest {
+  string tenant_id = 1;
+  string financing_id = 2;
+  string noc_type = 3;
+  google.protobuf.Timestamp noc_request_date = 4;
+  optional double noc_amount = 5;
+}
+
+message CreateBankNOCResponse {
+  string noc_id = 1;
+  bool success = 2;
+  string message = 3;
+}
+
+message CreateBankCollectionRequest {
+  string tenant_id = 1;
+  string financing_id = 2;
+  string collection_type = 3;
+  double collection_amount = 4;
+  google.protobuf.Timestamp collection_date = 5;
+  optional string payment_mode = 6;
+  optional string payment_reference_no = 7;
+  optional string emi_month = 8;
+}
+
+message CreateBankCollectionResponse {
+  string collection_id = 1;
+  bool success = 2;
+  string message = 3;
+}
+
+message CreateBankRequest {
+  string tenant_id = 1;
+  string bank_name = 2;
+  string branch_name = 3;
+  optional string ifsc_code = 4;
+  optional string branch_contact = 5;
+  optional string branch_email = 6;
+  optional string relationship_manager_name = 7;
+  optional string relationship_manager_phone = 8;
+  optional string relationship_manager_email = 9;
+}
+
+message CreateBankResponse {
+  string bank_id = 1;
+  bool success = 2;
+  string message = 3;
+}
+
+message GetBankFinancingRequest {
+  string tenant_id = 1;
+  string financing_id = 2;
+}
+
+message ListBankFinancingRequest {
+  string tenant_id = 1;
+  optional string booking_id = 2;
+  optional string status = 3;
+  int32 limit = 4;
+  int32 offset = 5;
+}
+
+message ListBankFinancingResponse {
+  repeated BankFinancing financing_records = 1;
+  int32 total = 2;
+}
+
+// ============================================================================
+// BANK FINANCING SERVICE
+// ============================================================================
+
+service BankFinancingService {
+  rpc CreateBankFinancing(CreateBankFinancingRequest) returns (CreateBankFinancingResponse);
+  rpc GetBankFinancing(GetBankFinancingRequest) returns (BankFinancing);
+  rpc ListBankFinancing(ListBankFinancingRequest) returns (ListBankFinancingResponse);
+  rpc UpdateBankFinancing(BankFinancing) returns (BankFinancing);
+  
+  rpc CreateDisbursement(CreateBankDisbursementRequest) returns (CreateBankDisbursementResponse);
+  rpc GetDisbursement(GetBankFinancingRequest) returns (BankDisbursement);
+  rpc ListDisbursements(ListBankFinancingRequest) returns (ListBankFinancingResponse);
+  
+  rpc CreateNOC(CreateBankNOCRequest) returns (CreateBankNOCResponse);
+  rpc GetNOC(GetBankFinancingRequest) returns (BankNOC);
+  rpc ListNOCs(ListBankFinancingRequest) returns (ListBankFinancingResponse);
+  
+  rpc CreateCollection(CreateBankCollectionRequest) returns (CreateBankCollectionResponse);
+  rpc GetCollection(GetBankFinancingRequest) returns (BankCollectionTracking);
+  rpc ListCollections(ListBankFinancingRequest) returns (ListBankFinancingResponse);
+  
+  rpc CreateBank(CreateBankRequest) returns (CreateBankResponse);
+  rpc GetBank(GetBankFinancingRequest) returns (Bank);
+  rpc ListBanks(ListBankFinancingRequest) returns (ListBankFinancingResponse);
+}
