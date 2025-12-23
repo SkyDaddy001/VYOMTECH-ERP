@@ -52,28 +52,70 @@ class ApiClient {
   }
 
   async get<T>(url: string, config = {}) {
-    const response = await this.client.get<ApiResponse<T>>(url, config)
-    return response.data.data || response.data
+    try {
+      const response = await this.client.get<any>(url, config)
+      // Handle null response body
+      if (!response.data) {
+        return null
+      }
+      // Return nested data if available, otherwise return the response data itself
+      return response.data?.data ?? response.data
+    } catch (error) {
+      console.error('API GET error:', error)
+      throw error
+    }
   }
 
   async post<T>(url: string, data?: any, config = {}) {
-    const response = await this.client.post<ApiResponse<T>>(url, data, config)
-    return response.data.data || response.data
+    try {
+      const response = await this.client.post<any>(url, data, config)
+      if (!response.data) {
+        return null
+      }
+      return response.data?.data ?? response.data
+    } catch (error) {
+      console.error('API POST error:', error)
+      throw error
+    }
   }
 
   async put<T>(url: string, data?: any, config = {}) {
-    const response = await this.client.put<ApiResponse<T>>(url, data, config)
-    return response.data.data || response.data
+    try {
+      const response = await this.client.put<any>(url, data, config)
+      if (!response.data) {
+        return null
+      }
+      return response.data?.data ?? response.data
+    } catch (error) {
+      console.error('API PUT error:', error)
+      throw error
+    }
   }
 
   async patch<T>(url: string, data?: any, config = {}) {
-    const response = await this.client.patch<ApiResponse<T>>(url, data, config)
-    return response.data.data || response.data
+    try {
+      const response = await this.client.patch<any>(url, data, config)
+      if (!response.data) {
+        return null
+      }
+      return response.data?.data ?? response.data
+    } catch (error) {
+      console.error('API PATCH error:', error)
+      throw error
+    }
   }
 
   async delete<T>(url: string, config = {}) {
-    const response = await this.client.delete<ApiResponse<T>>(url, config)
-    return response.data.data || response.data
+    try {
+      const response = await this.client.delete<any>(url, config)
+      if (!response.data) {
+        return null
+      }
+      return response.data?.data ?? response.data
+    } catch (error) {
+      console.error('API DELETE error:', error)
+      throw error
+    }
   }
 }
 

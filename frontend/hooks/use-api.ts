@@ -81,10 +81,8 @@ export function useData<T>(
   }, [endpoint])
 
   useEffect(() => {
-    if (options.autoFetch !== false) {
-      refetch()
-    }
-  }, [endpoint, options.autoFetch])
+    refetch()
+  }, [endpoint])
 
   return { data, total, loading, error, refetch }
 }
@@ -93,8 +91,9 @@ export function useData<T>(
  * Hook for fetching leads
  */
 export function useLeads(options: UseDataOptions = {}) {
-  const { limit = 50, offset = 0, ...rest } = options
-  const endpoint = useCallback(() => api.leads.list({ limit, offset, ...rest }), [limit, offset, rest])
+  const limit = options.limit || 50
+  const offset = options.offset || 0
+  const endpoint = useCallback(() => api.leads.list({ limit, offset }), [limit, offset])
   return useData(endpoint, options)
 }
 
@@ -102,8 +101,9 @@ export function useLeads(options: UseDataOptions = {}) {
  * Hook for fetching agents
  */
 export function useAgents(options: UseDataOptions = {}) {
-  const { limit = 50, offset = 0, ...rest } = options
-  const endpoint = useCallback(() => api.agents.list({ limit, offset, ...rest }), [limit, offset, rest])
+  const limit = options.limit || 50
+  const offset = options.offset || 0
+  const endpoint = useCallback(() => api.agents.list({ limit, offset }), [limit, offset])
   return useData(endpoint, options)
 }
 
@@ -111,8 +111,9 @@ export function useAgents(options: UseDataOptions = {}) {
  * Hook for fetching calls
  */
 export function useCalls(options: UseDataOptions = {}) {
-  const { limit = 50, offset = 0, ...rest } = options
-  const endpoint = useCallback(() => api.calls.list({ limit, offset, ...rest }), [limit, offset, rest])
+  const limit = options.limit || 50
+  const offset = options.offset || 0
+  const endpoint = useCallback(() => api.calls.list({ limit, offset }), [limit, offset])
   return useData(endpoint, options)
 }
 
@@ -120,8 +121,9 @@ export function useCalls(options: UseDataOptions = {}) {
  * Hook for fetching campaigns
  */
 export function useCampaigns(options: UseDataOptions = {}) {
-  const { limit = 50, offset = 0, ...rest } = options
-  const endpoint = useCallback(() => api.campaigns.list({ limit, offset, ...rest }), [limit, offset, rest])
+  const limit = options.limit || 50
+  const offset = options.offset || 0
+  const endpoint = useCallback(() => api.campaigns.list({ limit, offset }), [limit, offset])
   return useData(endpoint, options)
 }
 
@@ -129,8 +131,9 @@ export function useCampaigns(options: UseDataOptions = {}) {
  * Hook for fetching properties
  */
 export function useProperties(options: UseDataOptions = {}) {
-  const { limit = 50, offset = 0, ...rest } = options
-  const endpoint = useCallback(() => api.realEstate.listProperties({ limit, offset, ...rest }), [limit, offset, rest])
+  const limit = options.limit || 50
+  const offset = options.offset || 0
+  const endpoint = useCallback(() => api.realEstate.listProperties({ limit, offset }), [limit, offset])
   return useData(endpoint, options)
 }
 
@@ -138,8 +141,9 @@ export function useProperties(options: UseDataOptions = {}) {
  * Hook for fetching opportunities
  */
 export function useOpportunities(options: UseDataOptions = {}) {
-  const { limit = 50, offset = 0, ...rest } = options
-  const endpoint = useCallback(() => api.sales.listOpportunities({ limit, offset, ...rest }), [limit, offset, rest])
+  const limit = options.limit || 50
+  const offset = options.offset || 0
+  const endpoint = useCallback(() => api.sales.listOpportunities({ limit, offset }), [limit, offset])
   return useData(endpoint, options)
 }
 
