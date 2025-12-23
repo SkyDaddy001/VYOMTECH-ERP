@@ -43,6 +43,18 @@ services:
       - ./migrations/029_advanced_rbac.sql:/docker-entrypoint-initdb.d/29-advanced-rbac.sql
       - ./migrations/030_audit_logging.sql:/docker-entrypoint-initdb.d/30-audit-logging.sql
       - ./migrations/031_role_templates.sql:/docker-entrypoint-initdb.d/31-role-templates.sql
+      - ./migrations/032_bank_financing_enhancements.sql:/docker-entrypoint-initdb.d/32-bank-financing-enhancements.sql
+      - ./migrations/033_broker_management.sql:/docker-entrypoint-initdb.d/33-broker-management.sql
+      - ./migrations/034_joint_applicants.sql:/docker-entrypoint-initdb.d/34-joint-applicants.sql
+      - ./migrations/035_document_management.sql:/docker-entrypoint-initdb.d/35-document-management.sql
+      - ./migrations/036_site_visit_management.sql:/docker-entrypoint-initdb.d/36-site-visit-management.sql
+      - ./migrations/037_possession_management.sql:/docker-entrypoint-initdb.d/37-possession-management.sql
+      - ./migrations/038_title_clearance_management.sql:/docker-entrypoint-initdb.d/38-title-clearance-management.sql
+      - ./migrations/039_customer_portal.sql:/docker-entrypoint-initdb.d/39-customer-portal.sql
+      - ./migrations/040_advanced_analytics.sql:/docker-entrypoint-initdb.d/40-advanced-analytics.sql
+      - ./migrations/041_mobile_app_features.sql:/docker-entrypoint-initdb.d/41-mobile-app-features.sql
+      - ./migrations/042_ai_powered_recommendations.sql:/docker-entrypoint-initdb.d/42-ai-powered-recommendations.sql
+      - ./migrations/043_integration_hub.sql:/docker-entrypoint-initdb.d/43-integration-hub.sql
       - mysql_data:/var/lib/mysql
 
     healthcheck:

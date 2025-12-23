@@ -12,16 +12,25 @@ import (
 )
 
 // SetupRoutesWithServices configures all API routes with basic services
+// Deprecated: Use SetupRoutesWithPhase3C instead
 func SetupRoutesWithServices(
 	authService *services.AuthService,
 	passwordResetHandler *handlers.PasswordResetHandler,
 	agentService *services.AgentService,
 	log *logger.Logger,
 ) *mux.Router {
-	return setupRoutes(authService, nil, passwordResetHandler, agentService, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, log)
+	// Fallback: return a basic router when full dependencies are not available
+	r := mux.NewRouter()
+	r.Use(middleware.RequestLoggingMiddleware(log))
+	r.Use(middleware.ErrorRecoveryMiddleware(log))
+	r.Use(middleware.CORSMiddleware())
+	r.HandleFunc("/health", HealthCheck).Methods("GET")
+	r.HandleFunc("/ready", ReadinessCheck).Methods("GET")
+	return r
 }
 
 // SetupRoutesWithTenant configures all API routes with tenant service
+// Deprecated: Use SetupRoutesWithPhase3C instead
 func SetupRoutesWithTenant(
 	authService *services.AuthService,
 	tenantService *services.TenantService,
@@ -29,10 +38,18 @@ func SetupRoutesWithTenant(
 	agentService *services.AgentService,
 	log *logger.Logger,
 ) *mux.Router {
-	return setupRoutes(authService, tenantService, passwordResetHandler, agentService, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, log)
+	// Fallback: return a basic router when full dependencies are not available
+	r := mux.NewRouter()
+	r.Use(middleware.RequestLoggingMiddleware(log))
+	r.Use(middleware.ErrorRecoveryMiddleware(log))
+	r.Use(middleware.CORSMiddleware())
+	r.HandleFunc("/health", HealthCheck).Methods("GET")
+	r.HandleFunc("/ready", ReadinessCheck).Methods("GET")
+	return r
 }
 
 // SetupRoutesWithGamification configures all API routes with gamification features
+// Deprecated: Use SetupRoutesWithPhase3C instead
 func SetupRoutesWithGamification(
 	authService *services.AuthService,
 	tenantService *services.TenantService,
@@ -41,10 +58,18 @@ func SetupRoutesWithGamification(
 	gamificationService *services.GamificationService,
 	log *logger.Logger,
 ) *mux.Router {
-	return setupRoutes(authService, tenantService, passwordResetHandler, agentService, gamificationService, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, log)
+	// Fallback: return a basic router when full dependencies are not available
+	r := mux.NewRouter()
+	r.Use(middleware.RequestLoggingMiddleware(log))
+	r.Use(middleware.ErrorRecoveryMiddleware(log))
+	r.Use(middleware.CORSMiddleware())
+	r.HandleFunc("/health", HealthCheck).Methods("GET")
+	r.HandleFunc("/ready", ReadinessCheck).Methods("GET")
+	return r
 }
 
 // SetupRoutesWithCoreFeatures configures all API routes with core features and real-time support
+// Deprecated: Use SetupRoutesWithPhase3C instead
 func SetupRoutesWithCoreFeatures(
 	authService *services.AuthService,
 	tenantService *services.TenantService,
@@ -57,10 +82,18 @@ func SetupRoutesWithCoreFeatures(
 	aiOrchestrator *services.AIOrchestrator,
 	log *logger.Logger,
 ) *mux.Router {
-	return setupRoutes(authService, tenantService, passwordResetHandler, agentService, gamificationService, leadService, callService, campaignService, aiOrchestrator, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, log)
+	// Fallback: return a basic router when full dependencies are not available
+	r := mux.NewRouter()
+	r.Use(middleware.RequestLoggingMiddleware(log))
+	r.Use(middleware.ErrorRecoveryMiddleware(log))
+	r.Use(middleware.CORSMiddleware())
+	r.HandleFunc("/health", HealthCheck).Methods("GET")
+	r.HandleFunc("/ready", ReadinessCheck).Methods("GET")
+	return r
 }
 
 // SetupRoutesWithRealtime configures all API routes with realtime WebSocket support
+// Deprecated: Use SetupRoutesWithPhase3C instead
 func SetupRoutesWithRealtime(
 	authService *services.AuthService,
 	tenantService *services.TenantService,
@@ -79,7 +112,14 @@ func SetupRoutesWithRealtime(
 	customizationService services.TenantCustomizationService,
 	log *logger.Logger,
 ) *mux.Router {
-	return setupRoutes(authService, tenantService, passwordResetHandler, agentService, gamificationService, leadService, callService, campaignService, aiOrchestrator, webSocketHub, leadScoringService, dashboardService, taskService, notificationService, customizationService, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, log)
+	// Fallback: return a basic router when full dependencies are not available
+	r := mux.NewRouter()
+	r.Use(middleware.RequestLoggingMiddleware(log))
+	r.Use(middleware.ErrorRecoveryMiddleware(log))
+	r.Use(middleware.CORSMiddleware())
+	r.HandleFunc("/health", HealthCheck).Methods("GET")
+	r.HandleFunc("/ready", ReadinessCheck).Methods("GET")
+	return r
 }
 
 // SetupRoutesWithPhase3C configures all API routes including Phase 3C (Modular Monetization) and Phase 3.2 Mobile
@@ -126,9 +166,11 @@ func SetupRoutesWithPhase3C(
 	tenantAdminHandler *handlers.TenantAdminHandler,
 	mobileHandler *handlers.MobileHandler,
 	aiRecommendationsHandler *handlers.AIRecommendationsHandler,
+	siteVisitHandler *handlers.SiteVisitHandler,
+	integrationHandler *handlers.IntegrationHandler,
 	log *logger.Logger,
 ) *mux.Router {
-	return setupRoutes(authService, tenantService, passwordResetHandler, agentService, gamificationService, leadService, callService, campaignService, aiOrchestrator, webSocketHub, leadScoringService, dashboardService, taskService, notificationService, customizationService, phase3cServices, salesService, realEstateService, civilService, constructionService, boqService, hrService, glService, rbacService, reraComplianceHandler, hrComplianceHandler, taxComplianceHandler, financialDashboardHandler, hrDashboardHandler, complianceDashboardHandler, salesDashboardHandler, brokerHandler, jointApplicantHandler, documentHandler, possessionHandler, titleHandler, customerPortalHandler, analyticsHandler, userAdminHandler, tenantAdminHandler, mobileHandler, aiRecommendationsHandler, log)
+	return setupRoutes(authService, tenantService, passwordResetHandler, agentService, gamificationService, leadService, callService, campaignService, aiOrchestrator, webSocketHub, leadScoringService, dashboardService, taskService, notificationService, customizationService, phase3cServices, salesService, realEstateService, civilService, constructionService, boqService, hrService, glService, rbacService, reraComplianceHandler, hrComplianceHandler, taxComplianceHandler, financialDashboardHandler, hrDashboardHandler, complianceDashboardHandler, salesDashboardHandler, brokerHandler, jointApplicantHandler, documentHandler, possessionHandler, titleHandler, customerPortalHandler, analyticsHandler, userAdminHandler, tenantAdminHandler, mobileHandler, aiRecommendationsHandler, siteVisitHandler, integrationHandler, log)
 }
 
 func setupRoutes(
@@ -174,6 +216,8 @@ func setupRoutes(
 	tenantAdminHandler *handlers.TenantAdminHandler,
 	mobileHandler *handlers.MobileHandler,
 	aiRecommendationsHandler *handlers.AIRecommendationsHandler,
+	siteVisitHandler *handlers.SiteVisitHandler,
+	integrationHandler *handlers.IntegrationHandler,
 	log *logger.Logger,
 ) *mux.Router {
 	r := mux.NewRouter()
@@ -1328,6 +1372,99 @@ func setupRoutes(
 	}
 
 	// ============================================
+	// ============================================
+	// SITE VISIT ROUTES (Phase 3 - Feature #8)
+	// NOTE: Handler methods pending implementation via Blackbox prompts
+	// ============================================
+	if siteVisitHandler != nil {
+		siteVisitRoutes := v1.PathPrefix("/site-visits").Subrouter()
+		siteVisitRoutes.Use(middleware.AuthMiddleware(authService, log))
+		siteVisitRoutes.Use(middleware.TenantIsolationMiddleware(log))
+
+		// Schedule endpoints - IMPLEMENTED
+		siteVisitRoutes.HandleFunc("/schedules", siteVisitHandler.CreateSchedule).Methods("POST")
+		siteVisitRoutes.HandleFunc("/schedules", siteVisitHandler.ListSchedules).Methods("GET")
+		siteVisitRoutes.HandleFunc("/schedules/{id}", siteVisitHandler.GetSchedule).Methods("GET")
+		siteVisitRoutes.HandleFunc("/schedules/{id}/status", siteVisitHandler.UpdateScheduleStatus).Methods("PUT")
+		siteVisitRoutes.HandleFunc("/schedules/{id}/cancel", siteVisitHandler.CancelSchedule).Methods("POST")
+
+		// Visit log endpoints - IMPLEMENTED
+		siteVisitRoutes.HandleFunc("/logs", siteVisitHandler.CheckInVisit).Methods("POST")
+		siteVisitRoutes.HandleFunc("/logs/{logId}", siteVisitHandler.GetVisitLog).Methods("GET")
+		siteVisitRoutes.HandleFunc("/schedules/{scheduleId}/logs", siteVisitHandler.ListVisitLogs).Methods("GET")
+		siteVisitRoutes.HandleFunc("/logs/{logId}", siteVisitHandler.CheckOutVisit).Methods("PUT")
+		siteVisitRoutes.HandleFunc("/logs/{logId}/feedback", siteVisitHandler.SubmitFeedback).Methods("POST")
+
+		// Analytics and reporting endpoints - IMPLEMENTED
+		siteVisitRoutes.HandleFunc("/leads/{leadId}/history", siteVisitHandler.GetLeadVisitHistory).Methods("GET")
+		siteVisitRoutes.HandleFunc("/users/stats", siteVisitHandler.GetUserStats).Methods("GET")
+		siteVisitRoutes.HandleFunc("/projects/{projectId}/summary", siteVisitHandler.GetProjectSummary).Methods("GET")
+		siteVisitRoutes.HandleFunc("/followups/pending", siteVisitHandler.ListPendingFollowups).Methods("GET")
+
+		// Endpoints include:
+		// POST   /api/v1/site-visits/schedules - Create site visit schedule
+		// GET    /api/v1/site-visits/schedules - List site visit schedules
+		// GET    /api/v1/site-visits/schedules/{id} - Get site visit schedule
+		// PUT    /api/v1/site-visits/schedules/{id}/status - Update schedule status
+		// POST   /api/v1/site-visits/schedules/{id}/cancel - Cancel schedule
+		// POST   /api/v1/site-visits/logs - Create visit log
+		// GET    /api/v1/site-visits/logs/{id} - Get visit log
+		// GET    /api/v1/site-visits/schedules/{id}/logs - List visit logs for schedule
+		// PUT    /api/v1/site-visits/logs/{id} - Update visit log
+		// GET    /api/v1/site-visits/leads/{lead_id}/history - Get lead visit history
+		// GET    /api/v1/site-visits/users/{user_id}/stats - Get user visit statistics
+		// GET    /api/v1/site-visits/projects/{project_id}/summary - Get project visit summary
+		// GET    /api/v1/site-visits/followups/pending - List pending follow-ups
+	}
+
+	// ============================================
+	// ============================================
+	// INTEGRATION HUB ROUTES (Phase 3.4)
+	// ============================================
+	if integrationHandler != nil {
+		integrationRoutes := v1.PathPrefix("/integrations").Subrouter()
+		integrationRoutes.Use(middleware.AuthMiddleware(authService, log))
+		integrationRoutes.Use(middleware.TenantIsolationMiddleware(log))
+
+		// Provider Management
+		integrationRoutes.HandleFunc("/providers", integrationHandler.CreateProvider).Methods("POST")
+		integrationRoutes.HandleFunc("/providers", integrationHandler.ListProviders).Methods("GET")
+		integrationRoutes.HandleFunc("/providers/{providerID}", integrationHandler.GetProvider).Methods("GET")
+		integrationRoutes.HandleFunc("/providers/{providerID}", integrationHandler.UpdateProvider).Methods("PUT")
+		integrationRoutes.HandleFunc("/providers/{providerID}", integrationHandler.DeleteProvider).Methods("DELETE")
+
+		// Webhook Management
+		integrationRoutes.HandleFunc("/webhooks", integrationHandler.CreateWebhook).Methods("POST")
+		integrationRoutes.HandleFunc("/providers/{providerID}/webhooks", integrationHandler.ListWebhooks).Methods("GET")
+		integrationRoutes.HandleFunc("/webhooks/{webhookID}", integrationHandler.GetWebhook).Methods("GET")
+
+		// Sync Jobs
+		integrationRoutes.HandleFunc("/sync", integrationHandler.TriggerSync).Methods("POST")
+		integrationRoutes.HandleFunc("/sync/{jobID}", integrationHandler.GetSyncJob).Methods("GET")
+		integrationRoutes.HandleFunc("/providers/{providerID}/sync-jobs", integrationHandler.ListSyncJobs).Methods("GET")
+
+		// Error Logs
+		integrationRoutes.HandleFunc("/providers/{providerID}/errors", integrationHandler.ListErrorLogs).Methods("GET")
+
+		// Statistics
+		integrationRoutes.HandleFunc("/stats", integrationHandler.GetIntegrationStats).Methods("GET")
+
+		// Endpoints documentation:
+		// POST   /api/v1/integrations/providers - Create provider
+		// GET    /api/v1/integrations/providers - List providers
+		// GET    /api/v1/integrations/providers/{providerID} - Get provider
+		// PUT    /api/v1/integrations/providers/{providerID} - Update provider
+		// DELETE /api/v1/integrations/providers/{providerID} - Delete provider
+		// POST   /api/v1/integrations/webhooks - Create webhook
+		// GET    /api/v1/integrations/providers/{providerID}/webhooks - List webhooks
+		// GET    /api/v1/integrations/webhooks/{webhookID} - Get webhook
+		// POST   /api/v1/integrations/sync - Trigger sync job
+		// GET    /api/v1/integrations/sync/{jobID} - Get sync job status
+		// GET    /api/v1/integrations/providers/{providerID}/sync-jobs - List sync jobs
+		// GET    /api/v1/integrations/providers/{providerID}/errors - List error logs
+		// GET    /api/v1/integrations/stats - Get integration statistics
+	}
+
 	// ============================================
 	// GENERAL LEDGER (GL) ROUTES
 	// ============================================

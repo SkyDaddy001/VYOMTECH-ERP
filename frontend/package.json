@@ -12,7 +12,7 @@
     "@ant-design/icons": "^6.1.0",
     "antd": "^6.1.1",
     "axios": "^1.6.0",
-    "baseline-browser-mapping": "^2.9.4",
+    "baseline-browser-mapping": "^2.9.11",
     "chart.js": "^4.4.0",
     "clsx": "^2.0.0",
     "date-fns": "^2.30.0",

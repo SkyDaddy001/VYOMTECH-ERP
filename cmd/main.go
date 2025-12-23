@@ -181,6 +181,14 @@ func main() {
 	mobileService := services.NewMobileService(dbConn)
 	mobileHandler := handlers.NewMobileHandler(mobileService, log)
 
+	// Site Visit Service & Handler
+	siteVisitService := services.NewSiteVisitService(dbConn)
+	siteVisitHandler := handlers.NewSiteVisitHandler(siteVisitService, log.Logger)
+
+	// Phase 3.4: Integration Hub Service & Handler
+	integrationService := services.NewIntegrationService(dbConn)
+	integrationHandler := handlers.NewIntegrationHandler(integrationService, log.Logger)
+
 	// Dashboard Handlers
 	financialDashboardHandler := handlers.NewFinancialDashboardHandler(glService)
 	hrDashboardHandler := handlers.NewHRDashboardHandler(hrService, hrComplianceService)
@@ -188,7 +196,7 @@ func main() {
 	salesDashboardHandler := handlers.NewSalesDashboardHandler(salesService)
 
 	// Setup router with all services
-	r := router.SetupRoutesWithPhase3C(authService, tenantService, passwordResetHandler, agentService, gamificationService, leadService, callService, campaignService, aiOrchestrator, webSocketHub, leadScoringService, dashboardService, taskService, notificationService, tenantCustomizationService, phase3cServices, salesService, realEstateService, civilService, constructionService, boqService, hrService, glService, rbacService, reraComplianceHandler, hrComplianceHandler, taxComplianceHandler, financialDashboardHandler, hrDashboardHandler, complianceDashboardHandler, salesDashboardHandler, brokerHandler, jointApplicantHandler, documentHandler, possessionHandler, titleHandler, customerPortalHandler, analyticsHandler, userAdminHandler, tenantAdminHandler, mobileHandler, aiRecommendationsHandler, log)
+	r := router.SetupRoutesWithPhase3C(authService, tenantService, passwordResetHandler, agentService, gamificationService, leadService, callService, campaignService, aiOrchestrator, webSocketHub, leadScoringService, dashboardService, taskService, notificationService, tenantCustomizationService, phase3cServices, salesService, realEstateService, civilService, constructionService, boqService, hrService, glService, rbacService, reraComplianceHandler, hrComplianceHandler, taxComplianceHandler, financialDashboardHandler, hrDashboardHandler, complianceDashboardHandler, salesDashboardHandler, brokerHandler, jointApplicantHandler, documentHandler, possessionHandler, titleHandler, customerPortalHandler, analyticsHandler, userAdminHandler, tenantAdminHandler, mobileHandler, aiRecommendationsHandler, siteVisitHandler, integrationHandler, log)
 
 	// Create HTTP server
 	server := &http.Server{
