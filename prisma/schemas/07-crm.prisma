@@ -1,0 +1,307 @@
+// ============================================================
+// CRM & SALES MODULE
+// ============================================================
+// Migrations: 007_sales.sql, 026_sales_postsales.sql, 028_lead_status_system.sql
+// Purpose: Customer, Quotations, Orders, Invoices, Sales Management
+// Tables: 21
+
+model SalesLead {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  leadCode          String   @unique @db.VarChar(50) @map("lead_code")
+  leadName          String   @db.VarChar(255) @map("lead_name")
+  email             String?  @db.VarChar(255)
+  phone             String?  @db.VarChar(20)
+  company           String?  @db.VarChar(255)
+  leadSource        String?  @db.VarChar(100) @map("lead_source")
+  leadValue         Decimal? @db.Decimal(15, 2) @map("lead_value")
+  leadStatus        String   @default("new") @db.VarChar(50) @map("lead_status")
+  description       String?  @db.Text
+  assignedTo        String?  @db.VarChar(36) @map("assigned_to")
+  createdBy         String?  @db.VarChar(36) @map("created_by")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  statusHistory     SalesStatusHistory[]
+  followUps         SalesFollowUp[]
+  attributionEvents AttributionEvent[]       // Events that drove this lead
+  attributionSnapshots LeadAttributionSnapshot[] // Attribution analysis snapshots
+
+  @@index([tenantId])
+  @@index([leadCode])
+  @@index([leadStatus])
+  @@map("sales_lead")
+}
+
+model SalesCustomer {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  customerCode      String   @unique @db.VarChar(50) @map("customer_code")
+  name              String   @db.VarChar(255)
+  email             String?  @db.VarChar(255)
+  phone             String?  @db.VarChar(20)
+  address           String?  @db.Text
+  city              String?  @db.VarChar(100)
+  state             String?  @db.VarChar(100)
+  country           String?  @db.VarChar(100)
+  postalCode        String?  @db.VarChar(20) @map("postal_code")
+  customerType      String?  @db.VarChar(50) @map("customer_type")
+  creditLimit       Decimal? @db.Decimal(15, 2) @map("credit_limit")
+  paymentTerms      String?  @db.VarChar(100) @map("payment_terms")
+  status            String   @default("active") @db.VarChar(50)
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  calls             Call[]
+
+  @@index([tenantId])
+  @@index([customerCode])
+  @@map("sales_customer")
+}
+
+model Quotation {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  quotationNumber   String   @unique @db.VarChar(50) @map("quotation_number")
+  customerId        String?  @db.VarChar(36) @map("customer_id")
+  quotationDate     DateTime @map("quotation_date") @db.Date
+  validTill         DateTime @map("valid_till") @db.Date
+  totalAmount       Decimal? @db.Decimal(18, 2) @map("total_amount")
+  tax               Decimal  @default(0) @db.Decimal(18, 2)
+  netAmount         Decimal? @db.Decimal(18, 2) @map("net_amount")
+  status            String   @default("draft") @db.VarChar(50)
+  approvedBy        String?  @db.VarChar(36) @map("approved_by")
+  approvedAt        DateTime? @map("approved_at")
+  createdBy         String?  @db.VarChar(36) @map("created_by")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  lineItems         QuotationLineItem[]
+
+  @@index([tenantId])
+  @@index([quotationNumber])
+  @@index([status])
+  @@map("quotation")
+}
+
+model QuotationLineItem {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  quotationId       String   @db.VarChar(36) @map("quotation_id")
+  description       String?  @db.VarChar(500)
+  quantity          Decimal  @db.Decimal(18, 4)
+  unitPrice         Decimal  @db.Decimal(18, 4) @map("unit_price")
+  lineAmount        Decimal  @db.Decimal(18, 2) @map("line_amount")
+  tax               Decimal  @default(0) @db.Decimal(18, 2)
+  lineTotal         Decimal  @db.Decimal(18, 2) @map("line_total")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+  quotation         Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([quotationId])
+  @@map("quotation_line_item")
+}
+
+model SalesOrder {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  orderNumber       String   @unique @db.VarChar(50) @map("order_number")
+  customerId        String?  @db.VarChar(36) @map("customer_id")
+  quotationId       String?  @db.VarChar(36) @map("quotation_id")
+  orderDate         DateTime @map("order_date") @db.Date
+  deliveryDate      DateTime? @map("delivery_date") @db.Date
+  totalAmount       Decimal? @db.Decimal(18, 2) @map("total_amount")
+  tax               Decimal  @default(0) @db.Decimal(18, 2)
+  netAmount         Decimal? @db.Decimal(18, 2) @map("net_amount")
+  status            String   @default("draft") @db.VarChar(50)
+  createdBy         String?  @db.VarChar(36) @map("created_by")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  lineItems         SalesOrderLineItem[]
+  invoices          SalesInvoice[]
+
+  @@index([tenantId])
+  @@index([orderNumber])
+  @@index([status])
+  @@map("sales_order")
+}
+
+model SalesOrderLineItem {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  orderid           String   @db.VarChar(36) @map("order_id")
+  description       String?  @db.VarChar(500)
+  quantity          Decimal  @db.Decimal(18, 4)
+  unitPrice         Decimal  @db.Decimal(18, 4) @map("unit_price")
+  lineAmount        Decimal  @db.Decimal(18, 2) @map("line_amount")
+  tax               Decimal  @default(0) @db.Decimal(18, 2)
+  lineTotal         Decimal  @db.Decimal(18, 2) @map("line_total")
+  quantityDelivered Decimal  @default(0) @db.Decimal(18, 4) @map("quantity_delivered")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+  order             SalesOrder @relation(fields: [orderid], references: [id], onDelete: Cascade)
+  exportHSCodeLineItems ExportHSCodeLineItem[] // From import/export module
+
+  @@index([tenantId])
+  @@index([orderid])
+  @@map("sales_order_line_item")
+}
+
+model SalesInvoice {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  invoiceNumber     String   @unique @db.VarChar(50) @map("invoice_number")
+  orderId           String?  @db.VarChar(36) @map("order_id")
+  customerId        String?  @db.VarChar(36) @map("customer_id")
+  invoiceDate       DateTime @map("invoice_date") @db.Date
+  dueDate           DateTime? @map("due_date") @db.Date
+  totalAmount       Decimal? @db.Decimal(18, 2) @map("total_amount")
+  tax               Decimal  @default(0) @db.Decimal(18, 2)
+  netAmount         Decimal? @db.Decimal(18, 2) @map("net_amount")
+  amountPaid        Decimal  @default(0) @db.Decimal(18, 2) @map("amount_paid")
+  status            String   @default("draft") @db.VarChar(50)
+  createdBy         String?  @db.VarChar(36) @map("created_by")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  order             SalesOrder? @relation(fields: [orderId], references: [id])
+  lineItems         SalesInvoiceLineItem[]
+
+  @@index([tenantId])
+  @@index([invoiceNumber])
+  @@index([status])
+  @@map("sales_invoice")
+}
+
+model SalesInvoiceLineItem {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  invoiceId         String   @db.VarChar(36) @map("invoice_id")
+  description       String?  @db.VarChar(500)
+  quantity          Decimal  @db.Decimal(18, 4)
+  unitPrice         Decimal  @db.Decimal(18, 4) @map("unit_price")
+  lineAmount        Decimal  @db.Decimal(18, 2) @map("line_amount")
+  tax               Decimal  @default(0) @db.Decimal(18, 2)
+  lineTotal         Decimal  @db.Decimal(18, 2) @map("line_total")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+  invoice           SalesInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([invoiceId])
+  @@map("sales_invoice_line_item")
+}
+
+model SalesReturn {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  returnNumber      String   @unique @db.VarChar(50) @map("return_number")
+  invoiceId         String?  @db.VarChar(36) @map("invoice_id")
+  returnDate        DateTime @map("return_date") @db.Date
+  reason            String?  @db.Text
+  totalAmount       Decimal  @db.Decimal(18, 2) @map("total_amount")
+  status            String   @default("pending") @db.VarChar(50)
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@index([returnNumber])
+  @@map("sales_return")
+}
+
+model SalesStatusHistory {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  leadId            String   @db.VarChar(36) @map("lead_id")
+  oldStatus         String   @db.VarChar(50) @map("old_status")
+  newStatus         String   @db.VarChar(50) @map("new_status")
+  changedBy         String?  @db.VarChar(36) @map("changed_by")
+  remarks           String?  @db.Text
+  changedAt         DateTime @default(now()) @map("changed_at")
+
+  // Relations
+  lead              SalesLead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([leadId])
+  @@map("sales_status_history")
+}
+
+model SalesFollowUp {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  leadId            String   @db.Char(36) @map("lead_id")
+  followUpDate      DateTime @map("follow_up_date") @db.Date
+  followUpType      String   @db.VarChar(50) @map("follow_up_type")
+  notes             String?  @db.Text
+  result            String?  @db.VarChar(100)
+  nextFollowUpDate  DateTime? @map("next_follow_up_date") @db.Date
+  createdBy         String?  @db.VarChar(36) @map("created_by")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+  lead              SalesLead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([leadId])
+  @@map("sales_follow_up")
+}
+
+model SalesTarget {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  period            String   @db.VarChar(50)
+  salesPersonId     String   @db.VarChar(36) @map("sales_person_id")
+  targetAmount      Decimal  @db.Decimal(15, 2) @map("target_amount")
+  achievedAmount    Decimal  @default(0) @db.Decimal(15, 2) @map("achieved_amount")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@map("sales_target")
+}
+
+model LeadStatusType {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  statusName        String   @db.VarChar(100) @map("status_name")
+  statusCode        String   @db.VarChar(50) @map("status_code")
+  description       String?  @db.Text
+  colorCode         String?  @db.VarChar(10) @map("color_code")
+  sequenceOrder     Int      @map("sequence_order")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@unique([tenantId, statusCode])
+  @@index([tenantId])
+  @@map("lead_status_type")
+}
+
+model LeadConversionRate {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  sourceId          String   @db.VarChar(36) @map("source_id")
+  statusId          String   @db.VarChar(36) @map("status_id")
+  conversionPercent Decimal  @db.Decimal(5, 2) @map("conversion_percent")
+  totalLeads        Int      @default(0) @map("total_leads")
+  convertedLeads    Int      @default(0) @map("converted_leads")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@map("lead_conversion_rate")
+}

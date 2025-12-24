@@ -1,0 +1,219 @@
+// ============================================================
+// ROLE-BASED ACCESS CONTROL (RBAC) MODULE
+// ============================================================
+// Migrations: 010_rbac.sql, 029_advanced_rbac.sql
+// Purpose: Roles, Permissions, Access Control, Resource Management
+// Tables: 11
+
+model Role {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  roleName          String   @db.VarChar(100) @map("role_name")
+  description       String?  @db.Text
+  isSystemRole      Boolean  @default(false) @map("is_system_role")
+  isActive          Boolean  @default(true) @map("is_active")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  permissions       RolePermission[]
+  userRoles         UserRole[]
+  roleDelegations   RoleDelegation[]
+
+  @@unique([tenantId, roleName])
+  @@index([tenantId])
+  @@map("role")
+}
+
+model Permission {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  permissionName    String   @db.VarChar(100) @map("permission_name")
+  description       String?  @db.Text
+  resource          String?  @db.VarChar(100)
+  action            String?  @db.VarChar(50)
+  isSystemPermission Boolean @default(false) @map("is_system_permission")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  roles             RolePermission[]
+  fieldPermissions  FieldLevelPermission[]
+
+  @@unique([tenantId, permissionName])
+  @@index([tenantId])
+  @@index([resource])
+  @@map("permission")
+}
+
+model RolePermission {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  roleId            String   @db.VarChar(36) @map("role_id")
+  permissionId      String   @db.VarChar(36) @map("permission_id")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+  role              Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission        Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+  @@index([tenantId])
+  @@index([roleId])
+  @@index([permissionId])
+  @@map("role_permission")
+}
+
+model UserRole {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  userId            String   @db.Char(36) @map("user_id")
+  roleId            String   @db.VarChar(36) @map("role_id")
+  assignedAt        DateTime @default(now()) @map("assigned_at")
+  assignedBy        String?  @db.VarChar(36) @map("assigned_by")
+  expiresAt         DateTime? @map("expires_at")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role              Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+  @@index([tenantId])
+  @@index([userId])
+  @@index([roleId])
+  @@map("user_role")
+}
+
+model Resource {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  resourceName      String   @db.VarChar(100) @map("resource_name")
+  resourceType      String?  @db.VarChar(50) @map("resource_type")
+  endpoint          String?  @db.VarChar(255)
+  description       String?  @db.Text
+  isProtected       Boolean  @default(true) @map("is_protected")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+  accessLogs        AccessLog[]
+  resourceAccesses  ResourceAccess[]
+
+  @@index([tenantId])
+  @@index([resourceType])
+  @@map("resource")
+}
+
+model AccessLog {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  userId            String?  @db.Char(36) @map("user_id")
+  resourceId        String?  @db.VarChar(36) @map("resource_id")
+  action            String?  @db.VarChar(50)
+  status            String?  @db.VarChar(50)
+  ipAddress         String?  @db.VarChar(45) @map("ip_address")
+  userAgent         String?  @db.Text @map("user_agent")
+  timestamp         DateTime @default(now())
+
+  // Relations
+  user              User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  resource          Resource? @relation(fields: [resourceId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId])
+  @@index([userId])
+  @@index([timestamp])
+  @@map("access_log")
+}
+
+model ResourceAccess {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  roleId            String   @db.VarChar(36) @map("role_id")
+  resourceId        String   @db.VarChar(36) @map("resource_id")
+  accessLevel       String?  @db.VarChar(50) @map("access_level")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+  resource          Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([roleId])
+  @@index([resourceId])
+  @@map("resource_access")
+}
+
+model TimeBasedPermission {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  roleId            String   @db.VarChar(36) @map("role_id")
+  validFrom         DateTime @map("valid_from")
+  validTo           DateTime @map("valid_to")
+  daysOfWeek        String?  @db.VarChar(50) @map("days_of_week")
+  timeFrom          String?  @db.VarChar(10) @map("time_from")
+  timeTo            String?  @db.VarChar(10) @map("time_to")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@index([roleId])
+  @@map("time_based_permission")
+}
+
+model FieldLevelPermission {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  permissionId      String   @db.VarChar(36) @map("permission_id")
+  entityName        String   @db.VarChar(100) @map("entity_name")
+  fieldName         String   @db.VarChar(100) @map("field_name")
+  accessType        String   @db.VarChar(50) @map("access_type")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+  permission        Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([permissionId])
+  @@map("field_level_permission")
+}
+
+model RoleDelegation {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  roleId            String   @db.VarChar(36) @map("role_id")
+  delegatedTo       String   @db.Char(36) @map("delegated_to")
+  delegatedBy       String   @db.Char(36) @map("delegated_by")
+  validFrom         DateTime @map("valid_from")
+  validTo           DateTime @map("valid_to")
+  reason            String?  @db.Text
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+  role              Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([roleId])
+  @@map("role_delegation")
+}
+
+model BulkPermissionLog {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  batchNumber       String   @unique @db.VarChar(100) @map("batch_number")
+  operation         String   @db.VarChar(50)
+  roleIds           String?  @db.Text @map("role_ids")
+  permissionIds     String?  @db.Text @map("permission_ids")
+  status            String   @default("pending") @db.VarChar(50)
+  totalAffected     Int      @map("total_affected")
+  successCount      Int      @default(0) @map("success_count")
+  failureCount      Int      @default(0) @map("failure_count")
+  createdBy         String?  @db.VarChar(36) @map("created_by")
+  completedAt       DateTime? @map("completed_at")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@index([status])
+  @@map("bulk_permission_log")
+}

@@ -1,0 +1,100 @@
+services:
+  # Frontend - Next.js
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: vyom-lms-frontend
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: http://api:8080/api/v1
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+    networks:
+      - vyom-network
+    restart: unless-stopped
+
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: vyom-lms-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: vyom_lms
+      MYSQL_USER: vyom
+      MYSQL_PASSWORD: vyom123
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 5s
+      retries: 10
+    networks:
+      - vyom-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: vyom-lms-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      timeout: 5s
+      retries: 10
+    networks:
+      - vyom-network
+
+  # API Server - Production
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vyom-lms-api
+    environment:
+      APP_ENV: development
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: vyom
+      DB_PASSWORD: vyom123
+      DB_NAME: vyom_lms
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: your-super-secret-jwt-key
+      LOG_LEVEL: debug
+      GIN_MODE: release
+    ports:
+      - "8080:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - vyom-network
+    restart: unless-stopped
+
+  # Adminer (Database Management)
+  adminer:
+    image: adminer
+    container_name: vyom-lms-adminer
+    ports:
+      - "8081:8080"
+    depends_on:
+      - mysql
+    networks:
+      - vyom-network
+
+volumes:
+  mysql_data:
+  redis_data:
+
+networks:
+  vyom-network:
+    driver: bridge

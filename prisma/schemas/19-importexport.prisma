@@ -1,0 +1,481 @@
+// ===== IMPORT/EXPORT MODULE =====
+// Purpose: International trade, customs, shipment tracking
+// Compliance: GST, Customs Tariff Act 1975, DGFT, FEMA, RBI
+// Status: Production-ready for import-export businesses
+
+// ===== IMPORT MODELS =====
+
+model ImportShipment {
+  id                      String    @id @default(cuid())
+  tenantId                String
+  shipmentNumber          String    @unique  // BOL or customs reference
+  containerNumber         String?
+  vesselName              String?
+  voyageNumber            String?
+  
+  // Trade party details
+  exporterName            String
+  exporterCountry         String    // ISO country code
+  importerName            String
+  importerIEC             String    // IEC (Importer-Exporter Code)
+  
+  // Import license
+  importLicense           ImportLicense? @relation("ImportShipmentToLicense", fields: [importLicenseId], references: [id])
+  importLicenseId         String?
+  
+  // Shipment terms
+  incoterm                String    // CIF, FOB, CNF, DDP, etc.
+  cifValue                Decimal   @db.Decimal(15, 2)
+  fobValue                Decimal   @db.Decimal(15, 2)
+  insuranceValue          Decimal   @db.Decimal(12, 2)
+  freight                 Decimal   @db.Decimal(12, 2)
+  
+  // Line items
+  quantity                Decimal   @db.Decimal(12, 3)
+  unit                    String    // KG, PCS, MT, etc.
+  
+  // Relationships to line items and calculations
+  hsCodeLineItems         ImportHSCodeLineItem[]
+  customsDocumentation    CustomsDocumentation[]
+  dutyCalculations        DutyCalculation[]
+  
+  // Status tracking
+  status                  String    // "In-Transit", "PortArrived", "CustomsClearing", "Cleared", "Delivered"
+  estimatedArrival        DateTime?
+  actualArrival           DateTime?
+  clearanceDate           DateTime?
+  
+  // Warehouse integration (optional receiving location)
+  warehouseId             String?
+  
+  // Procurement integration (optional PO)
+  vendorInvoiceId         String?
+  
+  // Tracking
+  shipmentTracking        ShipmentTracking[]
+  complianceCheck         ComplianceCheckImEx?
+  
+  // Audit
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+  userId                  String
+  
+  @@index([tenantId])
+  @@index([status])
+  @@index([estimatedArrival])
+}
+
+model ExportShipment {
+  id                      String    @id @default(cuid())
+  tenantId                String
+  shipmentNumber          String    @unique  // Export reference
+  containerNumber         String?
+  vesselName              String?
+  voyageNumber            String?
+  
+  // Trade details
+  exporterName            String
+  exporterIEC             String    // IEC for exports
+  importerName            String
+  importerCountry         String    // ISO country code
+  
+  // Customer integration (optional)
+  salesOrderId            String?
+  invoiceId               String?
+  
+  // Shipment terms
+  incoterm                String    // FOB, CIF, CIP, DDP, etc.
+  fobValue                Decimal   @db.Decimal(15, 2)
+  
+  // Line items
+  quantity                Decimal   @db.Decimal(12, 3)
+  unit                    String
+  
+  // Relationships
+  hsCodeLineItems         ExportHSCodeLineItem[]
+  customsDocumentation    CustomsDocumentation[]
+  
+  // Status tracking
+  status                  String    // "Packed", "In-Transit", "Delivered", "Lost"
+  shipmentDate            DateTime
+  deliveryDate            DateTime?
+  
+  shipmentTracking        ShipmentTracking[]
+  complianceCheck         ComplianceCheckImEx?
+  
+  // Audit
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+  userId                  String
+  
+  @@index([tenantId])
+  @@index([status])
+  @@index([shipmentDate])
+}
+
+// ===== LINE ITEM MODELS =====
+
+model ImportHSCodeLineItem {
+  id                      String    @id @default(cuid())
+  tenantId                String
+  importShipment          ImportShipment @relation(fields: [importShipmentId], references: [id], onDelete: Cascade)
+  importShipmentId        String
+  
+  hsCode                  String    @db.Char(8)  // 8-digit Harmonized System code
+  description             String
+  quantity                Decimal   @db.Decimal(12, 3)
+  unit                    String    // KG, PCS, MT, etc.
+  unitPrice               Decimal   @db.Decimal(12, 4)
+  cifValue                Decimal   @db.Decimal(15, 2)
+  
+  // Tax calculation
+  dutyCalculation         DutyCalculation?
+  gstRate                 Decimal   @db.Decimal(5, 2)
+  gstAmount               Decimal   @db.Decimal(12, 2)
+  
+  // Inventory integration (if applicable)
+  stockLevel              StockLevel? @relation(fields: [stockLevelId], references: [id])
+  stockLevelId            String?
+  
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+  
+  @@index([importShipmentId])
+  @@index([hsCode])
+}
+
+model ExportHSCodeLineItem {
+  id                      String    @id @default(cuid())
+  tenantId                String
+  exportShipment          ExportShipment @relation(fields: [exportShipmentId], references: [id], onDelete: Cascade)
+  exportShipmentId        String
+  
+  hsCode                  String    @db.Char(8)
+  description             String
+  quantity                Decimal   @db.Decimal(12, 3)
+  unit                    String
+  unitPrice               Decimal   @db.Decimal(12, 4)
+  fobValue                Decimal   @db.Decimal(15, 2)
+  
+  // From sales order line item (if applicable)
+  salesOrderLineItem      SalesOrderLineItem? @relation(fields: [soLineItemId], references: [id])
+  soLineItemId            String?
+  
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+  
+  @@index([exportShipmentId])
+  @@index([hsCode])
+}
+
+// ===== DUTY & TAX CALCULATION =====
+
+model DutyCalculation {
+  id                      String    @id @default(cuid())
+  tenantId                String
+  importShipment          ImportShipment @relation(fields: [importShipmentId], references: [id])
+  importShipmentId        String
+  lineItem                ImportHSCodeLineItem @relation(fields: [lineItemId], references: [id], onDelete: Cascade)
+  lineItemId              String    @unique
+  
+  // Customs duty components (as per Customs Tariff Act 1975)
+  basicCustomsDutyRate    Decimal   @db.Decimal(5, 2)   // 0-100%
+  basicCustomsDuty        Decimal   @db.Decimal(12, 2)
+  
+  additionalDutyRate      Decimal   @db.Decimal(5, 2)   // 0-20% (countervailing duty)
+  additionalDuty          Decimal   @db.Decimal(12, 2)
+  
+  safeguardDutyRate       Decimal   @db.Decimal(5, 2)   // 0-25% (if notified)
+  safeguardDuty           Decimal   @db.Decimal(12, 2)
+  
+  antiDumpingDutyRate     Decimal   @db.Decimal(5, 2)   // 0-50% (if notified)
+  antiDumpingDuty         Decimal   @db.Decimal(12, 2)
+  
+  totalCustomsDuty        Decimal   @db.Decimal(15, 2)
+  
+  // Taxes
+  iGSTRate                Decimal   @db.Decimal(5, 2)   // On CIF + Duty
+  iGST                    Decimal   @db.Decimal(12, 2)
+  
+  // Trade agreement preference (if applicable)
+  tradeAgreement          TradeAgreementPreference? @relation(fields: [tradeAgreementId], references: [id])
+  tradeAgreementId        String?
+  preferentialDutyRate    Decimal   @db.Decimal(5, 2)   // Reduced duty %
+  preferentialDuty        Decimal   @db.Decimal(12, 2)  // If FTA/CEPA applied
+  
+  // Total payable
+  totalPayable            Decimal   @db.Decimal(15, 2)  // Sum of all duties + GST
+  
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+  
+  @@index([importShipmentId])
+}
+
+// ===== DOCUMENTATION =====
+
+model CustomsDocumentation {
+  id                      String    @id @default(cuid())
+  tenantId                String
+  
+  // Linked shipments (can be import OR export)
+  importShipment          ImportShipment? @relation(fields: [importShipmentId], references: [id])
+  importShipmentId        String?
+  exportShipment          ExportShipment? @relation(fields: [exportShipmentId], references: [id])
+  exportShipmentId        String?
+  
+  // Document types
+  documentType            String    // "BOE", "GatePass", "FF240", "PackingList", "CommercialInvoice", "CertificateOfOrigin"
+  documentNumber          String    // Official customs reference (e.g., BOE number)
+  referenceNumber         String    // User-friendly reference
+  
+  // Status
+  status                  String    // "Draft", "Filed", "Approved", "Rejected"
+  generatedDate           DateTime
+  filedDate               DateTime?
+  approvedDate            DateTime?
+  rejectionReason         String?
+  
+  // Document file storage
+  documentFile            Bytes?    // PDF stored as LONGBLOB
+  documentPath            String?   // If stored on cloud (S3, etc.)
+  
+  // Audit
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+  userId                  String
+  approverUserId          String?
+  
+  @@index([tenantId])
+  @@index([documentType])
+  @@index([status])
+}
+
+// ===== SHIPMENT TRACKING =====
+
+model ShipmentTracking {
+  id                      String    @id @default(cuid())
+  tenantId                String
+  
+  // Linked shipments
+  importShipment          ImportShipment? @relation(fields: [importShipmentId], references: [id])
+  importShipmentId        String?
+  exportShipment          ExportShipment? @relation(fields: [exportShipmentId], references: [id])
+  exportShipmentId        String?
+  
+  // Tracking details
+  location                String    // Port, In-Transit, Warehouse, Customs, etc.
+  status                  String    // "In-Transit", "Arrived", "CustomsClearing", "Cleared", "Delivered"
+  timestamp               DateTime
+  notes                   String?
+  gpsCoordinates          String?   // Lat,Long for real-time tracking
+  
+  createdAt               DateTime  @default(now())
+  
+  @@index([tenantId])
+  @@index([importShipmentId])
+  @@index([exportShipmentId])
+  @@index([timestamp])
+}
+
+// ===== LICENSING & COMPLIANCE =====
+
+model ImportLicense {
+  id                      String    @id @default(cuid())
+  tenantId                String
+  
+  // IEC (Importer-Exporter Code) details
+  licenseNumber           String    @unique  // IEC number
+  licenseType             String    // "Individual", "Partnership", "Company", "Association"
+  tradingCategory         String    // "General", "Restricted", "Prohibited"
+  
+  // Validity
+  validityFrom            DateTime
+  validityTo              DateTime
+  status                  String    // "Active", "Suspended", "Expired", "Cancelled"
+  issuedBy                String    // DGFT (Directorate General of Foreign Trade)
+  
+  // Linked shipments
+  importShipments         ImportShipment[] @relation("ImportShipmentToLicense")
+  
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+  
+  @@index([tenantId])
+  @@index([licenseNumber])
+  @@index([status])
+}
+
+model ComplianceCheckImEx {
+  id                      String    @id @default(cuid())
+  tenantId                String
+  
+  // Linked shipments
+  importShipment          ImportShipment? @relation(fields: [importShipmentId], references: [id])
+  importShipmentId        String?    @unique
+  exportShipment          ExportShipment? @relation(fields: [exportShipmentId], references: [id])
+  exportShipmentId        String?    @unique
+  
+  // GST Compliance (GSTIN at port vs company)
+  gstIECMatch             Boolean   @default(false)  // IEC in GSTN matches
+  gstEligibleForITC       Boolean   @default(false)  // Can claim input credit
+  gstRate                 Decimal   @db.Decimal(5, 2)
+  gstCompliance           String    // "Compliant", "Non-Compliant", "Flagged"
+  
+  // DGFT Compliance (Directorate General of Foreign Trade)
+  dgftRestricted          Boolean   @default(false)  // Item on restricted list
+  dgftLicenseRequired     Boolean   @default(false)  // License needed
+  dgftLicenseNumber       String?   // Reference to license
+  dgftStatus              String    // "Cleared", "Flagged", "Rejected"
+  
+  // RBI & FEMA Compliance (Foreign Exchange Management Act)
+  rbiEligible             Boolean   @default(false)  // Complies with RBI guidelines
+  femaCompliant           Boolean   @default(false)  // Advance remittance allowed
+  advanceRemittanceAllowed Boolean @default(false)  // >180 days advance payment OK
+  femaStatus              String    // "Compliant", "Non-Compliant"
+  
+  // Final status
+  overallStatus           String    // "Compliant", "Non-Compliant", "Flagged", "Rejected"
+  issues                  String?   // JSON array of compliance issues found
+  
+  // Audit
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+  userId                  String
+  
+  @@index([tenantId])
+  @@index([overallStatus])
+}
+
+// ===== PARTNER & MASTER DATA =====
+
+model ImportExportPartner {
+  id                      String    @id @default(cuid())
+  tenantId                String
+  
+  partnerType             String    // "FreightForwarder", "CustomsAgent", "Consolidator", "Bank"
+  companyName             String
+  licenseNumber           String    // CHA, FF license
+  licenseCategory         String    // "Customs Agent", "Freight Forwarder", etc.
+  validUntil              DateTime
+  
+  // Operations
+  portsOfOperation        Json                  // Array of port codes
+  countriesCovered        Json                  // Array of country codes
+  
+  // Contact
+  contactName             String
+  email                   String
+  phone                   String
+  website                 String?
+  
+  // Rating
+  reliabilityRating       Decimal   @db.Decimal(3, 1) @default(0)  // 0-5 stars
+  turnaroundTime          Int       @default(0)  // Days
+  
+  // Status
+  isActive                Boolean   @default(true)
+  
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+  
+  @@index([tenantId])
+  @@index([partnerType])
+  @@index([isActive])
+}
+
+model HSCodeMaster {
+  id                      String    @id @default(cuid())
+  tenantId                String
+  
+  // HS Code details
+  hsCode                  String    @unique @db.Char(8)  // 8-digit code
+  description             String
+  longDescription         String?
+  
+  // GST
+  gstRate                 Decimal   @db.Decimal(5, 2)  // 0, 5, 12, 18, 28
+  gstCategory             String    // "Exempt", "Standard", "Reduced"
+  
+  // Customs duty
+  basicCustomsDutyRate    Decimal   @db.Decimal(5, 2)
+  additionalDutyRate      Decimal   @db.Decimal(5, 2)
+  
+  // Restrictions
+  isExempted              Boolean   @default(false)     // GST exempt
+  isSafeguardApplicable   Boolean   @default(false)
+  isAntiDumpingApplicable Boolean   @default(false)
+  isRestricted            Boolean   @default(false)     // Restricted import/export
+  requiresLicense         Boolean   @default(false)     // License needed
+  
+  // Additional info
+  restrictions            String?   // "Prohibited", "Licensed", etc.
+  notes                   String?
+  
+  // Master data
+  lastUpdatedFrom         String    // "CBIC", "Ministry", "GoI Website"
+  lastUpdatedDate         DateTime
+  validFrom               DateTime
+  validTo                 DateTime?
+  
+  // Relationships
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+  
+  @@index([tenantId])
+  @@index([hsCode])
+  @@index([gstRate])
+}
+
+model TradeAgreementPreference {
+  id                      String    @id @default(cuid())
+  tenantId                String
+  
+  // Trade agreement details
+  agreementName           String    // "India-UAE CEPA", "India-UK DTTA", "India-Mauritius CEPA", etc.
+  agreementCode           String    // ISO code (e.g., "CEPA-AE", "DTTA-GB")
+  
+  // Preference terms
+  hsCode                  String    @db.Char(8)
+  originCountry           String    // ISO country code (e.g., "AE" for UAE)
+  
+  // Preference details
+  standardDutyRate        Decimal   @db.Decimal(5, 2)   // Normal duty %
+  preferentialDutyRate    Decimal   @db.Decimal(5, 2)   // Reduced duty %
+  dutyReduction           Decimal   @db.Decimal(5, 2)   // Absolute saving %
+  
+  // Documentation required
+  requiresDocuments       Json                         // ["Certificate of Origin", "Certificate of Authenticity"]
+  documentType            String    // "Form A", "Form D", "CIQ", "ECS", etc.
+  
+  // Validity
+  validFrom               DateTime
+  validTo                 DateTime?
+  isActive                Boolean   @default(true)
+  
+  // Related duty calculations
+  dutyCalculations        DutyCalculation[]
+  
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+  
+  @@index([tenantId])
+  @@index([agreementName])
+  @@index([hsCode])
+  @@index([originCountry])
+}
+
+// ===== COMMON INTEGRATION MODELS (References to existing tables) =====
+// These relationships link ImportExport module to other modules
+//
+// ImportShipment → Warehouse (inventory)
+// ImportShipment → VendorInvoice (procurement)
+// ExportShipment → SalesOrder (CRM)
+// ExportShipment → SalesInvoice (CRM)
+// ImportHSCodeLineItem → StockLevel (inventory)
+// ExportHSCodeLineItem → SalesOrderItem (CRM)
+// DutyCalculation → TradeAgreementPreference (self-contained)
+// CustomsDocumentation → User (audit)
+// ShipmentTracking → ImportShipment/ExportShipment (tracking)
+// ImportLicense → ImportShipment (licensing)
+// ComplianceCheckImEx → ImportShipment/ExportShipment (compliance)

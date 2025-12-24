@@ -1,0 +1,368 @@
+// ============================================================
+// FINANCE & GENERAL LEDGER MODULE
+// ============================================================
+// Migrations: 005_accounts_gl.sql, 014_gl_posting.sql, 015_bank_reconciliation.sql, 032_bank_financing.sql
+// Purpose: Chart of Accounts, GL Posting, Bank Reconciliation, Financial Reporting
+// Tables: 30+
+
+model ChartOfAccount {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  accountCode       String   @unique @db.VarChar(50) @map("account_code")
+  accountName       String   @db.VarChar(255) @map("account_name")
+  accountType       String   @db.VarChar(50) @map("account_type")
+  accountSubtype    String?  @db.VarChar(50) @map("account_subtype")
+  description       String?  @db.Text
+  balance           Decimal  @default(0) @db.Decimal(18, 2)
+  parentAccountId   String?  @db.VarChar(36) @map("parent_account_id")
+  isHeader          Boolean  @default(false) @map("is_header")
+  isActive          Boolean  @default(true) @map("is_active")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  glPostingTemplatesAsSource GlPostingTemplate[] @relation("sourceAccount")
+  glPostingTemplatesAsTarget GlPostingTemplate[] @relation("targetAccount")
+  glPostingTemplatesAsDebit  GlPostingTemplate[] @relation("debitAccount")
+  glPostingTemplatesAsCredit GlPostingTemplate[] @relation("creditAccount")
+  journalEntryDetails JournalEntryDetail[]
+
+  @@unique([tenantId, accountCode])
+  @@index([tenantId])
+  @@index([accountCode])
+  @@index([accountType])
+  @@map("chart_of_account")
+}
+
+model FinancialPeriod {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  periodName        String   @db.VarChar(100) @map("period_name")
+  periodType        String   @db.VarChar(50) @map("period_type")
+  startDate         DateTime @map("start_date") @db.Date
+  endDate           DateTime @map("end_date") @db.Date
+  isClosed          Boolean  @default(false) @map("is_closed")
+  closedBy          String?  @db.VarChar(36) @map("closed_by")
+  closedAt          DateTime? @map("closed_at")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@index([startDate, endDate])
+  @@map("financial_period")
+}
+
+model JournalEntry {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  journalNumber     String   @unique @db.VarChar(50) @map("journal_number")
+  entryDate         DateTime @map("entry_date") @db.Date
+  description       String?  @db.Text
+  referenceNumber   String?  @db.VarChar(100) @map("reference_number")
+  referenceType     String?  @db.VarChar(50) @map("reference_type")
+  totalDebit        Decimal  @default(0) @db.Decimal(18, 2) @map("total_debit")
+  totalCredit       Decimal  @default(0) @db.Decimal(18, 2) @map("total_credit")
+  status            String   @default("draft") @db.VarChar(50)
+  approvedBy        String?  @db.VarChar(36) @map("approved_by")
+  approvedAt        DateTime? @map("approved_at")
+  postedBy          String?  @db.VarChar(36) @map("posted_by")
+  postedAt          DateTime? @map("posted_at")
+  createdBy         String?  @db.VarChar(36) @map("created_by")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  details           JournalEntryDetail[]
+
+  @@index([tenantId])
+  @@index([journalNumber])
+  @@index([entryDate])
+  @@index([status])
+  @@map("journal_entry")
+}
+
+model JournalEntryDetail {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  journalEntryId    String   @db.VarChar(36) @map("journal_entry_id")
+  accountId         String   @db.VarChar(36) @map("account_id")
+  debitAmount       Decimal  @default(0) @db.Decimal(18, 2) @map("debit_amount")
+  creditAmount      Decimal  @default(0) @db.Decimal(18, 2) @map("credit_amount")
+  description       String?  @db.Text
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+  journalEntry      JournalEntry @relation(fields: [journalEntryId], references: [id], onDelete: Cascade)
+  account           ChartOfAccount @relation(fields: [accountId], references: [id])
+
+  @@index([tenantId])
+  @@index([journalEntryId])
+  @@index([accountId])
+  @@map("journal_entry_detail")
+}
+
+model GlAccountBalance {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  accountId         String   @db.VarChar(36) @map("account_id")
+  fiscalYear        Int      @map("fiscal_year")
+  periodNumber      Int      @map("period_number")
+  openingBalance    Decimal  @default(0) @db.Decimal(18, 2) @map("opening_balance")
+  debitTotal        Decimal  @default(0) @db.Decimal(18, 2) @map("debit_total")
+  creditTotal       Decimal  @default(0) @db.Decimal(18, 2) @map("credit_total")
+  closingBalance    Decimal  @default(0) @db.Decimal(18, 2) @map("closing_balance")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  // Relations
+
+  @@unique([tenantId, accountId, fiscalYear, periodNumber])
+  @@index([tenantId])
+  @@index([accountId])
+  @@map("gl_account_balance")
+}
+
+model TrialBalance {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  trialBalanceDate  DateTime @map("trial_balance_date") @db.Date
+  totalDebits       Decimal  @db.Decimal(18, 2) @map("total_debits")
+  totalCredits      Decimal  @db.Decimal(18, 2) @map("total_credits")
+  status            String   @db.VarChar(50)
+  createdBy         String?  @db.VarChar(36) @map("created_by")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@index([trialBalanceDate])
+  @@map("trial_balance")
+}
+
+model IncomeStatement {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  statementDate     DateTime @map("statement_date") @db.Date
+  revenue           Decimal  @db.Decimal(18, 2)
+  costOfSales       Decimal  @db.Decimal(18, 2) @map("cost_of_sales")
+  grossProfit       Decimal  @db.Decimal(18, 2) @map("gross_profit")
+  operatingExpenses Decimal  @db.Decimal(18, 2) @map("operating_expenses")
+  operatingProfit   Decimal  @db.Decimal(18, 2) @map("operating_profit")
+  netIncome         Decimal  @db.Decimal(18, 2) @map("net_income")
+  createdBy         String?  @db.VarChar(36) @map("created_by")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@map("income_statement")
+}
+
+model BalanceSheet {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  sheetDate         DateTime @map("sheet_date") @db.Date
+  totalAssets       Decimal  @db.Decimal(18, 2) @map("total_assets")
+  totalLiabilities  Decimal  @db.Decimal(18, 2) @map("total_liabilities")
+  totalEquity       Decimal  @db.Decimal(18, 2) @map("total_equity")
+  createdBy         String?  @db.VarChar(36) @map("created_by")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@map("balance_sheet")
+}
+
+model GlPostingTemplate {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  templateName      String   @db.VarChar(255) @map("template_name")
+  description       String?  @db.Text
+  transactionType   String   @db.VarChar(50) @map("transaction_type")
+  sourceAccountId   String   @db.VarChar(36) @map("source_account_id")
+  targetAccountId   String   @db.VarChar(36) @map("target_account_id")
+  debitAccountId    String   @db.VarChar(36) @map("debit_account_id")
+  creditAccountId   String   @db.VarChar(36) @map("credit_account_id")
+  isActive          Boolean  @default(true) @map("is_active")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  sourceAccount     ChartOfAccount @relation("sourceAccount", fields: [sourceAccountId], references: [id])
+  targetAccount     ChartOfAccount @relation("targetAccount", fields: [targetAccountId], references: [id])
+  debitAccount      ChartOfAccount @relation("debitAccount", fields: [debitAccountId], references: [id])
+  creditAccount     ChartOfAccount @relation("creditAccount", fields: [creditAccountId], references: [id])
+
+  @@index([tenantId])
+  @@index([transactionType])
+  @@map("gl_posting_template")
+}
+
+model PayrollGlPosting {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  payrollId         String   @db.VarChar(36) @map("payroll_id")
+  journalEntryId    String   @db.VarChar(36) @map("journal_entry_id")
+  salaryExpenseAccountId String @db.VarChar(36) @map("salary_expense_account_id")
+  salaryPayableAccountId String @db.VarChar(36) @map("salary_payable_account_id")
+  totalSalary       Decimal  @db.Decimal(15, 2) @map("total_salary")
+  totalDeductions   Decimal  @db.Decimal(15, 2) @map("total_deductions")
+  postingDate       DateTime @map("posting_date") @db.Date
+  status            String   @default("pending") @db.VarChar(50)
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@index([payrollId])
+  @@map("payroll_gl_posting")
+}
+
+model PurchaseGlPosting {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  poId              String   @db.VarChar(36) @map("po_id")
+  journalEntryId    String   @db.VarChar(36) @map("journal_entry_id")
+  inventoryAccountId String @db.VarChar(36) @map("inventory_account_id")
+  expenseAccountId  String   @db.VarChar(36) @map("expense_account_id")
+  payableAccountId  String   @db.VarChar(36) @map("payable_account_id")
+  netAmount         Decimal  @db.Decimal(18, 2) @map("net_amount")
+  postingDate       DateTime @map("posting_date") @db.Date
+  status            String   @default("pending") @db.VarChar(50)
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@index([poId])
+  @@map("purchase_gl_posting")
+}
+
+model SalesGlPosting {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  invoiceId         String   @db.VarChar(36) @map("invoice_id")
+  journalEntryId    String   @db.VarChar(36) @map("journal_entry_id")
+  revenueAccountId  String   @db.VarChar(36) @map("revenue_account_id")
+  receivableAccountId String @db.VarChar(36) @map("receivable_account_id")
+  netAmount         Decimal  @db.Decimal(18, 2) @map("net_amount")
+  postingDate       DateTime @map("posting_date") @db.Date
+  status            String   @default("pending") @db.VarChar(50)
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@index([invoiceId])
+  @@map("sales_gl_posting")
+}
+
+model BankStatement {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  bankAccountId     String   @db.VarChar(36) @map("bank_account_id")
+  statementDate     DateTime @map("statement_date") @db.Date
+  openingBalance    Decimal  @db.Decimal(18, 2) @map("opening_balance")
+  closingBalance    Decimal  @db.Decimal(18, 2) @map("closing_balance")
+  totalDeposits     Decimal  @default(0) @db.Decimal(18, 2) @map("total_deposits")
+  totalWithdrawals  Decimal  @default(0) @db.Decimal(18, 2) @map("total_withdrawals")
+  statementFile     String?  @db.VarChar(255) @map("statement_file")
+  uploadedBy        String?  @db.VarChar(36) @map("uploaded_by")
+  uploadedAt        DateTime? @map("uploaded_at")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@index([bankAccountId])
+  @@map("bank_statement")
+}
+
+model BankTransaction {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  bankStatementId   String   @db.VarChar(36) @map("bank_statement_id")
+  transactionDate   DateTime @map("transaction_date") @db.Date
+  description       String   @db.VarChar(255)
+  amount            Decimal  @db.Decimal(18, 2)
+  transactionType   String   @db.VarChar(50) @map("transaction_type")
+  referenceNumber   String?  @db.VarChar(100) @map("reference_number")
+  balance           Decimal  @db.Decimal(18, 2)
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@index([bankStatementId])
+  @@map("bank_transaction")
+}
+
+model BankReconciliationMatch {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  bankTransactionId String   @db.VarChar(36) @map("bank_transaction_id")
+  journalEntryId    String?  @db.VarChar(36) @map("journal_entry_id")
+  matchDate         DateTime @map("match_date") @db.Date
+  amount            Decimal  @db.Decimal(18, 2)
+  status            String   @default("matched") @db.VarChar(50)
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@map("bank_reconciliation_match")
+}
+
+model UnclearedItem {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  bankAccountId     String   @db.VarChar(36) @map("bank_account_id")
+  journalEntryId    String?  @db.VarChar(36) @map("journal_entry_id")
+  itemDate          DateTime @map("item_date") @db.Date
+  description       String?  @db.VarChar(255)
+  amount            Decimal  @db.Decimal(18, 2)
+  itemType          String   @db.VarChar(50) @map("item_type")
+  daysOutstanding   Int?     @map("days_outstanding")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@map("uncleared_item")
+}
+
+model CashFlowForecast {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  forecastDate      DateTime @map("forecast_date") @db.Date
+  forecastPeriod    String   @db.VarChar(50) @map("forecast_period")
+  projectedInflows  Decimal  @db.Decimal(18, 2) @map("projected_inflows")
+  projectedOutflows Decimal  @db.Decimal(18, 2) @map("projected_outflows")
+  projectedBalance  Decimal  @db.Decimal(18, 2) @map("projected_balance")
+  createdBy         String?  @db.VarChar(36) @map("created_by")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@map("cash_flow_forecast")
+}
+
+model CashFlowItem {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  forecastId        String   @db.VarChar(36) @map("forecast_id")
+  itemType          String   @db.VarChar(50) @map("item_type")
+  description       String?  @db.VarChar(255)
+  amount            Decimal  @db.Decimal(18, 2)
+  dueDate           DateTime @map("due_date") @db.Date
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@index([forecastId])
+  @@map("cash_flow_item")
+}

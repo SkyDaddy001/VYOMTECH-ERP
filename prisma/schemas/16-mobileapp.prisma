@@ -1,0 +1,142 @@
+// ============================================================
+// MOBILE APP & DEVICE MODULE
+// ============================================================
+// Purpose: Mobile App Management, Push Notifications, Device Tracking
+// Tables: 9
+
+model MobileDevice {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  userId            String   @db.VarChar(36) @map("user_id")
+  deviceId          String   @unique @db.VarChar(255) @map("device_id")
+  deviceType        String   @db.VarChar(50) @map("device_type")
+  osType            String   @db.VarChar(50) @map("os_type")
+  osVersion         String?  @db.VarChar(50) @map("os_version")
+  appVersion        String?  @db.VarChar(50) @map("app_version")
+  pushToken         String?  @db.Text @map("push_token")
+  deviceModel       String?  @db.VarChar(100) @map("device_model")
+  manufacturer      String?  @db.VarChar(100)
+  isActive          Boolean  @default(true) @map("is_active")
+  lastActiveAt      DateTime @map("last_active_at") @db.DateTime
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+  sessions          MobileSession[]
+  pushNotifications MobilePushNotification[]
+
+  @@index([tenantId])
+  @@map("mobile_device")
+}
+
+model MobileSession {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  deviceId          String   @db.VarChar(36) @map("device_id")
+  userId            String   @db.VarChar(36) @map("user_id")
+  sessionToken      String   @unique(map: "idx_mobile_session_token") @db.VarChar(500) @map("session_token")
+  loginTime         DateTime @map("login_time") @db.DateTime
+  logoutTime        DateTime? @map("logout_time") @db.DateTime
+  ipAddress         String?  @db.VarChar(45) @map("ip_address")
+  userAgent         String?  @db.Text @map("user_agent")
+  isActive          Boolean  @default(true) @map("is_active")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+  device            MobileDevice @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("mobile_session")
+}
+
+model MobilePushNotification {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  deviceId          String   @db.VarChar(36) @map("device_id")
+  title             String   @db.VarChar(255)
+  body              String   @db.Text
+  notificationType  String   @db.VarChar(100) @map("notification_type")
+  entityType        String?  @db.VarChar(100) @map("entity_type")
+  entityId          String?  @db.VarChar(36) @map("entity_id")
+  payload           String?  @db.LongText
+  sentAt            DateTime @map("sent_at") @db.DateTime
+  deliveredAt       DateTime? @map("delivered_at") @db.DateTime
+  openedAt          DateTime? @map("opened_at") @db.DateTime
+  status            String   @default("pending") @db.VarChar(50)
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+  device            MobileDevice @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("mobile_push_notification")
+}
+
+model MobileAppUpdate {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  versionNumber     String   @db.VarChar(50) @map("version_number")
+  releaseNotes      String?  @db.LongText @map("release_notes")
+  downloadUrl       String   @db.Text @map("download_url")
+  minimumOsVersion  String?  @db.VarChar(50) @map("minimum_os_version")
+  forceUpdate       Boolean  @default(false) @map("force_update")
+  releaseDate       DateTime @map("release_date") @db.Date
+  status            String   @db.VarChar(50)
+  downloadCount     Int      @default(0) @map("download_count")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@map("mobile_app_update")
+}
+
+model MobileOfflineData {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  deviceId          String   @db.VarChar(36) @map("device_id")
+  entityType        String   @db.VarChar(100) @map("entity_type")
+  entityId          String   @db.VarChar(36) @map("entity_id")
+  dataSnapshot      String   @db.LongText @map("data_snapshot")
+  lastSyncedAt      DateTime @map("last_synced_at") @db.DateTime
+  syncRequired      Boolean  @default(false) @map("sync_required")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@map("mobile_offline_data")
+}
+
+model MobileAppConfig {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  configKey         String   @db.VarChar(255) @map("config_key")
+  configValue       String   @db.LongText @map("config_value")
+  configType        String   @db.VarChar(100) @map("config_type")
+  description       String?  @db.Text
+  updatedBy         String?  @db.VarChar(36) @map("updated_by")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@map("mobile_app_config")
+}
+
+model MobileAnalytics {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  deviceId          String   @db.VarChar(36) @map("device_id")
+  screenName        String   @db.VarChar(255) @map("screen_name")
+  eventName         String   @db.VarChar(255) @map("event_name")
+  eventValue        String?  @db.LongText @map("event_value")
+  sessionDuration   Int?     @map("session_duration")
+  crashReported     Boolean  @default(false) @map("crash_reported")
+  timestamp         DateTime @db.DateTime
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@map("mobile_analytics")
+}

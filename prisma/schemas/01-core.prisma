@@ -1,0 +1,1656 @@
+// ============================================================
+// CORE MULTI-TENANT TABLES (Foundation)
+// ============================================================
+// Migration: 001_foundation.sql
+// Purpose: Tenant, User, Auth, Teams, System Config
+// Tables: 7
+
+model Tenant {
+  id                   String   @id @db.Char(36)
+  name                 String   @db.VarChar(255)
+  domain               String   @unique @db.VarChar(255)
+  status               String   @default("active") @db.VarChar(50)
+  maxUsers             Int      @default(100) @map("max_users")
+  maxConcurrentCalls   Int      @default(50) @map("max_concurrent_calls")
+  aiBudgetMonthly      Decimal  @default(1000.00) @map("ai_budget_monthly") @db.Decimal(15, 2)
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  // Relations - Core only
+  users                User[]
+  currentTenantUsers   User[] @relation(name: "currentTenant")
+  teams                Team[]
+  systemConfigs        SystemConfig[]
+  auditLogs            AuditLog[]
+  // CallCenter module relations
+  callCenters          CallCenter[]
+  agents               Agent[]
+  aiAgents             AIAgent[]
+  skills               Skill[]
+  agentSkills          AgentSkill[]
+  campaigns            Campaign[]
+  aiCampaigns          AICampaign[]
+  queues               Queue[]
+  queueSkillRequirements QueueSkillRequirement[]
+  queueAssignments     QueueAssignment[]
+  agentCampaigns       AgentCampaign[]
+  calls                Call[]
+  callDispositions     CallDisposition[]
+  callRecordings       CallRecording[]
+  aiAgentDialogues     AIAgentDialogue[]
+  aiConversationLogs   AIConversationLog[]
+  callScripts          CallScript[]
+  externalProviders    ExternalProvider[]
+  providerConnections  ProviderConnection[]
+  agentNotes           AgentNote[]
+  agentPerformanceMetrics AgentPerformanceMetric[]
+
+  @@index([domain])
+  @@index([status])
+  @@map("tenant")
+}
+
+model User {
+  id                 String   @id @db.Char(36) // UUID
+  email              String   @unique @db.VarChar(255)
+  passwordHash       String   @db.VarChar(255) @map("password_hash")
+  role               String   @default("user") @db.VarChar(50)
+  tenantId           String   @db.VarChar(36) @map("tenant_id")
+  currentTenantId    String?  @db.VarChar(36) @map("current_tenant_id")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  tenant             Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  currentTenant      Tenant?  @relation(name: "currentTenant", fields: [currentTenantId], references: [id], onDelete: SetNull)
+  passwordResetTokens PasswordResetToken[]
+  authTokens         AuthToken[]
+  auditLogs          AuditLog[]
+  userRoles          UserRole[]
+  accessLogs         AccessLog[]
+  // Module-specific relations defined in their respective schema files
+
+  @@index([email])
+  @@index([tenantId])
+  @@index([role])
+  @@map("user")
+}
+
+model PasswordResetToken {
+  id                 String   @id @db.Char(26) // ULID
+  userId             String   @db.Char(36) @map("user_id")
+  token              String   @unique @db.VarChar(255)
+  expiresAt          DateTime @map("expires_at")
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@map("password_reset_token")
+}
+
+model AuthToken {
+  id                 String   @id @db.Char(26) // ULID
+  userId             String   @db.Char(36) @map("user_id")
+  token              String   @unique @db.VarChar(500)
+  expiresAt          DateTime @map("expires_at")
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@map("auth_token")
+}
+
+model Team {
+  id                 String   @id @db.Char(26) // ULID
+  tenantId           String   @db.VarChar(36) @map("tenant_id")
+  teamName           String   @db.VarChar(255) @map("team_name")
+  description        String?  @db.LongText
+  status             String   @default("active") @db.VarChar(50)
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  tenant             Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([status])
+  @@map("team")
+}
+
+model SystemConfig {
+  id                 String   @id @db.Char(26) // ULID
+  tenantId           String   @db.VarChar(36) @map("tenant_id")
+  configKey          String   @db.VarChar(255) @map("config_key")
+  configValue        String?  @db.LongText @map("config_value")
+  configType         String   @db.VarChar(50) @map("config_type")
+  description        String?  @db.LongText
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  tenant             Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, configKey])
+  @@index([tenantId])
+  @@map("system_config")
+}
+
+model AuditLog {
+  id                 String   @id @db.Char(26) // ULID
+  tenantId           String   @db.VarChar(36) @map("tenant_id")
+  userId             String?  @db.Char(36) @map("user_id")
+  action             String   @db.VarChar(100)
+  entityType         String   @db.VarChar(100) @map("entity_type")
+  entityId           String?  @db.VarChar(36) @map("entity_id")
+  changes            Json?  @map("changes")
+  ipAddress          String?  @db.VarChar(45) @map("ip_address")
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  // Relations
+  tenant             Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user               User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId])
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("audit_log")
+}
+
+
+// ============================================================================
+// CORE CALL CENTER ENTITIES
+// ============================================================================
+
+/// Call Center Configuration & Settings
+/// Supports multiple call centers per tenant with independent configurations
+model CallCenter {
+  id                    String    @id @default(uuid()) @db.Char(36)
+  tenantId              String    @db.Char(36)
+  tenant                Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  name                  String    @db.VarChar(255)
+  description           String?   @db.Text
+  type                  String    @db.VarChar(50) // "INBOUND", "OUTBOUND", "BLENDED"
+  status                String    @default("ACTIVE") @db.VarChar(50) // "ACTIVE", "INACTIVE", "SUSPENDED"
+  
+  // Location & Contact
+  location              String?   @db.VarChar(255)
+  phone                 String?   @db.VarChar(20)
+  email                 String?   @db.VarChar(255)
+  
+  // Operational Settings
+  timezone              String    @default("Asia/Kolkata") @db.VarChar(100)
+  operatingHoursStart   String?   @db.VarChar(10) // HH:MM format
+  operatingHoursEnd     String?   @db.VarChar(10) // HH:MM format
+  isHolidayOperating    Boolean   @default(false)
+  
+  // Capacity Settings
+  maxAgents             Int       @default(50)
+  maxCampaigns          Int       @default(10)
+  maxQueues             Int       @default(20)
+  
+  // Cost & Billing
+  currencyCode          String    @default("INR") @db.VarChar(10)
+  costPerMinute         Decimal   @default(0) @db.Decimal(10, 2)
+  costPerCall           Decimal   @default(0) @db.Decimal(10, 2)
+  
+  // Metadata
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  
+  // Relations
+  agents                Agent[]
+  campaigns             Campaign[]
+  queues                Queue[]
+  dispositions          CallDisposition[]
+  calls                 Call[]
+  recordings            CallRecording[]
+  scripts               CallScript[]
+  aiAgents              AIAgent[]
+  skills                Skill[]
+  externalProviders     ExternalProvider[]
+  
+  @@index([tenantId])
+  @@map("call_centers")
+}
+
+// ============================================================================
+// AGENT MANAGEMENT
+// ============================================================================
+
+/// Call Center Agent (Human)
+model Agent {
+  id                    String    @id @default(uuid()) @db.Char(36)
+  tenantId              String    @db.Char(36)
+  tenant                Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  callCenterId          String    @db.Char(36)
+  callCenter            CallCenter @relation(fields: [callCenterId], references: [id], onDelete: Cascade)
+  
+  employeeId            String?   @db.Char(36) // Link to HR Employee if exists
+  
+  agentId               String    @unique @db.VarChar(50) // Unique agent ID like CC001, CC002
+  name                  String    @db.VarChar(255)
+  email                 String    @db.VarChar(255)
+  phone                 String    @db.VarChar(20)
+  
+  // Agent Status
+  status                String    @default("OFFLINE") @db.VarChar(50)
+  // "OFFLINE", "ONLINE", "READY", "BUSY", "WRAP_UP", "BREAK", "LUNCH", "TRAINING", "UNAVAILABLE"
+  
+  currentCallId         String?   @unique @db.Char(36)
+  currentCall           Call?     @relation("CurrentCall", fields: [currentCallId], references: [id], onDelete: SetNull)
+  
+  lastStatusChangeTime  DateTime?
+  lastCallEndTime       DateTime?
+  
+  // Assignment Preference
+  assignmentType        String    @default("ANY") @db.VarChar(50)
+  // "ANY" (any available), "STICKY" (same caller callback), "SKILL_BASED", "CAMPAIGN_SPECIFIC"
+  
+  stickyAgentPreference Boolean   @default(false) // If true, tries to assign same agent to same customer
+  
+  // Performance Metrics (cached from detailed table)
+  totalCalls            Int       @default(0)
+  totalHandleTime       Int       @default(0) // In seconds
+  averageHandleTime     Int       @default(0) // In seconds
+  totalWrapUpTime       Int       @default(0) // In seconds
+  
+  // Schedule
+  startDate             DateTime
+  endDate               DateTime?
+  workDaysJson          String?   @db.Text // JSON: ["MON", "TUE", "WED", "THU", "FRI"]
+  workingHoursStart     String    @default("09:00") @db.VarChar(10)
+  workingHoursEnd       String    @default("18:00") @db.VarChar(10)
+  
+  // Break & Lunch
+  breakDurationMinutes  Int       @default(15)
+  lunchDurationMinutes  Int       @default(60)
+  
+  // Metadata
+  isTraining            Boolean   @default(false)
+  trainingUntil         DateTime?
+  
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  
+  // Relations
+  agentSkills           AgentSkill[]
+  agentCampaigns        AgentCampaign[]
+  performanceMetrics    AgentPerformanceMetric[]
+  notes                 AgentNote[]
+  queueAssignments      QueueAssignment[]
+  
+  @@index([tenantId])
+  @@index([callCenterId])
+  @@index([employeeId])
+  @@index([status])
+  @@map("agents")
+}
+
+// ============================================================================
+// AI-BASED CALLING AGENT
+// ============================================================================
+
+/// AI-Powered Calling Agent
+/// Support for multiple AI providers: Google Dialogflow, AWS Lex, Azure Bot, OpenAI, etc.
+model AIAgent {
+  id                    String    @id @default(uuid()) @db.Char(36)
+  tenantId              String    @db.Char(36)
+  tenant                Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  callCenterId          String    @db.Char(36)
+  callCenter            CallCenter @relation(fields: [callCenterId], references: [id], onDelete: Cascade)
+  
+  agentId               String    @unique @db.VarChar(50) // Like AI_AGENT_001
+  name                  String    @db.VarChar(255)
+  description           String?   @db.Text
+  
+  // AI Provider Configuration
+  provider              String    @db.VarChar(100)
+  // "GOOGLE_DIALOGFLOW", "AWS_LEX", "AZURE_BOT", "OPENAI_VOICE", "ELEVENLABS", "TWILIO_IVR", "CUSTOM"
+  
+  providerAgentId       String    @db.VarChar(255) // External AI agent ID from provider
+  providerApiKey        String?   @db.Text // Encrypted
+  providerConfig        String?   @db.Text // JSON: detailed provider config
+  
+  // AI Capabilities
+  language              String    @default("hi") @db.VarChar(10) // ISO 639-1 code: "en", "hi", "ta", "te", etc.
+  voiceType             String    @default("FEMALE") @db.VarChar(50) // "MALE", "FEMALE", "NEUTRAL"
+  voiceAccent           String?   @db.VarChar(100) // "INDIAN", "AMERICAN", "BRITISH", etc.
+  
+  supportedLanguages    String    @db.VarChar(255) @default("en,hi") // CSV
+  sentiment             String    @default("PROFESSIONAL") @db.VarChar(50) // "PROFESSIONAL", "FRIENDLY", "FORMAL", "CASUAL"
+  
+  // Intelligence & Learning
+  usesNLU               Boolean   @default(true) // Natural Language Understanding
+  usesNLG               Boolean   @default(true) // Natural Language Generation
+  learningEnabled       Boolean   @default(true) // Improve from conversations
+  emotionDetection      Boolean   @default(true)
+  intentRecognition     Boolean   @default(true)
+  
+  // Capabilities
+  canMakeOutbound       Boolean   @default(true)
+  canReceiveInbound     Boolean   @default(true)
+  canConferenceCall     Boolean   @default(false)
+  canTransfer           Boolean   @default(true)
+  
+  // Handover Logic
+  handoverThreshold     Decimal   @default(0.6) @db.Decimal(3, 2) // Confidence threshold (0-1) for handover to human
+  handoverPreference    String    @db.VarChar(50) // "AUTO", "REQUIRED", "OPTIONAL"
+  
+  // Status
+  status                String    @default("ACTIVE") @db.VarChar(50) // "ACTIVE", "INACTIVE", "TRAINING", "MAINTENANCE"
+  isAvailable           Boolean   @default(true)
+  
+  // Current State
+  currentCallId         String?   @unique @db.Char(36)
+  currentCall           Call?     @relation("CurrentAICall", fields: [currentCallId], references: [id], onDelete: SetNull)
+  
+  // Performance Metrics
+  totalCalls            Int       @default(0)
+  successfulCalls       Int       @default(0) // Calls completed without transfer
+  transferredCalls      Int       @default(0) // Calls transferred to human
+  averageConfidence     Decimal   @default(0) @db.Decimal(5, 2) // % confidence in responses
+  customerSatisfaction  Decimal   @default(0) @db.Decimal(5, 2) // CSAT score
+  
+  // Script & Knowledge
+  scriptId              String?   @db.Char(36)
+  script                CallScript? @relation("AIAgentScript", fields: [scriptId], references: [id], onDelete: SetNull)
+  
+  knowledgeBaseId       String?   @db.Char(36) // Reference to knowledge base
+  
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  
+  // Relations
+  calls                 Call[]
+  aiCampaigns           AICampaign[]
+  aiAgentDialogues      AIAgentDialogue[]
+  aiConversationLogs    AIConversationLog[]
+  
+  @@index([tenantId])
+  @@index([callCenterId])
+  @@index([status])
+  @@map("ai_agents")
+}
+
+// ============================================================================
+// SKILLS & SPECIALIZATIONS
+// ============================================================================
+
+/// Skills that agents or AI agents can have
+model Skill {
+  id                    String    @id @default(uuid()) @db.Char(36)
+  tenantId              String    @db.Char(36)
+  tenant                Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  callCenterId          String    @db.Char(36)
+  callCenter            CallCenter @relation(fields: [callCenterId], references: [id], onDelete: Cascade)
+  
+  skillName             String    @db.VarChar(255)
+  description           String?   @db.Text
+  skillCategory         String    @db.VarChar(100) // "PRODUCT", "LANGUAGE", "TECHNICAL", "CUSTOMER_TYPE", etc.
+  
+  // Skill Proficiency
+  level                 String    @default("BEGINNER") @db.VarChar(50) // "BEGINNER", "INTERMEDIATE", "ADVANCED", "EXPERT"
+  
+  // Skill Routing
+  routingPriority       Int       @default(1) // Lower = higher priority for routing
+  minimumProficiency    String    @default("BEGINNER") @db.VarChar(50)
+  
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  
+  // Relations
+  agentSkills           AgentSkill[]
+  queueSkillRequirements QueueSkillRequirement[]
+  
+  @@index([tenantId])
+  @@index([callCenterId])
+  @@map("skills")
+}
+
+/// Agent Skill Mapping
+model AgentSkill {
+  id                    String    @id @default(uuid()) @db.Char(36)
+  tenantId              String    @db.Char(36)
+  tenant                Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  agentId               String    @db.Char(36)
+  agent                 Agent     @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  
+  skillId               String    @db.Char(36)
+  skill                 Skill     @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  
+  proficiency           String    @default("BEGINNER") @db.VarChar(50)
+  yearsOfExperience     Int       @default(0)
+  isVerified            Boolean   @default(false)
+  
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  
+  @@unique([agentId, skillId])
+  @@index([tenantId])
+  @@map("agent_skills")
+}
+
+// ============================================================================
+// CAMPAIGNS & QUEUES
+// ============================================================================
+
+/// Campaign Configuration for Call Routing
+model Campaign {
+  id                    String    @id @default(uuid()) @db.Char(36)
+  tenantId              String    @db.Char(36)
+  tenant                Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  callCenterId          String    @db.Char(36)
+  callCenter            CallCenter @relation(fields: [callCenterId], references: [id], onDelete: Cascade)
+  
+  campaignName          String    @db.VarChar(255)
+  description           String?   @db.Text
+  campaignType          String    @db.VarChar(50) // "INBOUND", "OUTBOUND", "BLENDED"
+  purpose               String    @db.VarChar(100) // "PRESALES", "SALES", "SUPPORT", "FEEDBACK", "COLLECTION"
+  
+  // Campaign Status
+  status                String    @default("DRAFT") @db.VarChar(50) // "DRAFT", "ACTIVE", "PAUSED", "COMPLETED", "CANCELLED"
+  startDate             DateTime?
+  endDate               DateTime?
+  
+  // Routing Rules
+  assignmentStrategy    String    @default("LEAST_BUSY") @db.VarChar(50)
+  // "LEAST_BUSY", "ROUND_ROBIN", "STICKY_AGENT", "SKILL_BASED", "BALANCED", "RANDOM"
+  
+  stickyAgentEnabled    Boolean   @default(false)
+  stickyAgentDuration   Int       @default(86400) // In seconds, 24 hours default
+  
+  allowAIAgent          Boolean   @default(false)
+  allowHumanAgent       Boolean   @default(true)
+  aiAgentPriority       Int       @default(1) // 1 = AI first, 2 = Human first, 3 = Balanced
+  
+  // Source & SubSource Routing
+  routeBySource         Boolean   @default(false)
+  routeBySubSource      Boolean   @default(false)
+  routeByLeadSource     Boolean   @default(true)
+  
+  // Queue Settings
+  maxWaitTime           Int       @default(900) // In seconds, 15 minutes
+  abandonedCallHandling String    @db.VarChar(50) // "VOICEMAIL", "CALLBACK", "SMS", "EMAIL"
+  
+  // Project Linkage (for CRM integration)
+  salesProjectId        String?   @db.Char(36) // Link to CRM Project
+  
+  // Metadata
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  
+  // Relations
+  agentCampaigns        AgentCampaign[]
+  aiCampaigns           AICampaign[]
+  calls                 Call[]
+  
+  @@index([tenantId])
+  @@index([callCenterId])
+  @@index([status])
+  @@map("campaigns")
+}
+
+/// AI Campaign Configuration
+model AICampaign {
+  id                    String    @id @default(uuid()) @db.Char(36)
+  tenantId              String    @db.Char(36)
+  tenant                Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  campaignId            String    @db.Char(36)
+  campaign              Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  
+  aiAgentId             String    @db.Char(36)
+  aiAgent               AIAgent   @relation(fields: [aiAgentId], references: [id], onDelete: Cascade)
+  
+  assignmentPercentage  Int       @default(50) // % of calls to route to this AI agent
+  priority              Int       @default(1)
+  
+  isActive              Boolean   @default(true)
+  
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  
+  @@unique([campaignId, aiAgentId])
+  @@index([tenantId])
+  @@map("ai_campaigns")
+}
+
+/// Call Queue - Waiting area for calls before agent assignment
+model Queue {
+  id                    String    @id @default(uuid()) @db.Char(36)
+  tenantId              String    @db.Char(36)
+  tenant                Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  callCenterId          String    @db.Char(36)
+  callCenter            CallCenter @relation(fields: [callCenterId], references: [id], onDelete: Cascade)
+  
+  queueName             String    @db.VarChar(255)
+  queueNumber           String    @db.VarChar(50)
+  description           String?   @db.Text
+  
+  // Queue Configuration
+  maxCapacity           Int       @default(100)
+  currentSize           Int       @default(0)
+  
+  // Routing
+  routingStrategy       String    @default("FIFO") @db.VarChar(50) // "FIFO", "PRIORITY", "SKILL_BASED", "WEIGHTED"
+  priorityQueueEnabled  Boolean   @default(false)
+  
+  // Timeout Settings
+  timeoutSeconds        Int       @default(300) // Call timeout in queue
+  abandonmentThreshold  Int       @default(600) // When to mark as abandoned
+  
+  // Welcome Message
+  welcomeMessageId      String?   @db.Char(36)
+  hasWelcomeMessage     Boolean   @default(false)
+  
+  // Hold Music
+  holdMusicUrl          String?   @db.Text
+  hasHoldMusic          Boolean   @default(false)
+  
+  // Queue Status
+  status                String    @default("ACTIVE") @db.VarChar(50)
+  
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  
+  // Relations
+  calls                 Call[]
+  queueAssignments      QueueAssignment[]
+  queueSkillRequirements QueueSkillRequirement[]
+  
+  @@index([tenantId])
+  @@index([callCenterId])
+  @@map("queues")
+}
+
+/// Queue Skill Requirements
+model QueueSkillRequirement {
+  id                    String    @id @default(uuid()) @db.Char(36)
+  tenantId              String    @db.Char(36)
+  tenant                Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  queueId               String    @db.Char(36)
+  queue                 Queue     @relation(fields: [queueId], references: [id], onDelete: Cascade)
+  
+  skillId               String    @db.Char(36)
+  skill                 Skill     @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  
+  isRequired            Boolean   @default(false)
+  minimumProficiency    String    @default("BEGINNER") @db.VarChar(50)
+  weight                Int       @default(1) // Importance in routing
+  
+  @@unique([queueId, skillId])
+  @@index([tenantId])
+  @@map("queue_skill_requirements")
+}
+
+/// Agent Assignment to Queue/Campaign
+model QueueAssignment {
+  id                    String    @id @default(uuid()) @db.Char(36)
+  tenantId              String    @db.Char(36)
+  tenant                Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  agentId               String    @db.Char(36)
+  agent                 Agent     @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  
+  queueId               String    @db.Char(36)
+  queue                 Queue     @relation(fields: [queueId], references: [id], onDelete: Cascade)
+  
+  assignmentType        String    @default("PRIMARY") @db.VarChar(50) // "PRIMARY", "SECONDARY", "BACKUP"
+  priority              Int       @default(1)
+  
+  assignmentStartTime   DateTime  @default(now())
+  assignmentEndTime     DateTime?
+  
+  isActive              Boolean   @default(true)
+  
+  @@unique([agentId, queueId, assignmentStartTime])
+  @@index([tenantId])
+  @@map("queue_assignments")
+}
+
+/// Agent Campaign Assignment
+model AgentCampaign {
+  id                    String    @id @default(uuid()) @db.Char(36)
+  tenantId              String    @db.Char(36)
+  tenant                Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  agentId               String    @db.Char(36)
+  agent                 Agent     @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  
+  campaignId            String    @db.Char(36)
+  campaign              Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  
+  assignmentType        String    @default("PRIMARY") @db.VarChar(50)
+  priority              Int       @default(1)
+  
+  assignmentStartTime   DateTime  @default(now())
+  assignmentEndTime     DateTime?
+  
+  isActive              Boolean   @default(true)
+  
+  @@unique([agentId, campaignId, assignmentStartTime])
+  @@index([tenantId])
+  @@map("agent_campaigns")
+}
+
+// ============================================================================
+// CALL MANAGEMENT
+// ============================================================================
+
+/// Call Records (both inbound and outbound)
+model Call {
+  id                    String    @id @default(uuid()) @db.Char(36)
+  tenantId              String    @db.Char(36)
+  tenant                Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  callCenterId          String    @db.Char(36)
+  callCenter            CallCenter @relation(fields: [callCenterId], references: [id], onDelete: Cascade)
+  
+  // Call Identification
+  callId                String    @unique @db.VarChar(50) // Unique call reference
+  callULID              String    @unique @db.Char(26) // ULID for transaction tracking
+  
+  campaignId            String?   @db.Char(36)
+  campaign              Campaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  
+  queueId               String?   @db.Char(36)
+  queue                 Queue?    @relation(fields: [queueId], references: [id], onDelete: SetNull)
+  
+  // Caller Information
+  callDirection         String    @db.VarChar(20) // "INBOUND", "OUTBOUND"
+  
+  callerId              String    @db.VarChar(20)
+  callerName            String?   @db.VarChar(255)
+  callerEmail           String?   @db.VarChar(255)
+  
+  // Recipient Information (for outbound)
+  recipientId           String?   @db.VarChar(20)
+  recipientName         String?   @db.VarChar(255)
+  
+  // Lead/Customer Information
+  leadId                String?   @db.Char(36) // CRM SalesLead
+  customerId            String?   @db.Char(36) // CRM Customer
+  customer              SalesCustomer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  
+  // Call Assignment
+  agentId               String?   @db.Char(36)
+  
+  aiAgentId             String?   @db.Char(36)
+  aiAgent               AIAgent?  @relation(fields: [aiAgentId], references: [id], onDelete: SetNull)
+  
+  // Call Type
+  callType              String    @db.VarChar(50) // "VOICE", "VIDEO", "VOICEMAIL", "CALLBACK"
+  
+  // Source Information
+  source                String    @db.VarChar(100) // "INBOUND_CALL", "WEBSITE_FORM", "APP", "SMS", "EMAIL", "SOCIAL_MEDIA"
+  subSource             String?   @db.VarChar(100) // "GOOGLE_SEARCH", "FACEBOOK_AD", "INSTAGRAM", etc.
+  campaignSource        String?   @db.VarChar(100) // Campaign that generated the lead
+  
+  // Call Status
+  callStatus            String    @default("INITIATED") @db.VarChar(50)
+  // "INITIATED", "RINGING", "CONNECTED", "IN_PROGRESS", "HOLD", "TRANSFERRED", "CONFERENCE", "COMPLETED", "ABANDONED", "FAILED"
+  
+  // Call Timing
+  callInitiatedAt       DateTime  @default(now())
+  callConnectedAt       DateTime?
+  callEndedAt           DateTime?
+  callDurationSeconds   Int       @default(0)
+  
+  // Wrap-up & Outcomes
+  dispositionId         String?   @db.Char(36)
+  disposition           CallDisposition? @relation(fields: [dispositionId], references: [id], onDelete: SetNull)
+  
+  notes                 String?   @db.Text
+  
+  // Transfer Information
+  transferredFromAgentId String? @db.Char(36)
+  transferredToAgentId  String?  @db.Char(36)
+  transferredToAIAgentId String? @db.Char(36)
+  transferReason        String?  @db.VarChar(255)
+  transferredAt         DateTime?
+  
+  // AI-Specific
+  aiHandlingDuration    Int?      // In seconds, how long AI handled before transfer
+  aiConfidenceScore     Decimal?  @db.Decimal(5, 2) // Confidence in AI response
+  wasHandledByAI        Boolean   @default(false)
+  wasTransferredFromAI  Boolean   @default(false)
+  aiTranscript          String?   @db.Text // If AI handled call
+  
+  // Recording & Compliance
+  recordingUrl          String?   @db.Text
+  recordingId           String?   @db.VarChar(255)
+  recordingStatus       String?   @db.VarChar(50) // "PENDING", "COMPLETED", "FAILED", "DELETED"
+  isCallRecorded        Boolean   @default(false)
+  
+  // Customer Feedback
+  satScore              Int?      // 1-5 CSAT score
+  feedback              String?   @db.Text
+  
+  // Compliance
+  isSensitive           Boolean   @default(false)
+  requiresAudit         Boolean   @default(false)
+  
+  // Metadata
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  
+  // Relations
+  currentAgentCall      Agent?    @relation("CurrentCall")
+  currentAIAgentCall    AIAgent?  @relation("CurrentAICall")
+  recordings            CallRecording[]
+  aiDialogues           AIAgentDialogue[]
+  conversationLogs      AIConversationLog[]
+  
+  @@index([tenantId])
+  @@index([callCenterId])
+  @@index([campaignId])
+  @@index([queueId])
+  @@index([agentId])
+  @@index([aiAgentId])
+  @@index([leadId])
+  @@index([customerId])
+  @@index([callStatus])
+  @@index([callInitiatedAt])
+  @@map("calls")
+}
+
+// ============================================================================
+// CALL DISPOSITIONS & OUTCOMES
+// ============================================================================
+
+/// Call Disposition/Outcome Types
+model CallDisposition {
+  id                    String    @id @default(uuid()) @db.Char(36)
+  tenantId              String    @db.Char(36)
+  tenant                Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  callCenterId          String    @db.Char(36)
+  callCenter            CallCenter @relation(fields: [callCenterId], references: [id], onDelete: Cascade)
+  
+  dispositionCode       String    @db.VarChar(50)
+  dispositionName       String    @db.VarChar(255)
+  description           String?   @db.Text
+  
+  // Classification
+  dispositionCategory   String    @db.VarChar(100) // "SUCCESSFUL", "UNSUCCESSFUL", "TRANSFERRED", "VOICEMAIL", "CALLBACK", "DO_NOT_CALL"
+  isPositive            Boolean   @default(false)
+  
+  // Attributes
+  allowsNotes           Boolean   @default(true)
+  requiresFollowup      Boolean   @default(false)
+  requiresCallback      Boolean   @default(false)
+  allowsWrapupTime      Boolean   @default(true)
+  
+  // Sequencing
+  sequenceOrder         Int       @default(1)
+  isActive              Boolean   @default(true)
+  
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  
+  // Relations
+  calls                 Call[]
+
+  @@unique([callCenterId, dispositionCode])
+  @@index([tenantId])
+  @@index([callCenterId])
+  @@map("call_dispositions")
+}
+
+// ============================================================================
+// CALL RECORDINGS & MONITORING
+// ============================================================================
+
+/// Call Recordings
+model CallRecording {
+  id                    String    @id @default(uuid()) @db.Char(36)
+  tenantId              String    @db.Char(36)
+  tenant                Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  callCenterId          String    @db.Char(36)
+  callCenter            CallCenter @relation(fields: [callCenterId], references: [id], onDelete: Cascade)
+  
+  callId                String    @db.Char(36)
+  call                  Call      @relation(fields: [callId], references: [id], onDelete: Cascade)
+  
+  recordingUrl          String    @db.Text
+  recordingExternalId   String    @db.VarChar(255)
+  
+  // Recording Details
+  fileSize              BigInt? // In bytes
+  fileDuration          Int? // In seconds
+  fileFormat            String    @db.VarChar(20) // "MP3", "WAV", "OGG"
+  
+  // Status
+  status                String    @default("PROCESSING") @db.VarChar(50) // "PROCESSING", "COMPLETED", "FAILED"
+  
+  // Transcription
+  hasTranscript         Boolean   @default(false)
+  transcriptUrl         String?   @db.Text
+  transcriptText        String?   @db.LongText // Full transcript
+  transcriptionAccuracy Decimal?  @db.Decimal(5, 2) // Confidence %
+  
+  // Sentiment Analysis
+  hasSentimentAnalysis  Boolean   @default(false)
+  overallSentiment      String?   @db.VarChar(50) // "POSITIVE", "NEUTRAL", "NEGATIVE"
+  sentimentScore        Decimal?  @db.Decimal(5, 2) // -1 to 1
+  
+  // Compliance
+  isCompliant           Boolean?  // Null = not checked
+  complianceNotes       String?   @db.Text
+  
+  // Retention
+  retentionDays         Int? // Days to retain
+  deleteAfterDate       DateTime?
+  
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  
+  @@index([tenantId])
+  @@index([callCenterId])
+  @@index([callId])
+  @@map("call_recordings")
+}
+
+// ============================================================================
+// AI CONVERSATION LOGS & INTELLIGENCE
+// ============================================================================
+
+/// AI Agent Dialogue during call
+model AIAgentDialogue {
+  id                    String    @id @default(uuid()) @db.Char(36)
+  tenantId              String    @db.Char(36)
+  tenant                Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  callId                String    @db.Char(36)
+  call                  Call      @relation(fields: [callId], references: [id], onDelete: Cascade)
+  
+  aiAgentId             String    @db.Char(36)
+  aiAgent               AIAgent   @relation(fields: [aiAgentId], references: [id], onDelete: Cascade)
+  
+  // Dialogue Turn
+  turnNumber            Int
+  speaker               String    @db.VarChar(20) // "CALLER", "AI_AGENT"
+  
+  // Content
+  rawText               String    @db.Text
+  cleanedText           String    @db.Text
+  
+  // NLU Analysis
+  intent                String?   @db.VarChar(255)
+  entities              String?   @db.Text // JSON array of entities
+  sentiment             String?   @db.VarChar(50) // "POSITIVE", "NEUTRAL", "NEGATIVE"
+  sentimentScore        Decimal?  @db.Decimal(5, 2)
+  
+  confidence            Decimal   @default(0) @db.Decimal(5, 2) // AI confidence in response
+  
+  // If AI was speaker
+  generatedResponse     String?   @db.Text
+  responseType          String?   @db.VarChar(100) // "ANSWER", "CLARIFICATION", "HANDOVER_NOTICE", "GOODBYE"
+  
+  // Timing
+  turnStartTime         DateTime  @default(now())
+  turnDurationSeconds   Int? // Time to generate response
+  
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  
+  @@index([tenantId])
+  @@index([callId])
+  @@index([aiAgentId])
+  @@map("ai_agent_dialogues")
+}
+
+/// AI Conversation Log (meta-level)
+model AIConversationLog {
+  id                    String    @id @default(uuid()) @db.Char(36)
+  tenantId              String    @db.Char(36)
+  tenant                Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  callId                String    @db.Char(36)
+  call                  Call      @relation(fields: [callId], references: [id], onDelete: Cascade)
+  
+  aiAgentId             String    @db.Char(36)
+  aiAgent               AIAgent   @relation(fields: [aiAgentId], references: [id], onDelete: Cascade)
+  
+  // Overall Metrics
+  totalTurns            Int
+  averageConfidence     Decimal   @db.Decimal(5, 2)
+  
+  // Intent Distribution
+  dominantIntent        String?   @db.VarChar(255)
+  multipleIntents       Boolean   @default(false)
+  
+  // Overall Sentiment
+  overallSentiment      String?   @db.VarChar(50)
+  sentimentTrend        String?   @db.VarChar(20) // "IMPROVING", "DECLINING", "STABLE"
+  
+  // Handover Metrics
+  handoverReason        String?   @db.VarChar(255)
+  handoverConfidence    Decimal?  @db.Decimal(5, 2)
+  
+  // Learning & Improvement
+  flaggedForReview      Boolean   @default(false)
+  reviewNotes           String?   @db.Text
+  trainingDataUsed      Boolean   @default(true)
+  
+  // Quality Metrics
+  callerSatisfaction    Decimal?  @db.Decimal(5, 2) // CSAT from post-call survey
+  issueResolved         Boolean?
+  
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  
+  @@index([tenantId])
+  @@index([callId])
+  @@index([aiAgentId])
+  @@map("ai_conversation_logs")
+}
+
+// ============================================================================
+// CALL SCRIPTS & KNOWLEDGE
+// ============================================================================
+
+/// Call Scripts for Agents/AI
+model CallScript {
+  id                    String    @id @default(uuid()) @db.Char(36)
+  tenantId              String    @db.Char(36)
+  tenant                Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  callCenterId          String    @db.Char(36)
+  callCenter            CallCenter @relation(fields: [callCenterId], references: [id], onDelete: Cascade)
+  
+  scriptName            String    @db.VarChar(255)
+  description           String?   @db.Text
+  scriptType            String    @db.VarChar(50) // "GREETING", "PITCH", "OBJECTION_HANDLING", "CLOSING", "CUSTOM"
+  
+  // Usage
+  purpose               String    @db.VarChar(100) // "PRESALES", "SALES", "SUPPORT", "FEEDBACK"
+  
+  // Content
+  scriptContent         String    @db.LongText // Detailed script text
+  scriptVariations      String?   @db.Text // JSON: alternative phrasings
+  
+  // AI-Specific
+  isAIOptimized         Boolean   @default(false)
+  aiTrainingScore       Decimal?  @db.Decimal(5, 2) // How well AI performs with this script
+  
+  // Compliance
+  complianceChecked     Boolean   @default(false)
+  complianceNotes       String?   @db.Text
+  
+  // Status
+  isActive              Boolean   @default(true)
+  version               Int       @default(1)
+  
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  
+  // Relations
+  aiAgents              AIAgent[] @relation("AIAgentScript")
+  
+  @@index([tenantId])
+  @@index([callCenterId])
+  @@map("call_scripts")
+}
+
+// ============================================================================
+// EXTERNAL PROVIDER INTEGRATION
+// ============================================================================
+
+/// External VoIP/Telecom Provider Configuration
+model ExternalProvider {
+  id                    String    @id @default(uuid()) @db.Char(36)
+  tenantId              String    @db.Char(36)
+  tenant                Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  callCenterId          String    @db.Char(36)
+  callCenter            CallCenter @relation(fields: [callCenterId], references: [id], onDelete: Cascade)
+  
+  providerName          String    @db.VarChar(100)
+  providerType          String    @db.VarChar(50)
+  // "TWILIO", "EXOTEL", "OZONETEL", "MCUBE", "ASTERISK", "JIOTELE", "AIRTEL", "VOICECOM", "VOIZFONE", "CUSTOM"
+  
+  // API Configuration
+  apiEndpoint           String    @db.Text
+  apiKey                String    @db.Text // Encrypted
+  apiSecret             String?   @db.Text // Encrypted
+  accountId             String?   @db.VarChar(255)
+  
+  // Provider Details
+  country               String    @default("IN") @db.VarChar(10)
+  supportedCountries    String    @db.Text // CSV
+  
+  // Capabilities
+  supportsInbound       Boolean   @default(true)
+  supportsOutbound      Boolean   @default(true)
+  supportsConference    Boolean   @default(false)
+  supportsRecording     Boolean   @default(true)
+  supportsIVR           Boolean   @default(true)
+  supportsTransfer      Boolean   @default(true)
+  
+  // Numbers & Allocation
+  allocatedNumbers      String    @db.Text // JSON: list of phone numbers
+  numberFormat          String    @default("E.164") @db.VarChar(20)
+  
+  // Pricing
+  costModel             String    @db.VarChar(50) // "PER_MINUTE", "PER_CALL", "MONTHLY", "HYBRID"
+  costPerMinute         Decimal?  @db.Decimal(10, 4)
+  costPerCall           Decimal?  @db.Decimal(10, 2)
+  setupCost             Decimal?  @db.Decimal(10, 2)
+  
+  // Status & Integration
+  status                String    @default("ACTIVE") @db.VarChar(50) // "ACTIVE", "INACTIVE", "TESTING", "ERROR"
+  lastHealthCheck       DateTime?
+  isHealthy             Boolean   @default(true)
+  
+  // Webhook Configuration
+  webhookUrl            String?   @db.Text // Our webhook URL for provider callbacks
+  webhookSecret         String?   @db.Text // Encrypted
+  
+  // Metadata
+  notes                 String?   @db.Text
+  
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  
+  // Relations
+  providerConnections   ProviderConnection[]
+  
+  @@unique([tenantId, callCenterId, providerName])
+  @@index([tenantId])
+  @@index([callCenterId])
+  @@index([status])
+  @@map("external_providers")
+}
+
+/// Mapping between CallCenter and Provider
+model ProviderConnection {
+  id                    String    @id @default(uuid()) @db.Char(36)
+  tenantId              String    @db.Char(36)
+  tenant                Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  providerId            String    @db.Char(36)
+  provider              ExternalProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  
+  callCenterId          String    @db.Char(36)
+  
+  // Connection Details
+  isPrimary             Boolean   @default(false) // Primary provider for failover
+  priority              Int       @default(1) // Lower = higher priority
+  
+  // Load Balancing
+  allocationPercentage  Int       @default(100) // % of calls to route to this provider
+  
+  // Status
+  isActive              Boolean   @default(true)
+  connectionStatus      String    @default("CONNECTED") @db.VarChar(50) // "CONNECTED", "DISCONNECTED", "ERROR", "TESTING"
+  
+  // Connection Metadata
+  connectedAt           DateTime?
+  lastActivityAt        DateTime?
+  
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  
+  @@unique([providerId, callCenterId])
+  @@index([tenantId])
+  @@map("provider_connections")
+}
+
+// ============================================================================
+// AGENT NOTES & PERFORMANCE
+// ============================================================================
+
+/// Agent Notes
+model AgentNote {
+  id                    String    @id @default(uuid()) @db.Char(36)
+  tenantId              String    @db.Char(36)
+  tenant                Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  agentId               String    @db.Char(36)
+  agent                 Agent     @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  
+  noteType              String    @db.VarChar(50) // "PERFORMANCE", "FEEDBACK", "TRAINING", "INCIDENT", "PERSONAL"
+  noteTitle             String    @db.VarChar(255)
+  noteContent           String    @db.Text
+  
+  severity              String?   @db.VarChar(20) // "LOW", "MEDIUM", "HIGH", "CRITICAL"
+  
+  createdBy             String    @db.VarChar(255)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  
+  @@index([tenantId])
+  @@index([agentId])
+  @@map("agent_notes")
+}
+
+/// Agent Performance Metrics
+model AgentPerformanceMetric {
+  id                    String    @id @default(uuid()) @db.Char(36)
+  tenantId              String    @db.Char(36)
+  tenant                Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  agentId               String    @db.Char(36)
+  agent                 Agent     @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  
+  // Time Period
+  metricDate            DateTime
+  metricPeriod          String    @default("DAILY") @db.VarChar(20) // "DAILY", "WEEKLY", "MONTHLY"
+  
+  // Call Metrics
+  totalCalls            Int       @default(0)
+  inboundCalls          Int       @default(0)
+  outboundCalls         Int       @default(0)
+  answeredCalls         Int       @default(0)
+  missedCalls           Int       @default(0)
+  
+  // Time Metrics
+  totalTalkTime         Int       @default(0) // In seconds
+  totalHoldTime         Int       @default(0)
+  totalWrapUpTime       Int       @default(0)
+  totalBreakTime        Int       @default(0)
+  
+  // Calculated Metrics
+  answerRate            Decimal   @default(0) @db.Decimal(5, 2) // %
+  averageHandleTime     Int       @default(0) // In seconds
+  averageHoldTime       Decimal   @default(0) @db.Decimal(8, 2)
+  
+  // Quality Metrics
+  averageCSAT           Decimal   @default(0) @db.Decimal(5, 2) // CSAT score
+  transferRate          Decimal   @default(0) @db.Decimal(5, 2) // %
+  
+  // Sales Metrics (if applicable)
+  salesConversions      Int       @default(0)
+  conversionRate        Decimal   @default(0) @db.Decimal(5, 2) // %
+  totalSalesValue       Decimal   @default(0) @db.Decimal(15, 2)
+  
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  
+  @@unique([agentId, metricDate, metricPeriod])
+  @@index([tenantId])
+  @@index([agentId])
+  @@index([metricDate])
+  @@map("agent_performance_metrics")
+}
+
+// ============================================================================
+// INTEGRATION REFERENCES
+// ============================================================================
+
+// This module references the following external models:
+// - Tenant (Core module) - Multi-tenant isolation
+// - Employee (HR module) - Optional link to HR records
+// - SalesLead (CRM module) - For presales calls
+// - Customer (CRM module) - For sales/support calls
+// - Project (CRM module) - For project-based campaign routing
+
+// ============================================================================
+// NOTE: External Provider Types Supported
+// ============================================================================
+// 1. TWILIO - Cloud communication platform, global reach, webhook support
+// 2. EXOTEL - Indian VoIP provider, affordable, good for India use case
+// 3. OZONETEL - Indian contact center platform, IVR, routing, recording
+// 4. MCUBE - Indian VoIP provider with advanced IVR
+// 5. ASTERISK - Open-source PBX, self-hosted, full control
+// 6. JIOTELE - Jio Platforms telecom integration
+// 7. AIRTEL - Airtel telecom integration
+// 8. VOICECOM - Indian VoIP provider
+// 9. VOIZFONE - Indian VoIP provider with IVRS
+// 10. CUSTOM - For any other provider via REST API
+
+// ============================================================================
+// NOTE: AI Agent Providers Supported
+// ============================================================================
+// 1. GOOGLE_DIALOGFLOW - Google's NLU platform
+// 2. AWS_LEX - Amazon's conversational AI
+// 3. AZURE_BOT - Microsoft Azure Bot Service
+// 4. OPENAI_VOICE - GPT-based voice agent
+// 5. ELEVENLABS - AI voice generation with natural speech
+// 6. TWILIO_IVR - Twilio's IVR capabilities
+// 7. CUSTOM - Build custom AI agent integration
+
+// ============================================================
+// ATTRIBUTION SYSTEM MODULE (Canonical)
+// ============================================================
+// Migration: 030_attribution_system.sql
+// Purpose: Event-based, immutable attribution tracking across all channels
+// Tables: 9
+// Philosophy: Events are the single source of truth. All attribution insights are derived, never overwritten.
+
+// ============================================================
+// ENUMS - Canonical Attribution Taxonomy (FROZEN)
+// ============================================================
+
+enum AttributionBucket {
+  SEO              // Organic search (Google, Bing, Yahoo, Discover, Local Pack)
+  SEM              // Paid search (Google Ads, Bing Ads, etc)
+  SMM              // Social media (Facebook, Instagram, LinkedIn, Twitter, YouTube)
+  PORTALS          // Listing platforms (99acres, MagicBricks, Housing, NoBroker, SquareYards)
+  OWNED            // Your assets (Website, WhatsApp, Email, SMS, CRM Remarketing)
+  OFFLINE          // Physical touchpoints (Walk-ins, Print, BTL Activations)
+  AFFILIATE        // Channel partners (Brokers, Referrals, Consultants)
+  DIRECT           // Residual/Direct traffic (Direct, Bookmark, Typed URL)
+  
+  @@map("attribution_bucket")
+}
+
+enum AttributionSource {
+  // SEO Sources
+  google
+  bing
+  yahoo
+  other_search
+
+  // SEM Sources
+  // (google, bing already defined above - reused)
+
+  // SMM Sources
+  meta               // Facebook + Instagram parent
+  instagram
+  facebook
+  youtube
+  linkedin
+  twitter
+
+  // Portal Sources
+  portal_99acres
+  portal_magicbricks
+  portal_housing
+  portal_nobroker
+  portal_squareyards
+
+  // Owned Sources
+  website
+  whatsapp
+  email
+  sms
+  crm
+
+  // Offline Sources
+  walk_in
+  print_media
+  btl_activation
+
+  // Affiliate Sources
+  broker
+  referral
+  consultant
+
+  // Direct Source
+  direct
+
+  @@map("attribution_source")
+}
+
+enum AttributionSubSource {
+  // ===== SEO SUB-SOURCES =====
+  google_organic
+  bing_organic
+  yahoo_organic
+  discover
+  local_pack
+
+  // ===== SEM SUB-SOURCES =====
+  google_search_ads
+  google_display_ads
+  youtube_ads
+  performance_max
+  bing_ads
+
+  // ===== SMM PAID SUB-SOURCES =====
+  facebook_ads
+  instagram_ads
+  linkedin_ads
+  twitter_ads
+
+  // ===== SMM ORGANIC SUB-SOURCES =====
+  instagram_organic
+  facebook_organic
+  youtube_organic
+  linkedin_organic
+
+  // ===== PORTALS SUB-SOURCES =====
+  portal_listing      // Generic for all portals
+
+  // ===== OWNED SUB-SOURCES =====
+  web_form
+  whatsapp_chat
+  email_campaign
+  sms_campaign
+  crm_remarketing
+
+  // ===== OFFLINE SUB-SOURCES =====
+  walk_in_site        // At site/project
+  walk_in_office      // At office
+  newspaper
+  magazine
+  flyers
+  brochure
+  mall_stall
+  roadshow_stall
+  expo_stall
+  society_activation
+
+  // ===== AFFILIATE SUB-SOURCES =====
+  channel_partner
+  referral_agent
+  property_consultant
+
+  // ===== DIRECT SUB-SOURCES =====
+  direct_unknown
+  bookmark
+  typed_url
+
+  @@map("attribution_subsource")
+}
+
+// ============================================================
+// CORE ATTRIBUTION TABLES
+// ============================================================
+
+model AttributionEvent {
+  id                    String                @id @db.Char(36)
+  tenantId              String                @db.VarChar(36) @map("tenant_id")
+  
+  // Event Identity
+  eventId               String                @db.Char(26) @map("event_id") // ULID
+  leadId                String?               @db.VarChar(36) @map("lead_id")
+  visitorId             String?               @db.VarChar(36) @map("visitor_id")
+  sessionId             String?               @db.VarChar(100) @map("session_id")
+  
+  // Attribution Taxonomy (FROZEN - Never change after insert)
+  attributionBucket     AttributionBucket     @map("attribution_bucket")
+  attributionSource     AttributionSource     @map("attribution_source")
+  attributionSubSource  AttributionSubSource  @map("attribution_subsource")
+  
+  // Event Details
+  eventType             String                @db.VarChar(100) @map("event_type") // page_view, form_submit, call, sms, whatsapp_msg, site_visit, etc
+  eventValue            Decimal?              @db.Decimal(15, 2) @map("event_value")
+  eventData             String?               @db.LongText @map("event_data") // JSON: {form_fields, call_duration, conversion_type, etc}
+  
+  // Channel Details
+  campaign              String?               @db.VarChar(255)
+  adSet                 String?               @db.VarChar(255) @map("ad_set")
+  ad                    String?               @db.VarChar(255)
+  keyword               String?               @db.VarChar(255)
+  referrer              String?               @db.Text
+  
+  // Device & User Info
+  userAgent             String?               @db.Text @map("user_agent")
+  ipAddress             String?               @db.VarChar(45) @map("ip_address")
+  country               String?               @db.VarChar(100)
+  state                 String?               @db.VarChar(100)
+  city                  String?               @db.VarChar(100)
+  
+  // Metadata
+  source                String?               @db.VarChar(100) // e.g., "web_pixel", "api", "manual", "import"
+  isTest                Boolean               @default(false) @map("is_test")
+  
+  // Timestamps (Immutable)
+  eventTimestamp        DateTime              @db.DateTime @map("event_timestamp")
+  createdAt             DateTime              @default(now()) @map("created_at")
+  
+  // Relations (Sparse - only link to known entities)
+  lead                  SalesLead?            @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  
+  // Indexes for analytics queries
+  @@unique([tenantId, eventId])
+  @@index([tenantId, attributionBucket])
+  @@index([tenantId, attributionSource])
+  @@index([tenantId, attributionSubSource])
+  @@index([tenantId, eventTimestamp])
+  @@index([tenantId, leadId])
+  @@index([tenantId, visitorId])
+  @@index([tenantId, campaign])
+  @@index([leadId])
+  @@index([visitorId])
+  @@map("attribution_event")
+}
+
+model AttributionBucketConfig {
+  id                    String                @id @db.Char(36)
+  tenantId              String                @db.VarChar(36) @map("tenant_id")
+  
+  // Bucket Configuration
+  bucket                AttributionBucket     @map("bucket")
+  bucketLabel           String                @db.VarChar(100) @map("bucket_label")
+  bucketDescription     String?               @db.Text @map("bucket_description")
+  
+  // Metrics
+  isActive              Boolean               @default(true) @map("is_active")
+  priority              Int                   @default(0) // For attribution model weighting
+  weight                Decimal               @default(1.0) @db.Decimal(5, 2) // For custom attribution models
+  
+  // Metadata
+  createdAt             DateTime              @default(now()) @map("created_at")
+  updatedAt             DateTime              @updatedAt @map("updated_at")
+  
+  @@unique([tenantId, bucket])
+  @@index([tenantId, isActive])
+  @@map("attribution_bucket_config")
+}
+
+model AttributionSourceConfig {
+  id                    String                @id @db.Char(36)
+  tenantId              String                @db.VarChar(36) @map("tenant_id")
+  
+  // Source Configuration
+  source                AttributionSource     @map("source")
+  sourceLabel           String                @db.VarChar(100) @map("source_label")
+  sourceDescription     String?               @db.Text @map("source_description")
+  
+  // Validation Rules
+  isActive              Boolean               @default(true) @map("is_active")
+  requiresAuthorization Boolean               @default(false) @map("requires_authorization")
+  apiKeyRequired        Boolean               @default(false) @map("api_key_required")
+  
+  // Integration Details
+  integrationUrl        String?               @db.VarChar(500) @map("integration_url")
+  lastSyncDate          DateTime?             @map("last_sync_date")
+  
+  // Metadata
+  createdAt             DateTime              @default(now()) @map("created_at")
+  updatedAt             DateTime              @updatedAt @map("updated_at")
+  
+  @@unique([tenantId, source])
+  @@index([tenantId, isActive])
+  @@map("attribution_source_config")
+}
+
+model LeadAttributionSnapshot {
+  id                    String                @id @db.Char(36)
+  tenantId              String                @db.VarChar(36) @map("tenant_id")
+  leadId                String                @db.VarChar(36) @map("lead_id")
+  
+  // First Touch Attribution
+  firstTouchBucket      AttributionBucket?    @map("first_touch_bucket")
+  firstTouchSource      AttributionSource?    @map("first_touch_source")
+  firstTouchSubSource   AttributionSubSource? @map("first_touch_subsource")
+  firstTouchCampaign    String?               @db.VarChar(255) @map("first_touch_campaign")
+  firstTouchDate        DateTime?             @map("first_touch_date")
+  
+  // Last Touch Attribution
+  lastTouchBucket       AttributionBucket?    @map("last_touch_bucket")
+  lastTouchSource       AttributionSource?    @map("last_touch_source")
+  lastTouchSubSource    AttributionSubSource? @map("last_touch_subsource")
+  lastTouchCampaign     String?               @db.VarChar(255) @map("last_touch_campaign")
+  lastTouchDate         DateTime?             @map("last_touch_date")
+  
+  // Touch Counts
+  totalTouches          Int                   @default(1) @map("total_touches")
+  touchesByBucket       String?               @db.LongText @map("touches_by_bucket") // JSON: {SEO: 2, SEM: 1, SMM: 3}
+  touchesBySource       String?               @db.LongText @map("touches_by_source") // JSON: {google: 1, meta: 2, linkedin: 1}
+  
+  // Touch Sequence (for path analysis)
+  touchSequence         String?               @db.LongText @map("touch_sequence") // JSON: [{bucket, source, subsource, date}, ...]
+  
+  // Conversion Attribution
+  conversionBucket      AttributionBucket?    @map("conversion_bucket")
+  conversionSource      AttributionSource?    @map("conversion_source")
+  conversionSubSource   AttributionSubSource? @map("conversion_subsource")
+  conversionDate        DateTime?             @map("conversion_date")
+  
+  // Metadata
+  snaphotDate           DateTime              @map("snapshot_date") @db.Date
+  isConverted           Boolean               @default(false) @map("is_converted")
+  conversionValue       Decimal?              @db.Decimal(15, 2) @map("conversion_value")
+  
+  createdAt             DateTime              @default(now()) @map("created_at")
+  updatedAt             DateTime              @updatedAt @map("updated_at")
+  
+  // Relations
+  lead                  SalesLead             @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  
+  @@unique([tenantId, leadId, snaphotDate])
+  @@index([tenantId, leadId])
+  @@index([tenantId, firstTouchBucket])
+  @@index([tenantId, lastTouchBucket])
+  @@index([tenantId, conversionBucket])
+  @@index([tenantId, isConverted])
+  @@index([snaphotDate])
+  @@map("lead_attribution_snapshot")
+}
+
+model AttributionRule {
+  id                    String                @id @db.Char(36)
+  tenantId              String                @db.VarChar(36) @map("tenant_id")
+  
+  // Rule Definition
+  ruleName              String                @db.VarChar(255) @map("rule_name")
+  description           String?               @db.Text
+  ruleType              String                @db.VarChar(50) @map("rule_type") // first_touch, last_touch, linear, position_based, time_decay, custom
+  
+  // Conditions (if any)
+  conditions            String?               @db.LongText // JSON: {bucket: "SEO", excludeTest: true, ...}
+  
+  // Rule Configuration
+  isActive              Boolean               @default(true) @map("is_active")
+  priority              Int                   @default(0) // Higher = evaluated first
+  
+  // Metadata
+  createdBy             String?               @db.VarChar(36) @map("created_by")
+  createdAt             DateTime              @default(now()) @map("created_at")
+  updatedAt             DateTime              @updatedAt @map("updated_at")
+  
+  @@index([tenantId, isActive])
+  @@map("attribution_rule")
+}
+
+model AttributionExclusion {
+  id                    String                @id @db.Char(36)
+  tenantId              String                @db.VarChar(36) @map("tenant_id")
+  
+  // Exclusion Criteria
+  exclusionType         String                @db.VarChar(100) @map("exclusion_type") // bot, test, internal, spam, duplicate
+  exclusionName         String                @db.VarChar(255) @map("exclusion_name")
+  description           String?               @db.Text
+  
+  // Match Patterns
+  matchType             String                @db.VarChar(50) @map("match_type") // exact, contains, regex, ip_range
+  matchValue            String                @db.VarChar(500) @map("match_value")
+  
+  // Scope
+  field                 String                @db.VarChar(100) // user_agent, ip_address, keyword, etc
+  isActive              Boolean               @default(true) @map("is_active")
+  
+  // Metadata
+  appliedCount          Int                   @default(0) @map("applied_count")
+  lastAppliedDate       DateTime?             @map("last_applied_date")
+  createdAt             DateTime              @default(now()) @map("created_at")
+  
+  @@index([tenantId, field])
+  @@index([tenantId, isActive])
+  @@map("attribution_exclusion")
+}
+
+model AttributionMetric {
+  id                    String                @id @db.Char(36)
+  tenantId              String                @db.VarChar(36) @map("tenant_id")
+  
+  // Metric Date
+  metricDate            DateTime              @map("metric_date") @db.Date
+  
+  // Bucket Metrics
+  bucket                AttributionBucket     @map("bucket")
+  
+  // KPIs
+  totalEvents           Int                   @map("total_events")
+  uniqueLeads           Int                   @map("unique_leads")
+  uniqueVisitors        Int                   @map("unique_visitors")
+  conversions           Int
+  conversionRate        Decimal               @db.Decimal(5, 4) @map("conversion_rate") // percentage as 0.0523
+  avgTouchesPerLead     Decimal               @db.Decimal(5, 2) @map("avg_touches_per_lead")
+  
+  // Cost & Revenue (for ROI)
+  totalSpend            Decimal?              @db.Decimal(15, 2) @map("total_spend")
+  totalRevenue          Decimal?              @db.Decimal(15, 2) @map("total_revenue")
+  roi                   Decimal?              @db.Decimal(8, 2) @map("roi") // percentage
+  
+  // Metadata
+  dataQuality           String                @db.VarChar(50) @map("data_quality") // complete, partial, estimated
+  lastUpdated           DateTime              @map("last_updated") @db.DateTime
+  
+  @@unique([tenantId, metricDate, bucket])
+  @@index([tenantId, metricDate])
+  @@index([tenantId, bucket])
+  @@map("attribution_metric")
+}
+
+model AttributionAuditLog {
+  id                    String                @id @db.Char(36)
+  tenantId              String                @db.VarChar(36) @map("tenant_id")
+  
+  // Action Details
+  action                String                @db.VarChar(100) // event_created, rule_changed, bucket_updated, etc
+  entityType            String                @db.VarChar(100) @map("entity_type") // AttributionEvent, AttributionRule, etc
+  entityId              String?               @db.VarChar(36) @map("entity_id")
+  
+  // Changes
+  oldValue              String?               @db.LongText @map("old_value") // JSON
+  newValue              String?               @db.LongText @map("new_value") // JSON
+  
+  // Context
+  userId                String?               @db.VarChar(36) @map("user_id")
+  ipAddress             String?               @db.VarChar(45) @map("ip_address")
+  
+  // Metadata
+  createdAt             DateTime              @default(now()) @map("created_at")
+  
+  @@index([tenantId, action])
+  @@index([tenantId, entityType])
+  @@index([tenantId, createdAt])
+  @@map("attribution_audit_log")
+}
+
+// ============================================================
+// RELATIONS TO EXTEND EXISTING MODELS
+// ============================================================
+// These relations will be added to existing models in other schemas:
+//
+// SalesLead:
+//   - attributionEvents: AttributionEvent[]
+//   - attributionSnapshots: LeadAttributionSnapshot[]
+//
+// Tenant (already has relation through tenant_id)
+//
+// User (for audit logs):
+//   - attributionAuditLogs: AttributionAuditLog[]
+

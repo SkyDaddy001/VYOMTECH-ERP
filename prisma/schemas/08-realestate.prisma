@@ -1,0 +1,286 @@
+// ============================================================
+// REAL ESTATE MODULE
+// ============================================================
+// Migrations: 008_real_estate.sql, 022_project_management.sql
+// Purpose: Property, Projects, Booking, Payment Plans, Units
+// Tables: 20
+
+model PropertyProject {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  projectName       String   @db.VarChar(255) @map("project_name")
+  projectCode       String   @unique @db.VarChar(50) @map("project_code")
+  location          String?  @db.VarChar(255)
+  city              String?  @db.VarChar(100)
+  state             String?  @db.VarChar(100)
+  country           String?  @db.VarChar(100)
+  postalCode        String?  @db.VarChar(20) @map("postal_code")
+  projectType       String?  @db.VarChar(50) @map("project_type")
+  totalArea         Decimal? @db.Decimal(15, 2) @map("total_area")
+  totalUnits        Int      @default(0) @map("total_units")
+  launchDate        DateTime? @map("launch_date") @db.Date
+  completionDate    DateTime? @map("completion_date") @db.Date
+  status            String   @default("planning") @db.VarChar(50)
+  developerId       String?  @db.VarChar(36) @map("developer_id")
+  description       String?  @db.LongText
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  blocks            PropertyBlock[]
+  units             PropertyUnit[]
+
+  @@index([tenantId])
+  @@index([projectCode])
+  @@index([status])
+  @@map("property_project")
+}
+
+model PropertyBlock {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  projectId         String   @db.VarChar(36) @map("project_id")
+  blockName         String   @db.VarChar(100) @map("block_name")
+  blockCode         String   @db.VarChar(50) @map("block_code")
+  totalUnits        Int      @default(0) @map("total_units")
+  unitsLeft         Int      @default(0) @map("units_left")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+  project           PropertyProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  units             PropertyUnit[]
+
+  @@unique([projectId, blockCode])
+  @@index([tenantId])
+  @@index([projectId])
+  @@map("property_block")
+}
+
+model PropertyUnit {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  projectId         String   @db.VarChar(36) @map("project_id")
+  blockId           String?  @db.VarChar(36) @map("block_id")
+  unitNumber        String   @db.VarChar(50) @map("unit_number")
+  unitType          String   @db.VarChar(50) @map("unit_type")
+  builtUpArea       Decimal  @db.Decimal(10, 2) @map("built_up_area")
+  carpetArea        Decimal  @db.Decimal(10, 2) @map("carpet_area")
+  superBuiltUpArea  Decimal? @db.Decimal(10, 2) @map("super_built_up_area")
+  bedrooms          Int?
+  bathrooms         Int?
+  floor             Int?
+  basePrice         Decimal  @db.Decimal(15, 2) @map("base_price")
+  status            String   @default("available") @db.VarChar(50)
+  description       String?  @db.Text
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  project           PropertyProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  block             PropertyBlock? @relation(fields: [blockId], references: [id], onDelete: SetNull)
+  costSheets        UnitCostSheet[]
+  bookings          Booking[]
+  paymentPlans      PaymentPlan[]
+
+  @@unique([projectId, unitNumber])
+  @@index([tenantId])
+  @@index([projectId])
+  @@index([status])
+  @@map("property_unit")
+}
+
+model UnitCostSheet {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  unitId            String   @db.VarChar(36) @map("unit_id")
+  basicPrice        Decimal  @db.Decimal(15, 2) @map("basic_price")
+  floorRiseFactor   Decimal  @default(0) @db.Decimal(5, 2) @map("floor_rise_factor")
+  cornerFactor      Decimal  @default(0) @db.Decimal(5, 2) @map("corner_factor")
+  otherCharges      Decimal  @default(0) @db.Decimal(15, 2) @map("other_charges")
+  taxes             Decimal  @default(0) @db.Decimal(15, 2)
+  totalPrice        Decimal  @db.Decimal(15, 2) @map("total_price")
+  validFrom         DateTime @map("valid_from") @db.Date
+  validTill         DateTime? @map("valid_till") @db.Date
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+  unit              PropertyUnit @relation(fields: [unitId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([unitId])
+  @@map("unit_cost_sheet")
+}
+
+model PaymentPlan {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  unitId            String   @db.VarChar(36) @map("unit_id")
+  planName          String   @db.VarChar(100) @map("plan_name")
+  totalPrice        Decimal  @db.Decimal(15, 2) @map("total_price")
+  upfrontAmount     Decimal  @db.Decimal(15, 2) @map("upfront_amount")
+  upfrontPercent    Decimal? @db.Decimal(5, 2) @map("upfront_percent")
+  description       String?  @db.Text
+  isActive          Boolean  @default(true) @map("is_active")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  unit              PropertyUnit @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  installments      Installment[]
+
+  @@index([tenantId])
+  @@index([unitId])
+  @@map("payment_plan")
+}
+
+model Installment {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  paymentPlanId     String   @db.VarChar(36) @map("payment_plan_id")
+  installmentNumber Int      @map("installment_number")
+  dueDate           DateTime @map("due_date") @db.Date
+  amount            Decimal  @db.Decimal(15, 2)
+  description       String?  @db.VarChar(255)
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+  paymentPlan       PaymentPlan @relation(fields: [paymentPlanId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([paymentPlanId])
+  @@map("installment")
+}
+
+model Booking {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  unitId            String   @db.VarChar(36) @map("unit_id")
+  customerId        String?  @db.VarChar(36) @map("customer_id")
+  bookingDate       DateTime @map("booking_date") @db.Date
+  bookingAmount     Decimal  @db.Decimal(15, 2) @map("booking_amount")
+  status            String   @default("booked") @db.VarChar(50)
+  notes             String?  @db.Text
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  unit              PropertyUnit @relation(fields: [unitId], references: [id], onDelete: Cascade)
+
+  @@unique([unitId])
+  @@index([tenantId])
+  @@index([customerId])
+  @@map("booking")
+}
+
+model PropertyCostBreakup {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  unitId            String   @db.VarChar(36) @map("unit_id")
+  costCategory      String   @db.VarChar(100) @map("cost_category")
+  costAmount        Decimal  @db.Decimal(15, 2) @map("cost_amount")
+  costPercent       Decimal? @db.Decimal(5, 2) @map("cost_percent")
+  description       String?  @db.Text
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@index([unitId])
+  @@map("property_cost_breakup")
+}
+
+model PropertyAmenity {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  projectId         String?  @db.VarChar(36) @map("project_id")
+  amenityName       String   @db.VarChar(100) @map("amenity_name")
+  amenityType       String?  @db.VarChar(50) @map("amenity_type")
+  description       String?  @db.Text
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@map("property_amenity")
+}
+
+model PropertyUnitAreaStatement {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  unitId            String   @db.VarChar(36) @map("unit_id")
+  areaType          String   @db.VarChar(100) @map("area_type")
+  areaValue         Decimal  @db.Decimal(10, 2) @map("area_value")
+  areaUnit          String   @db.VarChar(20) @map("area_unit")
+  description       String?  @db.Text
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@map("property_unit_area_statement")
+}
+
+model ProjectCostConfiguration {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  projectId         String   @db.VarChar(36) @map("project_id")
+  costName          String   @db.VarChar(100) @map("cost_name")
+  costFormula       String?  @db.Text @map("cost_formula")
+  applicableUnits   String?  @db.Text @map("applicable_units")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@map("project_cost_configuration")
+}
+
+model PropertyCustomerProfile {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  customerId        String   @db.VarChar(36) @map("customer_id")
+  occupationStatus  String?  @db.VarChar(100) @map("occupation_status")
+  incomeRange       String?  @db.VarChar(50) @map("income_range")
+  investmentGoal    String?  @db.VarChar(255) @map("investment_goal")
+  investmentTimeline String? @db.VarChar(50) @map("investment_timeline")
+  preferences       String?  @db.Text
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@index([customerId])
+  @@map("property_customer_profile")
+}
+
+model PropertyComparable {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  projectId         String   @db.VarChar(36) @map("project_id")
+  comparableType    String   @db.VarChar(100) @map("comparable_type")
+  location          String?  @db.VarChar(255)
+  pricePerSqFt      Decimal  @db.Decimal(10, 2) @map("price_per_sqft")
+  marketData        String?  @db.Text @map("market_data")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@map("property_comparable")
+}
+
+model SiteVisitFeedback {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  siteVisitId       String   @db.VarChar(36) @map("site_visit_id")
+  feedback          String?  @db.Text
+  rating            Decimal? @db.Decimal(3, 1)
+  followUpRequired  Boolean  @default(false) @map("follow_up_required")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@map("site_visit_feedback")
+}

@@ -1,0 +1,306 @@
+// ============================================================
+// HR & PAYROLL MODULE
+// ============================================================
+// Migrations: 004_hr_payroll.sql, 013_hr_compliance_esipf.sql
+// Purpose: Employee Management, Payroll, HR Compliance, ESI, PF
+// Tables: 20
+
+model Employee {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  employeeCode      String   @unique @db.VarChar(50) @map("employee_code")
+  firstName         String   @db.VarChar(100) @map("first_name")
+  lastName          String   @db.VarChar(100) @map("last_name")
+  email             String?  @db.VarChar(255)
+  phone             String?  @db.VarChar(20)
+  departmentId      String?  @db.VarChar(36) @map("department_id")
+  designationId     String?  @db.VarChar(36) @map("designation_id")
+  joiningDate       DateTime @map("joining_date") @db.Date
+  status            String   @default("active") @db.VarChar(50)
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  employeeDetails   EmployeeDetails?
+  leaveBalances     LeaveBalance[]
+  epfRegistrations  EmployeeEPFRegistration[]
+  esiRegistrations  EmployeeESIRegistration[]
+  epfContributions  EPFContribution[]
+  esiContributions  ESIContribution[]
+  complianceChecklist EmployeeComplianceChecklist[]
+
+  @@index([tenantId])
+  @@index([employeeCode])
+  @@index([status])
+  @@map("employee")
+}
+
+model EmployeeDetails {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  employeeId        String   @unique @db.Char(36) @map("employee_id")
+  fatherName        String?  @db.VarChar(255) @map("father_name")
+  motherName        String?  @db.VarChar(255) @map("mother_name")
+  spouse            String?  @db.VarChar(255)
+  children          Int      @default(0)
+  dateOfBirth       DateTime @map("date_of_birth") @db.Date
+  bloodGroup        String?  @db.VarChar(5) @map("blood_group")
+  aadhar            String?  @db.VarChar(50)
+  pan               String?  @db.VarChar(50)
+  pfNumber          String?  @db.VarChar(50) @map("pf_number")
+  esiNumber         String?  @db.VarChar(50) @map("esi_number")
+  bankAccountNumber String?  @db.VarChar(50) @map("bank_account_number")
+  bankName          String?  @db.VarChar(100) @map("bank_name")
+  ifscCode          String?  @db.VarChar(20) @map("ifsc_code")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  employee          Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("employee_details")
+}
+
+model LeaveType {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  leaveTypeName     String   @db.VarChar(100) @map("leave_type_name")
+  allowedDays       Int      @map("allowed_days")
+  accrualRate       Decimal? @db.Decimal(5, 2) @map("accrual_rate")
+  isCarryOver       Boolean  @default(false) @map("is_carry_over")
+  maxCarryOver      Int      @default(0) @map("max_carry_over")
+  requiresApproval  Boolean  @default(true) @map("requires_approval")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@unique([tenantId, leaveTypeName])
+  @@index([tenantId])
+  @@map("leave_type")
+}
+
+model LeaveBalance {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  employeeId        String   @db.Char(36) @map("employee_id")
+  leaveTypeId       String   @db.VarChar(36) @map("leave_type_id")
+  year              Int
+  openingBalance    Decimal  @db.Decimal(5, 2) @map("opening_balance")
+  accrued           Decimal  @db.Decimal(5, 2)
+  utilized          Decimal  @db.Decimal(5, 2)
+  carried           Decimal  @db.Decimal(5, 2)
+  closingBalance    Decimal  @db.Decimal(5, 2) @map("closing_balance")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  employee          Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, employeeId, leaveTypeId, year])
+  @@index([tenantId])
+  @@map("leave_balance")
+}
+
+model Designation {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  designationName   String   @db.VarChar(100) @map("designation_name")
+  designationLevel  Int?     @map("designation_level")
+  description       String?  @db.Text
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@unique([tenantId, designationName])
+  @@index([tenantId])
+  @@map("designation")
+}
+
+model Department {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  departmentName    String   @db.VarChar(100) @map("department_name")
+  departmentCode    String   @db.VarChar(50) @map("department_code")
+  headId            String?  @db.VarChar(36) @map("head_id")
+  costCenter        String?  @db.VarChar(50) @map("cost_center")
+  description       String?  @db.Text
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@unique([tenantId, departmentCode])
+  @@index([tenantId])
+  @@map("department")
+}
+
+model SalaryComponent {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  componentName     String   @db.VarChar(100) @map("component_name")
+  componentType     String   @db.VarChar(50) @map("component_type")
+  taxable           Boolean  @default(false)
+  formula           String?  @db.Text
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@unique([tenantId, componentName])
+  @@index([tenantId])
+  @@map("salary_component")
+}
+
+model PayrollRun {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  month             Int
+  year              Int
+  payrollStatus     String   @default("draft") @db.VarChar(50) @map("payroll_status")
+  totalEmployees    Int      @map("total_employees")
+  totalSalary       Decimal  @db.Decimal(15, 2) @map("total_salary")
+  totalDeductions   Decimal  @db.Decimal(15, 2) @map("total_deductions")
+  netPayable        Decimal  @db.Decimal(15, 2) @map("net_payable")
+  freezeDate        DateTime? @map("freeze_date")
+  processedBy       String?  @db.VarChar(36) @map("processed_by")
+  processedAt       DateTime? @map("processed_at")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@unique([tenantId, month, year])
+  @@index([tenantId])
+  @@map("payroll_run")
+}
+
+model EPFConfiguration {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  epfNumber         String   @unique @db.VarChar(50) @map("epf_number")
+  epfRegistrationDate DateTime @map("epf_registration_date") @db.Date
+  epfEstablishmentCode String @db.VarChar(50) @map("epf_establishment_code")
+  companyContributionRate Decimal @db.Decimal(5, 2) @map("company_contribution_rate")
+  employeeContributionRate Decimal @db.Decimal(5, 2) @map("employee_contribution_rate")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@map("epf_configuration")
+}
+
+model ESIConfiguration {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  esiNumber         String   @unique @db.VarChar(50) @map("esi_number")
+  esiRegistrationDate DateTime @map("esi_registration_date") @db.Date
+  companyContributionRate Decimal @db.Decimal(5, 2) @map("company_contribution_rate")
+  employeeContributionRate Decimal @db.Decimal(5, 2) @map("employee_contribution_rate")
+  wageLimit         Decimal  @db.Decimal(10, 2) @map("wage_limit")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@map("esi_configuration")
+}
+
+model EmployeeEPFRegistration {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  employeeId        String   @db.Char(36) @map("employee_id")
+  epfNumber         String   @db.VarChar(50) @map("epf_number")
+  enrollmentDate    DateTime @map("enrollment_date") @db.Date
+  memberStatus      String   @default("active") @db.VarChar(50) @map("member_status")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+  employee          Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("employee_epf_registration")
+}
+
+model EmployeeESIRegistration {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  employeeId        String   @db.Char(36) @map("employee_id")
+  esiNumber         String   @db.VarChar(50) @map("esi_number")
+  enrollmentDate    DateTime @map("enrollment_date") @db.Date
+  memberStatus      String   @default("active") @db.VarChar(50) @map("member_status")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+  employee          Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("employee_esi_registration")
+}
+
+model EPFContribution {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  employeeId        String   @db.Char(36) @map("employee_id")
+  payrollMonth      Int      @map("payroll_month")
+  payrollYear       Int      @map("payroll_year")
+  companyContribution Decimal @db.Decimal(12, 2) @map("company_contribution")
+  employeeContribution Decimal @db.Decimal(12, 2) @map("employee_contribution")
+  submissionDate    DateTime? @map("submission_date") @db.Date
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+  employee          Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("epf_contribution")
+}
+
+model ESIContribution {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  employeeId        String   @db.Char(36) @map("employee_id")
+  payrollMonth      Int      @map("payroll_month")
+  payrollYear       Int      @map("payroll_year")
+  companyContribution Decimal @db.Decimal(12, 2) @map("company_contribution")
+  employeeContribution Decimal @db.Decimal(12, 2) @map("employee_contribution")
+  submissionDate    DateTime? @map("submission_date") @db.Date
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+  employee          Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("esi_contribution")
+}
+
+model ComplianceRecord {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  recordType        String   @db.VarChar(100) @map("record_type")
+  recordValue       String?  @db.Text @map("record_value")
+  dueDate           DateTime? @map("due_date") @db.Date
+  completionDate    DateTime? @map("completion_date") @db.Date
+  status            String   @default("pending") @db.VarChar(50)
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@index([status])
+  @@map("compliance_record")
+}
+
+model EmployeeComplianceChecklist {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  employeeId        String   @db.Char(36) @map("employee_id")
+  itemDescription   String   @db.VarChar(255) @map("item_description")
+  isCompleted       Boolean  @default(false) @map("is_completed")
+  completionDate    DateTime? @map("completion_date") @db.Date
+  notes             String?  @db.Text
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+  employee          Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("employee_compliance_checklist")
+}
