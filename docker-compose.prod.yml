@@ -1,0 +1,195 @@
+version: '3.9'
+
+services:
+  # MySQL Database - Production Configuration
+  mysql:
+    image: mysql:8.0
+    container_name: vyom-lms-mysql-prod
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data_prod:/var/lib/mysql
+      - ./scripts/mysql-init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "${DB_USER}", "-p${DB_PASSWORD}"]
+      timeout: 10s
+      retries: 20
+      start_period: 40s
+    networks:
+      - vyom-network-prod
+    restart: always
+    command: --max-connections=1000 --default-authentication-plugin=mysql_native_password
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Redis Cache - Production Configuration
+  redis:
+    image: redis:7-alpine
+    container_name: vyom-lms-redis-prod
+    command: redis-server --requirepass ${REDIS_PASSWORD} --maxmemory 2gb --maxmemory-policy allkeys-lru
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data_prod:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      timeout: 10s
+      retries: 20
+      start_period: 40s
+    networks:
+      - vyom-network-prod
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # API Server - Production Configuration
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        BUILD_VERSION: ${API_VERSION:-1.0.0}
+        BUILD_TIMESTAMP: ${BUILD_TIMESTAMP}
+    image: vyom-erp-api:${API_VERSION:-latest}
+    container_name: vyom-lms-api-prod
+    environment:
+      APP_ENV: production
+      GIN_MODE: release
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      DB_MAX_CONNECTIONS: 100
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      GOOGLE_OAUTH_CLIENT_ID: ${GOOGLE_OAUTH_CLIENT_ID}
+      GOOGLE_OAUTH_CLIENT_SECRET: ${GOOGLE_OAUTH_CLIENT_SECRET}
+      META_OAUTH_CLIENT_ID: ${META_OAUTH_CLIENT_ID}
+      META_OAUTH_CLIENT_SECRET: ${META_OAUTH_CLIENT_SECRET}
+      SYNC_JOB_INTERVAL: ${SYNC_JOB_INTERVAL:-30s}
+      TLS_ENABLED: ${TLS_ENABLED:-false}
+      TLS_CERT_PATH: ${TLS_CERT_PATH}
+      TLS_KEY_PATH: ${TLS_KEY_PATH}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
+      SENTRY_DSN: ${SENTRY_DSN}
+    ports:
+      - "8080:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - vyom-network-prod
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/health"]
+      timeout: 10s
+      retries: 20
+      start_period: 40s
+      interval: 30s
+    volumes:
+      - ./logs:/app/logs
+      - /etc/ssl/certs:/etc/ssl/certs:ro
+      - /etc/ssl/private:/etc/ssl/private:ro
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "10"
+    cpu_shares: 1024
+    memory: 2g
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '1'
+          memory: 1G
+
+  # Frontend - Next.js Production Configuration
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.vyom-erp.com/api/v1}
+    image: vyom-erp-frontend:${API_VERSION:-latest}
+    container_name: vyom-lms-frontend-prod
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.vyom-erp.com/api/v1}
+      NEXT_TELEMETRY_DISABLED: 1
+    ports:
+      - "3000:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - vyom-network-prod
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      timeout: 10s
+      retries: 20
+      start_period: 60s
+      interval: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "10"
+    cpu_shares: 512
+    memory: 1g
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  # Adminer - Database Management (only in non-prod)
+  # NOTE: Remove this in production for security
+  adminer:
+    image: adminer
+    container_name: vyom-lms-adminer-prod
+    ports:
+      - "8081:8080"
+    depends_on:
+      - mysql
+    networks:
+      - vyom-network-prod
+    environment:
+      ADMINER_DEFAULT_SERVER: mysql
+    restart: unless-stopped
+
+volumes:
+  mysql_data_prod:
+    driver: local
+  redis_data_prod:
+    driver: local
+
+networks:
+  vyom-network-prod:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

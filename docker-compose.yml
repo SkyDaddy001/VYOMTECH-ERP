@@ -1,20 +1,20 @@
 services:
-  # Frontend - Next.js
-  frontend:
-    build:
-      context: .
-      dockerfile: Dockerfile.frontend
-    container_name: vyom-lms-frontend
-    environment:
-      NODE_ENV: production
-      NEXT_PUBLIC_API_URL: http://api:8080/api/v1
-    ports:
-      - "3000:3000"
-    depends_on:
-      - api
-    networks:
-      - vyom-network
-    restart: unless-stopped
+  # Frontend - Next.js (DISABLED FOR TESTING)
+  # frontend:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile.frontend
+  #   container_name: vyom-lms-frontend
+  #   environment:
+  #     NODE_ENV: production
+  #     NEXT_PUBLIC_API_URL: http://api:8080/api/v1
+  #   ports:
+  #     - "3000:3000"
+  #   depends_on:
+  #     - api
+  #   networks:
+  #     - vyom-network
+  #   restart: unless-stopped
 
   # MySQL Database
   mysql:
@@ -26,7 +26,7 @@ services:
       MYSQL_USER: vyom
       MYSQL_PASSWORD: vyom123
     ports:
-      - "3306:3306"
+      - "3307:3306"
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:
@@ -36,20 +36,20 @@ services:
     networks:
       - vyom-network
 
-  # Redis Cache
-  redis:
-    image: redis:7-alpine
-    container_name: vyom-lms-redis
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      timeout: 5s
-      retries: 10
-    networks:
-      - vyom-network
+  # Redis Cache (DISABLED FOR WINDOWS TESTING)
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: vyom-lms-redis
+  #   ports:
+  #     - "6380:6379"
+  #   volumes:
+  #     - redis_data:/data
+  #   healthcheck:
+  #     test: ["CMD", "redis-cli", "ping"]
+  #     timeout: 5s
+  #     retries: 10
+  #   networks:
+  #     - vyom-network
 
   # API Server - Production
   api:
@@ -73,8 +73,6 @@ services:
       - "8080:8080"
     depends_on:
       mysql:
-        condition: service_healthy
-      redis:
         condition: service_healthy
     networks:
       - vyom-network

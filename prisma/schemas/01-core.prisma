@@ -44,7 +44,9 @@ model Tenant {
   providerConnections  ProviderConnection[]
   agentNotes           AgentNote[]
   agentPerformanceMetrics AgentPerformanceMetric[]
-
+  // User billing & tracking
+  userCount            TenantUserCount?
+  
   @@index([domain])
   @@index([status])
   @@map("tenant")
@@ -1641,6 +1643,134 @@ model AttributionAuditLog {
 }
 
 // ============================================================
+// USER COUNT & BILLING TRACKING
+// ============================================================
+// Purpose: Track active users, enforce seat limits, and support user-based billing
+// Tables: 3
+
+/// Tenant User Count Summary (Real-time cache)
+/// Updated whenever a user is created/deleted or their status changes
+model TenantUserCount {
+  id                      String    @id @db.Char(36)
+  tenantId                String    @unique @db.Char(36) @map("tenant_id")
+  
+  // Current User Counts
+  totalActiveUsers        Int       @default(0) @map("total_active_users")
+  totalInactiveUsers      Int       @default(0) @map("total_inactive_users")
+  totalSuspendedUsers     Int       @default(0) @map("total_suspended_users")
+  totalUsers              Int       @default(0) @map("total_users") // Sum of all
+  
+  // Limits & Overages
+  maxUsersAllowed         Int       @default(100) @map("max_users_allowed")
+  isOverLimit             Boolean   @default(false) @map("is_over_limit")
+  overageCount            Int       @default(0) @map("overage_count") // totalUsers - maxUsersAllowed
+  
+  // Seat Utilization
+  seatUtilization         Decimal   @default(0) @db.Decimal(5, 2) @map("seat_utilization") // percentage
+  seatsRemaining          Int       @default(0) @map("seats_remaining")
+  
+  // User Status Breakdown
+  adminUsers              Int       @default(0) @map("admin_users")
+  managerUsers            Int       @default(0) @map("manager_users")
+  standardUsers           Int       @default(0) @map("standard_users")
+  guestUsers              Int       @default(0) @map("guest_users")
+  
+  // Timestamps
+  lastCountedAt           DateTime  @map("last_counted_at")
+  lastOverageAlertSent    DateTime? @map("last_overage_alert_sent")
+  createdAt               DateTime  @default(now()) @map("created_at")
+  updatedAt               DateTime  @updatedAt @map("updated_at")
+  
+  // Relations
+  tenant                  Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userCountHistory        TenantUserCountHistory[]
+  
+  @@index([tenantId])
+  @@index([isOverLimit])
+  @@map("tenant_user_count")
+}
+
+/// User Count History (Audit trail for billing/compliance)
+/// Daily snapshot of user counts for tracking growth and billing
+model TenantUserCountHistory {
+  id                      String    @id @db.Char(36)
+  tenantId                String    @db.Char(36) @map("tenant_id")
+  
+  userCountId             String    @db.Char(36) @map("user_count_id")
+  userCount               TenantUserCount @relation(fields: [userCountId], references: [id], onDelete: Cascade)
+  
+  // Daily Snapshot
+  snapshotDate            DateTime  @db.Date @map("snapshot_date")
+  
+  // User Counts at snapshot time
+  activeUserCount         Int       @map("active_user_count")
+  inactiveUserCount       Int       @map("inactive_user_count")
+  suspendedUserCount      Int       @map("suspended_user_count")
+  totalUserCount          Int       @map("total_user_count")
+  
+  // Billing Metrics
+  billableUserCount       Int       @map("billable_user_count") // Users billable this period
+  peakConcurrentUsers     Int?      @map("peak_concurrent_users") // Max users online same time
+  
+  // Changes from previous day
+  newUsersAdded           Int       @default(0) @map("new_users_added")
+  usersRemoved            Int       @default(0) @map("users_removed")
+  usersReactivated        Int       @default(0) @map("users_reactivated")
+  usersSuspended          Int       @default(0) @map("users_suspended")
+  
+  // Tier/Plan Info
+  currentPlan             String?   @db.VarChar(100) @map("current_plan") // "starter", "pro", "enterprise", etc
+  maxAllowedUsers         Int       @map("max_allowed_users")
+  isOverLimit             Boolean   @default(false) @map("is_over_limit")
+  overageChargeApplied    Boolean   @default(false) @map("overage_charge_applied")
+  
+  // Metadata
+  recordedAt              DateTime  @default(now()) @map("recorded_at")
+  recordedBy              String?   @db.VarChar(100) @map("recorded_by") // "system", "manual", etc
+  notes                   String?   @db.Text
+  
+  @@unique([userCountId, snapshotDate])
+  @@index([tenantId])
+  @@index([snapshotDate])
+  @@map("tenant_user_count_history")
+}
+
+/// User Activity Log (for tracking active users)
+/// Records user login/logout for seat/concurrent user tracking
+model UserActivityLog {
+  id                      String    @id @db.Char(36)
+  userId                  String    @db.Char(36) @map("user_id")
+  tenantId                String    @db.Char(36) @map("tenant_id")
+  
+  // Activity Type
+  activityType            String    @db.VarChar(50) @map("activity_type") // "LOGIN", "LOGOUT", "SESSION_START", "SESSION_END", "IDLE", "ACTIVE"
+  
+  // Timing
+  activityTimestamp       DateTime  @map("activity_timestamp")
+  sessionDurationSeconds  Int?      @map("session_duration_seconds")
+  
+  // Session Info
+  sessionId               String?   @db.VarChar(255) @map("session_id")
+  ipAddress               String?   @db.VarChar(45) @map("ip_address")
+  userAgent               String?   @db.Text @map("user_agent")
+  deviceType              String?   @db.VarChar(50) @map("device_type") // "DESKTOP", "MOBILE", "TABLET"
+  
+  // Location (if available)
+  country                 String?   @db.VarChar(100)
+  state                   String?   @db.VarChar(100)
+  city                    String?   @db.VarChar(100)
+  
+  // Metadata
+  createdAt               DateTime  @default(now()) @map("created_at")
+  
+  @@index([userId])
+  @@index([tenantId])
+  @@index([activityTimestamp])
+  @@index([activityType])
+  @@map("user_activity_log")
+}
+
+// ============================================================
 // RELATIONS TO EXTEND EXISTING MODELS
 // ============================================================
 // These relations will be added to existing models in other schemas:
@@ -1650,7 +1780,9 @@ model AttributionAuditLog {
 //   - attributionSnapshots: LeadAttributionSnapshot[]
 //
 // Tenant (already has relation through tenant_id)
+//   - userCount: TenantUserCount?
 //
 // User (for audit logs):
 //   - attributionAuditLogs: AttributionAuditLog[]
+//   - activityLogs: UserActivityLog[]
 

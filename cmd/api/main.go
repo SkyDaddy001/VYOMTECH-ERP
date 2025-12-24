@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
@@ -22,6 +23,37 @@ func main() {
 
 	// Health check endpoint
 	router.GET("/health", healthCheck)
+
+	// Register mock OAuth routes for development/testing
+	RegisterMockOAuthRoutes(router)
+
+	// Register test data routes for development/testing
+	RegisterTestDataRoutes(router)
+
+	// Register Phase 8: API Endpoints
+	registerGoogleAdsRoutes(router)
+	registerMetaAdsRoutes(router)
+	registerROIRoutes(router)
+
+	// Register Phase 8: Test & Documentation Routes
+	registerPhase8TestRoutes(router)
+
+	// ============================================================
+	// PHASE 10: Initialize Sync Job Scheduler
+	// ============================================================
+	ctx := context.Background()
+	scheduler = initSyncJobScheduler()
+
+	// Register Phase 10 sync jobs
+	if err := initSyncJobs(scheduler); err != nil {
+		log.Printf("Failed to initialize sync jobs: %v", err)
+	}
+
+	// Start scheduler
+	scheduler.Start(ctx)
+
+	// Register Phase 10: Sync Status Endpoints
+	registerPhase10SyncRoutes(router)
 
 	// API v1 routes
 	v1 := router.Group("/api/v1")
@@ -46,6 +78,20 @@ func main() {
 			protected.GET("/users/:id", getUser)
 			protected.PUT("/users/:id", updateUser)
 			protected.DELETE("/users/:id", deleteUser)
+
+			// User Count & Seat Management routes
+			protected.GET("/tenant/users/count", getTenantUserCount)
+			protected.GET("/tenant/users/breakdown", getTenantUserBreakdown)
+			protected.GET("/tenant/users/history", getUserCountHistory)
+			protected.GET("/tenant/users/active", getActiveUsersRealtime)
+			protected.GET("/tenant/users/seat-available", checkSeatAvailability)
+			protected.GET("/tenant/users/list", listTenantUsers)
+			protected.GET("/users/:userId/activity", getUserActivity)
+			protected.GET("/tenant/users/stats", getUserCountStats)
+			protected.GET("/tenant/users/report", exportUserCountReport)
+			protected.PATCH("/tenant/users/limit", updateTenantUserLimit)
+			protected.POST("/users/activity", recordUserActivity)
+			protected.GET("/tenant/billing/overage-check", checkBillingOverage)
 
 			// Call Center routes
 			protected.GET("/call-centers", listCallCenters)

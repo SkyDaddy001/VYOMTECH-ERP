@@ -1,0 +1,449 @@
+{
+  "info": {
+    "name": "VYOM ERP - OAuth Testing & Development",
+    "description": "Complete OAuth and API testing collection for development without real authentication",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "vyom-oauth-testing"
+  },
+  "item": [
+    {
+      "name": "Mock OAuth - Google Ads",
+      "item": [
+        {
+          "name": "1. Get Test Credentials",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/mock/oauth/test-data",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["mock", "oauth", "test-data"]
+            }
+          }
+        },
+        {
+          "name": "2. Authorize (Get Code)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"client_id\": \"mock-google-client-id\",\n  \"redirect_uri\": \"http://localhost:3000/oauth/callback/google\",\n  \"scope\": \"https://www.googleapis.com/auth/adwords\",\n  \"state\": \"random_state_google_{{$timestamp}}\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/mock/oauth/google/authorize",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["mock", "oauth", "google", "authorize"]
+            }
+          }
+        },
+        {
+          "name": "3. Exchange Code for Tokens",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"auth_a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n  \"client_id\": \"mock-google-client-id\",\n  \"client_secret\": \"mock-google-client-secret\",\n  \"redirect_uri\": \"http://localhost:3000/oauth/callback/google\",\n  \"grant_type\": \"authorization_code\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/mock/oauth/google/token",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["mock", "oauth", "google", "token"]
+            }
+          }
+        },
+        {
+          "name": "4. Validate Token",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/mock/oauth/google/validate?access_token=access_f9e8d7c6-b5a4-3210-fedc-ba9876543210",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["mock", "oauth", "google", "validate"],
+              "query": [
+                {
+                  "key": "access_token",
+                  "value": "access_f9e8d7c6-b5a4-3210-fedc-ba9876543210"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "5. Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"refresh_9876543210-fedc-ba98-7654-321f9e8d7c6b5\",\n  \"client_id\": \"mock-google-client-id\",\n  \"client_secret\": \"mock-google-client-secret\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/mock/oauth/google/refresh",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["mock", "oauth", "google", "refresh"]
+            }
+          }
+        },
+        {
+          "name": "6. Revoke Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"access_token\": \"access_f9e8d7c6-b5a4-3210-fedc-ba9876543210\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/mock/oauth/google/revoke",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["mock", "oauth", "google", "revoke"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Mock OAuth - Meta Ads",
+      "item": [
+        {
+          "name": "1. Authorize (Get Code)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"client_id\": \"mock-meta-client-id\",\n  \"redirect_uri\": \"http://localhost:3000/oauth/callback/meta\",\n  \"scope\": \"ads_management,business_management\",\n  \"state\": \"random_state_meta_{{$timestamp}}\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/mock/oauth/meta/authorize",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["mock", "oauth", "meta", "authorize"]
+            }
+          }
+        },
+        {
+          "name": "2. Exchange Code for Tokens",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"auth_a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n  \"client_id\": \"mock-meta-client-id\",\n  \"client_secret\": \"mock-meta-client-secret\",\n  \"redirect_uri\": \"http://localhost:3000/oauth/callback/meta\",\n  \"grant_type\": \"authorization_code\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/mock/oauth/meta/token",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["mock", "oauth", "meta", "token"]
+            }
+          }
+        },
+        {
+          "name": "3. Validate Token",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/mock/oauth/meta/validate?access_token=access_f9e8d7c6-b5a4-3210-fedc-ba9876543210",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["mock", "oauth", "meta", "validate"],
+              "query": [
+                {
+                  "key": "access_token",
+                  "value": "access_f9e8d7c6-b5a4-3210-fedc-ba9876543210"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "4. Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"refresh_9876543210-fedc-ba98-7654-321f9e8d7c6b5\",\n  \"client_id\": \"mock-meta-client-id\",\n  \"client_secret\": \"mock-meta-client-secret\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/mock/oauth/meta/refresh",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["mock", "oauth", "meta", "refresh"]
+            }
+          }
+        },
+        {
+          "name": "5. Revoke Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"access_token\": \"access_f9e8d7c6-b5a4-3210-fedc-ba9876543210\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/mock/oauth/meta/revoke",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["mock", "oauth", "meta", "revoke"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Test Data Endpoints",
+      "item": [
+        {
+          "name": "Get All Available Test Data",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/test/data",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["test", "data"]
+            }
+          }
+        },
+        {
+          "name": "Google Ads - Account Connection",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/test/data/google-ads/account_connection",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["test", "data", "google-ads", "account_connection"]
+            }
+          }
+        },
+        {
+          "name": "Google Ads - Campaign",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/test/data/google-ads/campaign",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["test", "data", "google-ads", "campaign"]
+            }
+          }
+        },
+        {
+          "name": "Google Ads - Metrics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/test/data/google-ads/metrics",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["test", "data", "google-ads", "metrics"]
+            }
+          }
+        },
+        {
+          "name": "Meta Ads - Account Connection",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/test/data/meta-ads/account_connection",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["test", "data", "meta-ads", "account_connection"]
+            }
+          }
+        },
+        {
+          "name": "Meta Ads - Campaign",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/test/data/meta-ads/campaign",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["test", "data", "meta-ads", "campaign"]
+            }
+          }
+        },
+        {
+          "name": "ROI - Daily ROI",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/test/data/roi/daily_roi",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["test", "data", "roi", "daily_roi"]
+            }
+          }
+        },
+        {
+          "name": "Attribution - Event",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/test/data/attribution/event",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["test", "data", "attribution", "event"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Error Handling Tests",
+      "item": [
+        {
+          "name": "Invalid Client ID",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"client_id\": \"wrong-client-id\",\n  \"redirect_uri\": \"http://localhost:3000/oauth/callback/google\",\n  \"scope\": \"https://www.googleapis.com/auth/adwords\",\n  \"state\": \"test_state\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/mock/oauth/google/authorize",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["mock", "oauth", "google", "authorize"]
+            }
+          }
+        },
+        {
+          "name": "Invalid Redirect URI",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"client_id\": \"mock-google-client-id\",\n  \"redirect_uri\": \"http://wrong-uri.com\",\n  \"scope\": \"https://www.googleapis.com/auth/adwords\",\n  \"state\": \"test_state\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/mock/oauth/google/authorize",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["mock", "oauth", "google", "authorize"]
+            }
+          }
+        },
+        {
+          "name": "Invalid Authorization Code",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"invalid_code\",\n  \"client_id\": \"mock-google-client-id\",\n  \"client_secret\": \"mock-google-client-secret\",\n  \"redirect_uri\": \"http://localhost:3000/oauth/callback/google\",\n  \"grant_type\": \"authorization_code\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/mock/oauth/google/token",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["mock", "oauth", "google", "token"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
