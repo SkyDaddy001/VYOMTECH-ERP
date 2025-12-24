@@ -10,9 +10,9 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- AUDIT LOG TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `audit_log` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(26) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
-    `user_id` INT NOT NULL,
+    `user_id` CHAR(36),
     `action` VARCHAR(100) NOT NULL,
     `resource_id` VARCHAR(36),
     `resource_type` VARCHAR(50),
@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS `audit_log` (
 -- AUDIT SUMMARY TABLE (for dashboards)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `audit_summary` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `date` DATE NOT NULL,
     `total_actions` INT DEFAULT 0,

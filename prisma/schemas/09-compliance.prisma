@@ -1,0 +1,118 @@
+// ============================================================
+// COMPLIANCE & TAX MODULE
+// ============================================================
+// Migrations: 011_compliance_tax.sql
+// Purpose: Tax Calculation, Compliance Tracking, Audit Trail, Regulatory Records
+// Tables: 6+
+
+model ComplianceChecklist {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  checklistName     String   @db.VarChar(255) @map("checklist_name")
+  description       String?  @db.Text
+  frequency         String   @db.VarChar(50)
+  dueDate           DateTime @map("due_date") @db.Date
+  completionDate    DateTime? @map("completion_date") @db.Date
+  status            String   @default("pending") @db.VarChar(50)
+  completedBy       String?  @db.VarChar(36) @map("completed_by")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@index([status])
+  @@map("compliance_checklist")
+}
+
+model TaxCalculation {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  transactionType   String   @db.VarChar(100) @map("transaction_type")
+  transactionId     String?  @db.VarChar(36) @map("transaction_id")
+  taxType           String   @db.VarChar(50) @map("tax_type")
+  taxableAmount     Decimal  @db.Decimal(15, 2) @map("taxable_amount")
+  taxRate           Decimal  @db.Decimal(5, 2) @map("tax_rate")
+  taxAmount         Decimal  @db.Decimal(15, 2) @map("tax_amount")
+  calculatedDate    DateTime @map("calculated_date") @db.Date
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@index([transactionType])
+  @@map("tax_calculation")
+}
+
+model AuditTrail {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  auditType         String   @db.VarChar(100) @map("audit_type")
+  entityType        String   @db.VarChar(100) @map("entity_type")
+  entityId          String?  @db.VarChar(36) @map("entity_id")
+  auditDate         DateTime @map("audit_date") @db.Date
+  findings          String?  @db.LongText
+  status            String   @db.VarChar(50)
+  auditor           String?  @db.VarChar(255)
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@index([auditType])
+  @@map("audit_trail")
+}
+
+model RegulatoryRequirement {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  requirementName   String   @db.VarChar(255) @map("requirement_name")
+  requirementType   String   @db.VarChar(100) @map("requirement_type")
+  jurisdiction      String   @db.VarChar(100)
+  dueDate           DateTime @map("due_date") @db.Date
+  status            String   @default("pending") @db.VarChar(50)
+  ownerDepartment   String?  @db.VarChar(100) @map("owner_department")
+  description       String?  @db.Text
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@index([status])
+  @@map("regulatory_requirement")
+}
+
+model ComplianceDocument {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  complianceType    String   @db.VarChar(100) @map("compliance_type")
+  documentName      String   @db.VarChar(255) @map("document_name")
+  documentPath      String?  @db.VarChar(500) @map("document_path")
+  uploadDate        DateTime @map("upload_date") @db.Date
+  expiryDate        DateTime? @map("expiry_date") @db.Date
+  uploadedBy        String?  @db.VarChar(36) @map("uploaded_by")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@map("compliance_document")
+}
+
+model ComplianceNotification {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  notificationType  String   @db.VarChar(100) @map("notification_type")
+  subject           String   @db.VarChar(255)
+  message           String?  @db.LongText
+  dueDate           DateTime @map("due_date") @db.Date
+  recipientEmail    String?  @db.VarChar(255) @map("recipient_email")
+  sentDate          DateTime? @map("sent_date")
+  status            String   @default("pending") @db.VarChar(50)
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@index([status])
+  @@map("compliance_notification")
+}

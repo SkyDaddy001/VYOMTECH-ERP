@@ -7,9 +7,9 @@
 -- documentation for multiple property owners.
 
 CREATE TABLE IF NOT EXISTS joint_applicant (
-  id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  tenant_id BIGINT NOT NULL,
-  booking_id BIGINT NOT NULL,
+  id CHAR(26) PRIMARY KEY,
+  tenant_id VARCHAR(36) NOT NULL,
+  booking_id VARCHAR(36) NOT NULL,
   
   -- Primary Applicant Flag
   is_primary_applicant BOOLEAN DEFAULT FALSE,
@@ -64,9 +64,9 @@ CREATE TABLE IF NOT EXISTS joint_applicant (
   legal_notice_acknowledged BOOLEAN DEFAULT FALSE,
   
   -- Metadata
-  created_by BIGINT,
+  created_by CHAR(36),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_by BIGINT,
+  updated_by CHAR(36),
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   deleted_at TIMESTAMP NULL,
   
@@ -82,9 +82,9 @@ CREATE TABLE IF NOT EXISTS joint_applicant (
 -- Joint Applicant Document Table
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS joint_applicant_document (
-  id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  tenant_id BIGINT NOT NULL,
-  joint_applicant_id BIGINT NOT NULL,
+  id CHAR(26) PRIMARY KEY,
+  tenant_id VARCHAR(36) NOT NULL,
+  joint_applicant_id VARCHAR(36) NOT NULL,
   
   -- Document Details
   document_type VARCHAR(100), -- aadhar_copy, pan_copy, income_proof, bank_statement, etc.
@@ -103,9 +103,9 @@ CREATE TABLE IF NOT EXISTS joint_applicant_document (
   verification_notes TEXT,
   
   -- Metadata
-  created_by BIGINT,
+  created_by CHAR(36),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_by BIGINT,
+  updated_by CHAR(36),
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   deleted_at TIMESTAMP NULL,
   
@@ -121,9 +121,9 @@ CREATE TABLE IF NOT EXISTS joint_applicant_document (
 -- Co-Ownership Agreement Table
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS co_ownership_agreement (
-  id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  tenant_id BIGINT NOT NULL,
-  booking_id BIGINT NOT NULL,
+  id CHAR(26) PRIMARY KEY,
+  tenant_id VARCHAR(36) NOT NULL,
+  booking_id VARCHAR(36) NOT NULL,
   
   -- Agreement Details
   agreement_reference_no VARCHAR(100) UNIQUE NOT NULL,
@@ -156,9 +156,9 @@ CREATE TABLE IF NOT EXISTS co_ownership_agreement (
   registration_certificate_url VARCHAR(500),
   
   -- Metadata
-  created_by BIGINT,
+  created_by CHAR(36),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_by BIGINT,
+  updated_by CHAR(36),
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   deleted_at TIMESTAMP NULL,
   
@@ -173,10 +173,10 @@ CREATE TABLE IF NOT EXISTS co_ownership_agreement (
 -- Joint Applicant Signatory (Legal Signatories Table)
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS co_ownership_signatory (
-  id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  tenant_id BIGINT NOT NULL,
-  co_ownership_agreement_id BIGINT NOT NULL,
-  joint_applicant_id BIGINT NOT NULL,
+  id CHAR(26) PRIMARY KEY,
+  tenant_id VARCHAR(36) NOT NULL,
+  co_ownership_agreement_id VARCHAR(36) NOT NULL,
+  joint_applicant_id VARCHAR(36) NOT NULL,
   
   -- Signatory Details
   signatory_name VARCHAR(255) NOT NULL,
@@ -201,9 +201,9 @@ CREATE TABLE IF NOT EXISTS co_ownership_signatory (
   witness_signature_url VARCHAR(500),
   
   -- Metadata
-  created_by BIGINT,
+  created_by CHAR(36),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_by BIGINT,
+  updated_by CHAR(36),
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   deleted_at TIMESTAMP NULL,
   
@@ -220,9 +220,9 @@ CREATE TABLE IF NOT EXISTS co_ownership_signatory (
 -- Joint Applicant Income Verification Table
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS joint_applicant_income_verification (
-  id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  tenant_id BIGINT NOT NULL,
-  joint_applicant_id BIGINT NOT NULL,
+  id CHAR(26) PRIMARY KEY,
+  tenant_id VARCHAR(36) NOT NULL,
+  joint_applicant_id VARCHAR(36) NOT NULL,
   
   -- Income Details
   annual_income DECIMAL(12,2),
@@ -261,13 +261,13 @@ CREATE TABLE IF NOT EXISTS joint_applicant_income_verification (
   -- Verification Status
   verification_status VARCHAR(50), -- pending, verified, rejected, expired
   verification_date TIMESTAMP NULL,
-  verifier_id BIGINT,
+  verifier_id CHAR(26),
   verification_notes TEXT,
   
   -- Metadata
-  created_by BIGINT,
+  created_by CHAR(36),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_by BIGINT,
+  updated_by CHAR(36),
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   deleted_at TIMESTAMP NULL,
   
@@ -283,9 +283,9 @@ CREATE TABLE IF NOT EXISTS joint_applicant_income_verification (
 -- Joint Applicant Liability Tracking Table
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS joint_applicant_liability (
-  id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  tenant_id BIGINT NOT NULL,
-  joint_applicant_id BIGINT NOT NULL,
+  id CHAR(26) PRIMARY KEY,
+  tenant_id VARCHAR(36) NOT NULL,
+  joint_applicant_id VARCHAR(36) NOT NULL,
   
   -- Liability Details
   liability_type ENUM('loan', 'credit_card', 'mortgage', 'personal_loan', 'business_loan'),
@@ -304,9 +304,9 @@ CREATE TABLE IF NOT EXISTS joint_applicant_liability (
   document_url VARCHAR(500),
   
   -- Metadata
-  created_by BIGINT,
+  created_by CHAR(36),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_by BIGINT,
+  updated_by CHAR(36),
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   deleted_at TIMESTAMP NULL,
   
@@ -321,9 +321,9 @@ CREATE TABLE IF NOT EXISTS joint_applicant_liability (
 -- Audit Log for Joint Applicants
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS joint_applicant_audit_log (
-  id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  tenant_id BIGINT NOT NULL,
-  joint_applicant_id BIGINT NOT NULL,
+  id CHAR(26) PRIMARY KEY,
+  tenant_id VARCHAR(36) NOT NULL,
+  joint_applicant_id VARCHAR(36) NOT NULL,
   
   -- Audit Details
   action VARCHAR(50), -- created, updated, verified, rejected, etc.
@@ -333,7 +333,7 @@ CREATE TABLE IF NOT EXISTS joint_applicant_audit_log (
   new_value TEXT,
   
   -- User Information
-  user_id BIGINT,
+  user_id CHAR(26),
   user_email VARCHAR(255),
   ip_address VARCHAR(50),
   
@@ -346,3 +346,8 @@ CREATE TABLE IF NOT EXISTS joint_applicant_audit_log (
   INDEX idx_action (action),
   INDEX idx_created_at (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+
+
+

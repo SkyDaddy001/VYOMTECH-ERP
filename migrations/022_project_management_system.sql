@@ -9,7 +9,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- NEW TABLES FOR PROJECT MANAGEMENT
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `property_unit_area_statement` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `project_id` VARCHAR(36) NOT NULL,
     `block_id` VARCHAR(36),
@@ -78,7 +78,7 @@ COMMENT='Area Statement: Complete area breakup for units (carpet, plinth, SBUA, 
 -- PROJECT COST CONFIGURATION (NEW TABLE - COST STRUCTURE SETUP)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `project_cost_configuration` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `project_id` VARCHAR(36) NOT NULL,
     `config_name` VARCHAR(100) NOT NULL COMMENT 'e.g., CMWSSB, Water Tax, Electricity Deposit, etc.',
@@ -104,7 +104,7 @@ COMMENT='Project-wise cost charge configuration for flexible other charges';
 -- ENHANCED CUSTOMER PROFILE (NEW TABLE - EXTENDS BOOKING CONCEPT)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `property_customer_profile` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `customer_code` VARCHAR(50) NOT NULL,
     `unit_id` VARCHAR(36),
@@ -233,7 +233,7 @@ COMMENT='Enhanced customer profile with comprehensive personal, financial, emplo
 -- CUSTOMER UNIT LINK (LINKS CUSTOMER TO PROPERTY UNIT AND BOOKING)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `property_customer_unit_link` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `customer_id` VARCHAR(36) NOT NULL,
     `unit_id` VARCHAR(36) NOT NULL,
@@ -264,7 +264,7 @@ COMMENT='Link customers to units and bookings';
 -- Creating a more detailed payment receipt table for comprehensive tracking
 
 CREATE TABLE IF NOT EXISTS `property_payment_receipt` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `customer_id` VARCHAR(36) NOT NULL,
     `customer_name` VARCHAR(200),
@@ -309,7 +309,7 @@ COMMENT='Payment receipts with detailed transaction tracking';
 -- PROJECT CONSTRUCTION MILESTONES (NEW TABLE)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `property_project_milestone` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `project_id` VARCHAR(36) NOT NULL,
     `block_id` VARCHAR(36),
@@ -346,7 +346,7 @@ COMMENT='Construction project milestones and phases';
 -- PROJECT ACTIVITY LOG (NEW TABLE)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `property_project_activity` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `project_id` VARCHAR(36) NOT NULL,
     `milestone_id` VARCHAR(36),
@@ -377,7 +377,7 @@ COMMENT='Project activity and work logs';
 -- PROJECT DOCUMENTS (NEW TABLE)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `property_project_document` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `project_id` VARCHAR(36) NOT NULL,
     `document_type` VARCHAR(50) NOT NULL COMMENT 'APPROVAL, NOC, PLAN, SPECIFICATION, COMPLIANCE, CERTIFICATE, INSURANCE, AGREEMENT, TENDER, CONTRACT',
@@ -408,7 +408,7 @@ COMMENT='Project approvals and compliance documents';
 -- PROJECT SUMMARY DASHBOARD (NEW TABLE)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `property_project_summary` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `project_id` VARCHAR(36) NOT NULL,
     `summary_date` DATE,
@@ -444,7 +444,7 @@ COMMENT='Project KPI and financial summary dashboard';
 -- Tracks banker's sanction, disbursement, and collection details per unit
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `property_bank_financing` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `project_id` VARCHAR(36) NOT NULL,
     `block_id` VARCHAR(36),
@@ -503,7 +503,7 @@ COMMENT='Bank financing details: sanction, disbursement, and collection tracking
 -- Tracks expected vs actual disbursements linked to payment milestones
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `property_disbursement_schedule` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `financing_id` VARCHAR(36) NOT NULL,
     `unit_id` VARCHAR(36) NOT NULL,
@@ -549,7 +549,7 @@ COMMENT='Detailed disbursement schedule linked to project milestones';
 -- Maps installment stages to percentage of cost and collections
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `property_payment_stage` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `project_id` VARCHAR(36) NOT NULL,
     `unit_id` VARCHAR(36) NOT NULL,

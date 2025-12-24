@@ -1,0 +1,202 @@
+// ============================================================
+// ANALYTICS & REPORTING MODULE
+// ============================================================
+// Purpose: Dashboards, KPIs, Business Intelligence, Reports
+// Tables: 15
+
+model Dashboard {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  dashboardName     String   @db.VarChar(255) @map("dashboard_name")
+  dashboardType     String   @db.VarChar(100) @map("dashboard_type")
+  createdBy         String   @db.VarChar(36) @map("created_by")
+  isPublic          Boolean  @default(false) @map("is_public")
+  refreshInterval   Int?     @map("refresh_interval")
+  status            String   @default("active") @db.VarChar(50)
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+  widgets           DashboardWidget[]
+
+  @@index([tenantId])
+  @@map("dashboard")
+}
+
+model DashboardWidget {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  dashboardId       String   @db.VarChar(36) @map("dashboard_id")
+  widgetName        String   @db.VarChar(255) @map("widget_name")
+  widgetType        String   @db.VarChar(100) @map("widget_type")
+  position          Int
+  size              String   @db.VarChar(50)
+  configuration    String?  @db.LongText
+  refreshInterval   Int?     @map("refresh_interval")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+  dashboard         Dashboard @relation(fields: [dashboardId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("dashboard_widget")
+}
+
+model KPIDefinition {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  kpiCode           String   @unique @db.VarChar(100) @map("kpi_code")
+  kpiName           String   @db.VarChar(255) @map("kpi_name")
+  kpiCategory       String   @db.VarChar(100) @map("kpi_category")
+  description       String?  @db.Text
+  formula           String   @db.LongText
+  targetValue       Decimal? @db.Decimal(15, 4) @map("target_value")
+  minValue          Decimal? @db.Decimal(15, 4) @map("min_value")
+  maxValue          Decimal? @db.Decimal(15, 4) @map("max_value")
+  unit              String   @db.VarChar(50)
+  frequency         String   @db.VarChar(50)
+  owner             String?  @db.VarChar(36)
+  status            String   @default("active") @db.VarChar(50)
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+  values            KPIValue[]
+
+  @@index([tenantId])
+  @@map("kpi_definition")
+}
+
+model KPIValue {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  kpiId             String   @db.VarChar(36) @map("kpi_id")
+  valueDate         DateTime @map("value_date") @db.Date
+  actualValue       Decimal  @db.Decimal(15, 4) @map("actual_value")
+  targetValue       Decimal? @db.Decimal(15, 4) @map("target_value")
+  variance          Decimal? @db.Decimal(15, 4)
+  status            String   @default("normal") @db.VarChar(50)
+  trend             String?  @db.VarChar(50)
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+  kpi               KPIDefinition @relation(fields: [kpiId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("kpi_value")
+}
+
+model Report {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  reportCode        String   @unique @db.VarChar(100) @map("report_code")
+  reportName        String   @db.VarChar(255) @map("report_name")
+  reportType        String   @db.VarChar(100) @map("report_type")
+  description       String?  @db.Text
+  query             String   @db.LongText
+  schedule          String?  @db.VarChar(100)
+  lastRunDate       DateTime? @map("last_run_date")
+  nextRunDate       DateTime? @map("next_run_date")
+  owner             String?  @db.VarChar(36)
+  isPublished       Boolean  @default(false) @map("is_published")
+  status            String   @default("active") @db.VarChar(50)
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+  executions        ReportExecution[]
+
+  @@index([tenantId])
+  @@map("report")
+}
+
+model ReportExecution {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  reportId          String   @db.VarChar(36) @map("report_id")
+  executedBy        String   @db.VarChar(36) @map("executed_by")
+  executionDate     DateTime @map("execution_date") @db.DateTime
+  executionTime     Int      @map("execution_time")
+  recordCount       Int      @default(0) @map("record_count")
+  outputFile        String?  @db.VarChar(255) @map("output_file")
+  status            String   @db.VarChar(50)
+  errorMessage      String?  @db.Text @map("error_message")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+  report            Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("report_execution")
+}
+
+model AnalyticsDataCache {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  entityType        String   @db.VarChar(100) @map("entity_type")
+  period            String   @db.VarChar(50)
+  dimensionValues   String?  @db.LongText @map("dimension_values")
+  metricName        String   @db.VarChar(255) @map("metric_name")
+  metricValue       Decimal  @db.Decimal(15, 4) @map("metric_value")
+  lastUpdated       DateTime @map("last_updated") @db.DateTime
+  expiryDate        DateTime @map("expiry_date") @db.Date
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@map("analytics_data_cache")
+}
+
+model CustomReport {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  reportName        String   @db.VarChar(255) @map("report_name")
+  createdBy         String   @db.VarChar(36) @map("created_by")
+  columns           String   @db.LongText
+  filters           String?  @db.LongText
+  groupBy           String?  @db.LongText @map("group_by")
+  orderBy           String?  @db.LongText @map("order_by")
+  format            String   @default("pdf") @db.VarChar(50)
+  isPublic          Boolean  @default(false) @map("is_public")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@map("custom_report")
+}
+
+model ReportSchedule {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  reportId          String   @db.VarChar(36) @map("report_id")
+  frequency         String   @db.VarChar(50)
+  dayOfWeek         Int?     @map("day_of_week")
+  dayOfMonth        Int?     @map("day_of_month")
+  hour              Int
+  minute            Int
+  emailRecipients   String?  @db.Text @map("email_recipients")
+  isActive          Boolean  @default(true) @map("is_active")
+  nextRunDate       DateTime @map("next_run_date") @db.DateTime
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@map("report_schedule")
+}
+
+model AnalyticsEvent {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  eventType         String   @db.VarChar(100) @map("event_type")
+  entityType        String   @db.VarChar(100) @map("entity_type")
+  entityId          String?  @db.VarChar(36) @map("entity_id")
+  userId            String?  @db.VarChar(36) @map("user_id")
+  eventData         String?  @db.LongText @map("event_data")
+  timestamp         DateTime @db.DateTime
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@map("analytics_event")
+}

@@ -1,0 +1,406 @@
+// ============================================================
+// INVENTORY MANAGEMENT MODULE
+// ============================================================
+// Migration: 018_inventory_management.sql
+// Purpose: Warehouse, Stock, Movements, Valuation, Transfers
+// Tables: 16
+
+model Warehouse {
+  id                      String   @id @db.Char(36)
+  tenantId                String   @db.VarChar(36) @map("tenant_id")
+  warehouseCode           String   @db.VarChar(50) @map("warehouse_code")
+  warehouseName           String   @db.VarChar(255) @map("warehouse_name")
+  warehouseType           String?  @db.VarChar(50) @map("warehouse_type")
+  address                 String?  @db.Text
+  city                    String?  @db.VarChar(100)
+  state                   String?  @db.VarChar(100)
+  country                 String?  @db.VarChar(100)
+  postalCode              String?  @db.VarChar(20) @map("postal_code")
+  managerId               String?  @db.VarChar(36) @map("manager_id")
+  capacity                Decimal? @db.Decimal(18, 2)
+  currentUtilization      Decimal  @default(0) @db.Decimal(18, 2) @map("current_utilization")
+  isActive                Boolean  @default(true) @map("is_active")
+  glInventoryAccountId    String?  @db.VarChar(36) @map("gl_inventory_account_id")
+  createdBy               String?  @db.VarChar(36) @map("created_by")
+  createdAt               DateTime @default(now()) @map("created_at")
+  updatedAt               DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  stockLevels             StockLevel[]
+  stockMovements          StockMovement[]
+
+  @@unique([tenantId, warehouseCode])
+  @@index([tenantId])
+  @@index([warehouseCode])
+  @@index([isActive])
+  @@map("warehouse")
+}
+
+model InventoryItem {
+  id                      String   @id @db.Char(36)
+  tenantId                String   @db.VarChar(36) @map("tenant_id")
+  sku                     String   @db.VarChar(50)
+  itemName                String   @db.VarChar(255) @map("item_name")
+  itemDescription         String?  @db.Text @map("item_description")
+  itemCategory            String?  @db.VarChar(100) @map("item_category")
+  itemType                String?  @db.VarChar(50) @map("item_type")
+  unitOfMeasure           String?  @db.VarChar(20) @map("unit_of_measure")
+  reorderLevel            Decimal? @db.Decimal(18, 4) @map("reorder_level")
+  reorderQuantity         Decimal? @db.Decimal(18, 4) @map("reorder_quantity")
+  safetyStock             Decimal? @db.Decimal(18, 4) @map("safety_stock")
+  leadTimeDays            Int?     @map("lead_time_days")
+  hsnCode                 String?  @db.VarChar(50) @map("hsn_code")
+  isSerialized            Boolean  @default(false) @map("is_serialized")
+  isBatchTracked          Boolean  @default(false) @map("is_batch_tracked")
+  itemStatus              String   @default("active") @db.VarChar(50) @map("item_status")
+  glInventoryAccountId    String?  @db.VarChar(36) @map("gl_inventory_account_id")
+  glExpenseAccountId      String?  @db.VarChar(36) @map("gl_expense_account_id")
+  createdBy               String?  @db.VarChar(36) @map("created_by")
+  createdAt               DateTime @default(now()) @map("created_at")
+  updatedAt               DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  itemVendors             InventoryItemVendor[]
+  stockLevels             StockLevel[]
+  stockMovements          StockMovement[]
+  inventoryBatches        InventoryBatch[]
+  inventorySerials        InventorySerial[]
+  stockAdjustmentLines    StockAdjustmentLine[]
+  physicalInventoryDetails PhysicalInventoryDetail[]
+
+  @@unique([tenantId, sku])
+  @@index([tenantId])
+  @@index([sku])
+  @@index([itemCategory])
+  @@index([itemStatus])
+  @@map("inventory_item")
+}
+
+model InventoryItemVendor {
+  id                      String   @id @db.Char(36)
+  tenantId                String   @db.VarChar(36) @map("tenant_id")
+  inventoryItemId         String   @db.VarChar(36) @map("inventory_item_id")
+  vendorId                String   @db.VarChar(36) @map("vendor_id")
+  vendorSku               String?  @db.VarChar(50) @map("vendor_sku")
+  vendorPartNumber        String?  @db.VarChar(100) @map("vendor_part_number")
+  leadTimeDays            Int?     @map("lead_time_days")
+  minimumOrderQuantity    Decimal? @db.Decimal(18, 4) @map("minimum_order_quantity")
+  unitPrice               Decimal? @db.Decimal(18, 4) @map("unit_price")
+  lastPriceDate           DateTime? @map("last_price_date") @db.Date
+  preferredVendor         Boolean  @default(false) @map("preferred_vendor")
+  qualityRating           Decimal? @db.Decimal(3, 1) @map("quality_rating")
+  isActive                Boolean  @default(true) @map("is_active")
+  createdAt               DateTime @default(now()) @map("created_at")
+
+  // Relations
+  inventoryItem           InventoryItem @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
+  vendor                  Vendor   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  @@unique([inventoryItemId, vendorId])
+  @@index([tenantId])
+  @@index([inventoryItemId])
+  @@index([vendorId])
+  @@map("inventory_item_vendor")
+}
+
+model StockLevel {
+  id                      String   @id @db.Char(36)
+  tenantId                String   @db.VarChar(36) @map("tenant_id")
+  inventoryItemId         String   @db.VarChar(36) @map("inventory_item_id")
+  warehouseId             String   @db.VarChar(36) @map("warehouse_id")
+  quantityOnHand          Decimal  @default(0) @db.Decimal(18, 4) @map("quantity_on_hand")
+  quantityReserved        Decimal  @default(0) @db.Decimal(18, 4) @map("quantity_reserved")
+  quantityAvailable       Decimal  @default(0) @db.Decimal(18, 4) @map("quantity_available")
+  quantityInTransit       Decimal  @default(0) @db.Decimal(18, 4) @map("quantity_in_transit")
+  lastCountedDate         DateTime? @map("last_counted_date") @db.Date
+  recountRequired         Boolean  @default(false) @map("recount_required")
+  createdAt               DateTime @default(now()) @map("created_at")
+  updatedAt               DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  inventoryItem           InventoryItem @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
+  warehouse               Warehouse @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+
+  @@unique([inventoryItemId, warehouseId])
+  @@index([tenantId])
+  @@index([inventoryItemId])
+  @@index([warehouseId])
+  @@index([recountRequired])
+  @@map("stock_level")
+}
+
+model StockMovement {
+  id                      String   @id @db.Char(36)
+  tenantId                String   @db.VarChar(36) @map("tenant_id")
+  inventoryItemId         String   @db.VarChar(36) @map("inventory_item_id")
+  warehouseId             String   @db.VarChar(36) @map("warehouse_id")
+  movementType            String?  @db.VarChar(50) @map("movement_type")
+  movementDate            DateTime @map("movement_date") @db.Date
+  quantityChange          Decimal? @db.Decimal(18, 4) @map("quantity_change")
+  referenceType           String?  @db.VarChar(50) @map("reference_type")
+  referenceId             String?  @db.VarChar(36) @map("reference_id")
+  fromLocation            String?  @db.VarChar(100) @map("from_location")
+  toLocation              String?  @db.VarChar(100) @map("to_location")
+  batchNumber             String?  @db.VarChar(100) @map("batch_number")
+  serialNumbers           String?  @db.Text @map("serial_numbers")
+  unitPrice               Decimal? @db.Decimal(18, 4) @map("unit_price")
+  totalValue              Decimal? @db.Decimal(18, 2) @map("total_value")
+  reasonCode              String?  @db.VarChar(50) @map("reason_code")
+  notes                   String?  @db.Text
+  createdBy               String?  @db.VarChar(36) @map("created_by")
+  createdAt               DateTime @default(now()) @map("created_at")
+
+  // Relations
+  inventoryItem           InventoryItem @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
+  warehouse               Warehouse @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([inventoryItemId])
+  @@index([warehouseId])
+  @@index([movementDate])
+  @@index([movementType])
+  @@index([referenceId])
+  @@map("stock_movement")
+}
+
+model InventoryBatch {
+  id                      String   @id @db.Char(36)
+  tenantId                String   @db.VarChar(36) @map("tenant_id")
+  inventoryItemId         String   @db.VarChar(36) @map("inventory_item_id")
+  batchNumber             String   @db.VarChar(100) @map("batch_number")
+  manufactureDate         DateTime? @map("manufacture_date") @db.Date
+  expiryDate              DateTime? @map("expiry_date") @db.Date
+  quantityReceived        Decimal? @db.Decimal(18, 4) @map("quantity_received")
+  quantityRemaining       Decimal? @db.Decimal(18, 4) @map("quantity_remaining")
+  purchaseOrderId         String?  @db.VarChar(36) @map("purchase_order_id")
+  supplierBatchNumber     String?  @db.VarChar(100) @map("supplier_batch_number")
+  qualityStatus           String?  @db.VarChar(50) @map("quality_status")
+  storageLocation         String?  @db.VarChar(100) @map("storage_location")
+  createdAt               DateTime @default(now()) @map("created_at")
+  updatedAt               DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  inventoryItem           InventoryItem @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
+  po                      PurchaseOrder? @relation(fields: [purchaseOrderId], references: [id])
+
+  @@unique([tenantId, batchNumber])
+  @@index([tenantId])
+  @@index([inventoryItemId])
+  @@index([batchNumber])
+  @@index([expiryDate])
+  @@index([qualityStatus])
+  @@map("inventory_batch")
+}
+
+model InventorySerial {
+  id                      String   @id @db.Char(36)
+  tenantId                String   @db.VarChar(36) @map("tenant_id")
+  inventoryItemId         String   @db.VarChar(36) @map("inventory_item_id")
+  serialNumber            String   @unique @db.VarChar(100) @map("serial_number")
+  batchId                 String?  @db.VarChar(36) @map("batch_id")
+  purchaseOrderId         String?  @db.VarChar(36) @map("purchase_order_id")
+  warrantyStartDate       DateTime? @map("warranty_start_date") @db.Date
+  warrantyEndDate         DateTime? @map("warranty_end_date") @db.Date
+  currentLocation         String?  @db.VarChar(100) @map("current_location")
+  status                  String   @default("in_stock") @db.VarChar(50)
+  createdAt               DateTime @default(now()) @map("created_at")
+  updatedAt               DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  inventoryItem           InventoryItem @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([inventoryItemId])
+  @@index([serialNumber])
+  @@map("inventory_serial")
+}
+
+model InventoryValuation {
+  id                      String   @id @db.Char(36)
+  tenantId                String   @db.VarChar(36) @map("tenant_id")
+  inventoryItemId         String   @db.VarChar(36) @map("inventory_item_id")
+  warehouseId             String   @db.VarChar(36) @map("warehouse_id")
+  valuationDate           DateTime @map("valuation_date") @db.Date
+  valuationMethod         String   @db.VarChar(50) @map("valuation_method")
+  quantityOnHand          Decimal  @db.Decimal(18, 4) @map("quantity_on_hand")
+  unitPrice               Decimal  @db.Decimal(18, 4) @map("unit_price")
+  totalValue              Decimal  @db.Decimal(18, 2) @map("total_value")
+  notes                   String?  @db.Text
+  createdBy               String?  @db.VarChar(36) @map("created_by")
+  createdAt               DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@index([inventoryItemId])
+  @@map("inventory_valuation")
+}
+
+model StockAdjustment {
+  id                      String   @id @db.Char(36)
+  tenantId                String   @db.VarChar(36) @map("tenant_id")
+  adjustmentNumber        String   @unique @db.VarChar(50) @map("adjustment_number")
+  adjustmentDate          DateTime @map("adjustment_date") @db.Date
+  reason                  String?  @db.VarChar(100)
+  status                  String   @default("draft") @db.VarChar(50)
+  approvedBy              String?  @db.VarChar(36) @map("approved_by")
+  approvalDate            DateTime? @map("approval_date")
+  notes                   String?  @db.Text
+  createdBy               String?  @db.VarChar(36) @map("created_by")
+  createdAt               DateTime @default(now()) @map("created_at")
+  updatedAt               DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  lineItems               StockAdjustmentLine[]
+
+  @@index([tenantId])
+  @@index([adjustmentNumber])
+  @@index([status])
+  @@map("stock_adjustment")
+}
+
+model StockAdjustmentLine {
+  id                      String   @id @db.Char(36)
+  tenantId                String   @db.VarChar(36) @map("tenant_id")
+  adjustmentId            String   @db.VarChar(36) @map("adjustment_id")
+  inventoryItemId         String   @db.VarChar(36) @map("inventory_item_id")
+  warehouseId             String   @db.VarChar(36) @map("warehouse_id")
+  quantityVariance        Decimal  @db.Decimal(18, 4) @map("quantity_variance")
+  reason                  String?  @db.VarChar(100)
+  createdAt               DateTime @default(now()) @map("created_at")
+
+  // Relations
+  adjustment              StockAdjustment @relation(fields: [adjustmentId], references: [id], onDelete: Cascade)
+  inventoryItem           InventoryItem @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([adjustmentId])
+  @@map("stock_adjustment_line")
+}
+
+model PhysicalInventory {
+  id                      String   @id @db.Char(36)
+  tenantId                String   @db.VarChar(36) @map("tenant_id")
+  inventoryNumber         String   @unique @db.VarChar(50) @map("inventory_number")
+  warehouseId             String?  @db.VarChar(36) @map("warehouse_id")
+  countDate               DateTime @map("count_date") @db.Date
+  status                  String   @default("draft") @db.VarChar(50)
+  countersNames           String?  @db.Text @map("counters_names")
+  completionPercentage    Decimal  @default(0) @db.Decimal(5, 2) @map("completion_percentage")
+  notes                   String?  @db.Text
+  startedBy               String?  @db.VarChar(36) @map("started_by")
+  completedBy             String?  @db.VarChar(36) @map("completed_by")
+  completedAt             DateTime? @map("completed_at")
+  createdAt               DateTime @default(now()) @map("created_at")
+  updatedAt               DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  details                 PhysicalInventoryDetail[]
+
+  @@index([tenantId])
+  @@index([inventoryNumber])
+  @@index([status])
+  @@map("physical_inventory")
+}
+
+model PhysicalInventoryDetail {
+  id                      String   @id @db.Char(36)
+  tenantId                String   @db.VarChar(36) @map("tenant_id")
+  physicalInventoryId     String   @db.VarChar(36) @map("physical_inventory_id")
+  inventoryItemId         String   @db.VarChar(36) @map("inventory_item_id")
+  quantityExpected        Decimal? @db.Decimal(18, 4) @map("quantity_expected")
+  quantityCounted         Decimal? @db.Decimal(18, 4) @map("quantity_counted")
+  variance                Decimal? @db.Decimal(18, 4)
+  variancePercent         Decimal? @db.Decimal(5, 2) @map("variance_percent")
+  notes                   String?  @db.Text
+  createdAt               DateTime @default(now()) @map("created_at")
+
+  // Relations
+  physicalInventory       PhysicalInventory @relation(fields: [physicalInventoryId], references: [id], onDelete: Cascade)
+  inventoryItem           InventoryItem @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([physicalInventoryId])
+  @@map("physical_inventory_detail")
+}
+
+model InventoryTransfer {
+  id                      String   @id @db.Char(36)
+  tenantId                String   @db.VarChar(36) @map("tenant_id")
+  transferNumber          String   @unique @db.VarChar(50) @map("transfer_number")
+  fromWarehouseId         String?  @db.VarChar(36) @map("from_warehouse_id")
+  toWarehouseId           String?  @db.VarChar(36) @map("to_warehouse_id")
+  transferDate            DateTime @map("transfer_date") @db.Date
+  expectedDeliveryDate    DateTime? @map("expected_delivery_date") @db.Date
+  actualDeliveryDate      DateTime? @map("actual_delivery_date") @db.Date
+  status                  String   @default("draft") @db.VarChar(50)
+  notes                   String?  @db.Text
+  createdBy               String?  @db.VarChar(36) @map("created_by")
+  createdAt               DateTime @default(now()) @map("created_at")
+  updatedAt               DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  lineItems               InventoryTransferLine[]
+
+  @@index([tenantId])
+  @@index([transferNumber])
+  @@index([status])
+  @@map("inventory_transfer")
+}
+
+model InventoryTransferLine {
+  id                      String   @id @db.Char(36)
+  tenantId                String   @db.VarChar(36) @map("tenant_id")
+  transferId              String   @db.VarChar(36) @map("transfer_id")
+  inventoryItemId         String   @db.VarChar(36) @map("inventory_item_id")
+  quantityTransfered      Decimal  @db.Decimal(18, 4) @map("quantity_transfered")
+  quantityReceived        Decimal  @default(0) @db.Decimal(18, 4) @map("quantity_received")
+  quantityShortage        Decimal  @default(0) @db.Decimal(18, 4) @map("quantity_shortage")
+  createdAt               DateTime @default(now()) @map("created_at")
+
+  // Relations
+  transfer                InventoryTransfer @relation(fields: [transferId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([transferId])
+  @@map("inventory_transfer_line")
+}
+
+model MinStockAlert {
+  id                      String   @id @db.Char(36)
+  tenantId                String   @db.VarChar(36) @map("tenant_id")
+  inventoryItemId         String   @db.VarChar(36) @map("inventory_item_id")
+  warehouseId             String   @db.VarChar(36) @map("warehouse_id")
+  minStockLevel           Decimal  @db.Decimal(18, 4) @map("min_stock_level")
+  maxStockLevel           Decimal  @db.Decimal(18, 4) @map("max_stock_level")
+  currentQuantity         Decimal? @db.Decimal(18, 4) @map("current_quantity")
+  alertStatus             String   @db.VarChar(50) @map("alert_status")
+  lastAlertDate           DateTime? @map("last_alert_date")
+  createdAt               DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@index([alertStatus])
+  @@map("min_stock_alert")
+}
+
+model InventoryDamage {
+  id                      String   @id @db.Char(36)
+  tenantId                String   @db.VarChar(36) @map("tenant_id")
+  inventoryItemId         String   @db.VarChar(36) @map("inventory_item_id")
+  warehouseId             String?  @db.VarChar(36) @map("warehouse_id")
+  damageDate              DateTime @map("damage_date") @db.Date
+  quantityDamaged         Decimal  @db.Decimal(18, 4) @map("quantity_damaged")
+  damageReason            String?  @db.VarChar(255) @map("damage_reason")
+  estimatedValue          Decimal? @db.Decimal(18, 2) @map("estimated_value")
+  notes                   String?  @db.Text
+  reportedBy              String?  @db.VarChar(36) @map("reported_by")
+  createdAt               DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@index([damageDate])
+  @@map("inventory_damage")
+}

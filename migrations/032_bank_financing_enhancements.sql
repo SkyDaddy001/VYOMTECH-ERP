@@ -36,9 +36,9 @@ CREATE TABLE IF NOT EXISTS bank_financing (
     sanction_letter_url VARCHAR(500),
     
     -- Metadata
-    created_by VARCHAR(36),
+    created_by INT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_by VARCHAR(36),
+    updated_by INT,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP NULL,
     
@@ -82,9 +82,9 @@ CREATE TABLE IF NOT EXISTS bank_disbursement (
     release_approval_date DATETIME,
     
     -- Metadata
-    created_by VARCHAR(36),
+    created_by INT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_by VARCHAR(36),
+    updated_by INT,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP NULL,
     
@@ -125,9 +125,9 @@ CREATE TABLE IF NOT EXISTS bank_noc (
     remarks TEXT,
     
     -- Metadata
-    created_by VARCHAR(36),
+    created_by INT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_by VARCHAR(36),
+    updated_by INT,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP NULL,
     
@@ -168,9 +168,9 @@ CREATE TABLE IF NOT EXISTS bank_collection_tracking (
     bank_confirmation_date DATETIME,
     
     -- Metadata
-    created_by VARCHAR(36),
+    created_by INT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_by VARCHAR(36),
+    updated_by INT,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP NULL,
     
@@ -223,3 +223,4 @@ CREATE INDEX idx_collection_month ON bank_collection_tracking(emi_month, financi
 -- ============================================================================
 -- MIGRATION COMPLETE
 -- ============================================================================
+

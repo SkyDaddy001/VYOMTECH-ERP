@@ -11,7 +11,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- AI MODELS - ML MODEL CONFIGURATIONS
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `ai_models` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `model_name` VARCHAR(255) NOT NULL,
     `model_type` VARCHAR(100) NOT NULL, -- recommendation, prediction, clustering, classification, anomaly_detection
@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS `ai_models` (
 -- RECOMMENDATION ENGINE - STRATEGY CONFIGURATIONS
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `recommendation_engine` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `engine_name` VARCHAR(255) NOT NULL,
     `description` TEXT,
@@ -96,7 +96,7 @@ CREATE TABLE IF NOT EXISTS `recommendation_engine` (
 -- USER RECOMMENDATIONS - PERSONALIZED RECOMMENDATIONS
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `user_recommendations` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `user_id` INT NOT NULL,
     `engine_id` VARCHAR(36) NOT NULL,
@@ -142,7 +142,7 @@ CREATE TABLE IF NOT EXISTS `user_recommendations` (
 -- RECOMMENDATION FEEDBACK - USER FEEDBACK
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `recommendation_feedback` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `user_id` INT NOT NULL,
     `recommendation_id` VARCHAR(36) NOT NULL,
@@ -177,7 +177,7 @@ CREATE TABLE IF NOT EXISTS `recommendation_feedback` (
 -- ML TRAINING DATA - DATASETS FOR MODEL TRAINING
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `ml_training_data` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `model_id` VARCHAR(36) NOT NULL,
     `dataset_name` VARCHAR(255) NOT NULL,
@@ -220,7 +220,7 @@ CREATE TABLE IF NOT EXISTS `ml_training_data` (
 -- PREDICTION RESULTS - ML PREDICTION OUTPUTS
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `prediction_results` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `model_id` VARCHAR(36) NOT NULL,
     `input_data_id` VARCHAR(255), -- ID of the input record (lead, customer, property, etc.)
@@ -262,7 +262,7 @@ CREATE TABLE IF NOT EXISTS `prediction_results` (
 -- RECOMMENDATION HISTORY - HISTORICAL RECOMMENDATIONS
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `recommendation_history` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `user_id` INT NOT NULL,
     `engine_id` VARCHAR(36) NOT NULL,
@@ -306,7 +306,7 @@ CREATE TABLE IF NOT EXISTS `recommendation_history` (
 -- ANOMALY DETECTION - DETECTED ANOMALIES IN DATA
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `anomaly_detection` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `anomaly_type` VARCHAR(100) NOT NULL, -- data_drift, performance_degradation, outlier, fraud, system_anomaly
     `severity_level` VARCHAR(50) NOT NULL, -- critical, high, medium, low, info
@@ -353,7 +353,7 @@ CREATE TABLE IF NOT EXISTS `anomaly_detection` (
 -- AI INSIGHTS - AI-GENERATED BUSINESS INSIGHTS
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `ai_insights` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `insight_type` VARCHAR(100) NOT NULL, -- trend, pattern, opportunity, risk, anomaly, forecast
     `insight_category` VARCHAR(100), -- sales, marketing, operations, finance, hr, customer
@@ -400,7 +400,7 @@ CREATE TABLE IF NOT EXISTS `ai_insights` (
 -- MODEL PERFORMANCE - ML MODEL PERFORMANCE METRICS
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `model_performance` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `model_id` VARCHAR(36) NOT NULL,
     `performance_date` DATE NOT NULL,

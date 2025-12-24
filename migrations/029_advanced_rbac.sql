@@ -10,7 +10,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- RESOURCE ACCESS TABLE (Resource-Level Permissions)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `resource_access` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `user_id` INT NOT NULL,
     `resource_type` VARCHAR(50) NOT NULL,
@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS `resource_access` (
 -- TIME-BASED PERMISSION TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `time_based_permission` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `role_id` VARCHAR(36) NOT NULL,
     `permission_id` VARCHAR(36) NOT NULL,
@@ -56,7 +56,7 @@ CREATE TABLE IF NOT EXISTS `time_based_permission` (
 -- FIELD-LEVEL PERMISSION TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `field_level_permission` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `role_id` VARCHAR(36) NOT NULL,
     `module_name` VARCHAR(50) NOT NULL,
@@ -80,7 +80,7 @@ CREATE TABLE IF NOT EXISTS `field_level_permission` (
 -- ROLE DELEGATION TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `role_delegation` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `parent_role_id` VARCHAR(36) NOT NULL,
     `sub_role_id` VARCHAR(36) NOT NULL,
@@ -103,7 +103,7 @@ CREATE TABLE IF NOT EXISTS `role_delegation` (
 -- BULK PERMISSION ASSIGNMENT LOG TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `bulk_permission_log` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `assignment_type` VARCHAR(50) NOT NULL COMMENT 'assign, revoke, update',
     `target_type` VARCHAR(50) NOT NULL COMMENT 'user, role, resource',

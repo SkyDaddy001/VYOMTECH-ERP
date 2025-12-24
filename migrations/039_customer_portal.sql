@@ -5,11 +5,13 @@
 -- CUSTOMER DASHBOARD & PROFILE
 -- ============================================
 
+SET FOREIGN_KEY_CHECKS = 0;
+
 CREATE TABLE IF NOT EXISTS customer_profiles (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    tenant_id BIGINT NOT NULL,
-    user_id BIGINT NOT NULL,
-    booking_id BIGINT,
+    id CHAR(26) PRIMARY KEY,
+    tenant_id VARCHAR(36) NOT NULL,
+    user_id CHAR(26) NOT NULL,
+    booking_id VARCHAR(36),
     phone_number VARCHAR(20),
     alternate_phone VARCHAR(20),
     email_address VARCHAR(255),
@@ -49,8 +51,8 @@ CREATE TABLE IF NOT EXISTS customer_profiles (
     
     -- Metadata
     metadata JSON,
-    created_by BIGINT,
-    updated_by BIGINT,
+    created_by CHAR(36),
+    updated_by CHAR(36),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP NULL,
@@ -59,7 +61,7 @@ CREATE TABLE IF NOT EXISTS customer_profiles (
     INDEX idx_tenant_customer (tenant_id),
     INDEX idx_booking_id (booking_id),
     INDEX idx_profile_completion (profile_completion_percentage),
-    CONSTRAINT fk_customer_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id)
+    CONSTRAINT fk_customer_tenant FOREIGN KEY (tenant_id) REFERENCES `tenant`(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================
@@ -67,9 +69,9 @@ CREATE TABLE IF NOT EXISTS customer_profiles (
 -- ============================================
 
 CREATE TABLE IF NOT EXISTS customer_notifications (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    tenant_id BIGINT NOT NULL,
-    user_id BIGINT NOT NULL,
+    id CHAR(26) PRIMARY KEY,
+    tenant_id VARCHAR(36) NOT NULL,
+    user_id CHAR(26) NOT NULL,
     notification_type VARCHAR(100),
     title VARCHAR(200),
     message TEXT NOT NULL,
@@ -81,7 +83,7 @@ CREATE TABLE IF NOT EXISTS customer_notifications (
     
     -- Related Entities
     related_entity_type VARCHAR(100),
-    related_entity_id BIGINT,
+    related_entity_id VARCHAR(36),
     
     -- Status
     is_read BOOLEAN DEFAULT FALSE,
@@ -109,8 +111,8 @@ CREATE TABLE IF NOT EXISTS customer_notifications (
     -- Metadata & Expiry
     metadata JSON,
     expires_at TIMESTAMP NULL,
-    created_by BIGINT,
-    updated_by BIGINT,
+    created_by CHAR(36),
+    updated_by CHAR(36),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP NULL,
@@ -121,7 +123,7 @@ CREATE TABLE IF NOT EXISTS customer_notifications (
     INDEX idx_notification_category (category),
     INDEX idx_notification_priority (priority),
     INDEX idx_related_entity (related_entity_type, related_entity_id),
-    CONSTRAINT fk_notif_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id)
+    CONSTRAINT fk_notif_tenant FOREIGN KEY (tenant_id) REFERENCES `tenant`(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================
@@ -129,11 +131,11 @@ CREATE TABLE IF NOT EXISTS customer_notifications (
 -- ============================================
 
 CREATE TABLE IF NOT EXISTS customer_conversations (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    tenant_id BIGINT NOT NULL,
-    customer_user_id BIGINT NOT NULL,
-    support_user_id BIGINT,
-    booking_id BIGINT,
+    id CHAR(26) PRIMARY KEY,
+    tenant_id VARCHAR(36) NOT NULL,
+    customer_user_id CHAR(26) NOT NULL,
+    support_user_id CHAR(26),
+    booking_id VARCHAR(36),
     
     -- Conversation Details
     subject VARCHAR(255),
@@ -156,8 +158,8 @@ CREATE TABLE IF NOT EXISTS customer_conversations (
     
     -- Metadata
     metadata JSON,
-    created_by BIGINT,
-    updated_by BIGINT,
+    created_by CHAR(36),
+    updated_by CHAR(36),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP NULL,
@@ -166,14 +168,14 @@ CREATE TABLE IF NOT EXISTS customer_conversations (
     INDEX idx_customer_conversation (customer_user_id),
     INDEX idx_conversation_status (status),
     INDEX idx_conversation_created (created_at DESC),
-    CONSTRAINT fk_conv_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id)
+    CONSTRAINT fk_conv_tenant FOREIGN KEY (tenant_id) REFERENCES `tenant`(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS customer_messages (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    tenant_id BIGINT NOT NULL,
-    conversation_id BIGINT NOT NULL,
-    sender_user_id BIGINT NOT NULL,
+    id CHAR(26) PRIMARY KEY,
+    tenant_id VARCHAR(36) NOT NULL,
+    conversation_id VARCHAR(36) NOT NULL,
+    sender_user_id CHAR(26) NOT NULL,
     sender_type ENUM('customer', 'support', 'system'),
     
     message_text TEXT NOT NULL,
@@ -200,7 +202,7 @@ CREATE TABLE IF NOT EXISTS customer_messages (
     INDEX idx_conversation_message (conversation_id),
     INDEX idx_sender_message (sender_user_id),
     INDEX idx_message_created (created_at DESC),
-    CONSTRAINT fk_message_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id),
+    CONSTRAINT fk_message_tenant FOREIGN KEY (tenant_id) REFERENCES `tenant`(id),
     CONSTRAINT fk_message_conversation FOREIGN KEY (conversation_id) REFERENCES customer_conversations(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -209,10 +211,10 @@ CREATE TABLE IF NOT EXISTS customer_messages (
 -- ============================================
 
 CREATE TABLE IF NOT EXISTS customer_document_uploads (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    tenant_id BIGINT NOT NULL,
-    user_id BIGINT NOT NULL,
-    booking_id BIGINT,
+    id CHAR(26) PRIMARY KEY,
+    tenant_id VARCHAR(36) NOT NULL,
+    user_id CHAR(26) NOT NULL,
+    booking_id VARCHAR(36),
     
     -- Document Details
     document_type VARCHAR(100),
@@ -246,8 +248,8 @@ CREATE TABLE IF NOT EXISTS customer_document_uploads (
     
     -- Metadata
     metadata JSON,
-    created_by BIGINT,
-    updated_by BIGINT,
+    created_by CHAR(36),
+    updated_by CHAR(36),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP NULL,
@@ -257,7 +259,7 @@ CREATE TABLE IF NOT EXISTS customer_document_uploads (
     INDEX idx_booking_uploads (booking_id),
     INDEX idx_upload_status (upload_status),
     INDEX idx_verification_status (verification_status),
-    CONSTRAINT fk_upload_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id)
+    CONSTRAINT fk_upload_tenant FOREIGN KEY (tenant_id) REFERENCES `tenant`(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================
@@ -265,10 +267,10 @@ CREATE TABLE IF NOT EXISTS customer_document_uploads (
 -- ============================================
 
 CREATE TABLE IF NOT EXISTS customer_booking_tracking (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    tenant_id BIGINT NOT NULL,
-    booking_id BIGINT NOT NULL,
-    user_id BIGINT NOT NULL,
+    id CHAR(26) PRIMARY KEY,
+    tenant_id VARCHAR(36) NOT NULL,
+    booking_id VARCHAR(36) NOT NULL,
+    user_id CHAR(26) NOT NULL,
     
     -- Booking Status Tracking
     current_status VARCHAR(100),
@@ -277,7 +279,7 @@ CREATE TABLE IF NOT EXISTS customer_booking_tracking (
     status_change_reason TEXT,
     
     -- Property Details
-    property_id BIGINT,
+    property_id VARCHAR(36),
     property_name VARCHAR(255),
     property_location VARCHAR(500),
     unit_number VARCHAR(100),
@@ -309,8 +311,8 @@ CREATE TABLE IF NOT EXISTS customer_booking_tracking (
     
     -- Metadata
     metadata JSON,
-    created_by BIGINT,
-    updated_by BIGINT,
+    created_by CHAR(36),
+    updated_by CHAR(36),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP NULL,
@@ -320,7 +322,7 @@ CREATE TABLE IF NOT EXISTS customer_booking_tracking (
     INDEX idx_user_tracking (user_id),
     INDEX idx_booking_tracking (booking_id),
     INDEX idx_status_change (status_changed_at DESC),
-    CONSTRAINT fk_tracking_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id)
+    CONSTRAINT fk_tracking_tenant FOREIGN KEY (tenant_id) REFERENCES `tenant`(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================
@@ -328,10 +330,10 @@ CREATE TABLE IF NOT EXISTS customer_booking_tracking (
 -- ============================================
 
 CREATE TABLE IF NOT EXISTS customer_payment_tracking (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    tenant_id BIGINT NOT NULL,
-    booking_id BIGINT NOT NULL,
-    user_id BIGINT NOT NULL,
+    id CHAR(26) PRIMARY KEY,
+    tenant_id VARCHAR(36) NOT NULL,
+    booking_id VARCHAR(36) NOT NULL,
+    user_id CHAR(26) NOT NULL,
     
     -- Invoice Details
     invoice_number VARCHAR(100),
@@ -369,8 +371,8 @@ CREATE TABLE IF NOT EXISTS customer_payment_tracking (
     
     -- Metadata
     metadata JSON,
-    created_by BIGINT,
-    updated_by BIGINT,
+    created_by CHAR(36),
+    updated_by CHAR(36),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP NULL,
@@ -380,7 +382,7 @@ CREATE TABLE IF NOT EXISTS customer_payment_tracking (
     INDEX idx_user_payment (user_id),
     INDEX idx_payment_status (payment_status),
     INDEX idx_invoice_date (invoice_date DESC),
-    CONSTRAINT fk_payment_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id)
+    CONSTRAINT fk_payment_tenant FOREIGN KEY (tenant_id) REFERENCES `tenant`(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================
@@ -388,10 +390,10 @@ CREATE TABLE IF NOT EXISTS customer_payment_tracking (
 -- ============================================
 
 CREATE TABLE IF NOT EXISTS customer_feedback (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    tenant_id BIGINT NOT NULL,
-    user_id BIGINT NOT NULL,
-    booking_id BIGINT,
+    id CHAR(26) PRIMARY KEY,
+    tenant_id VARCHAR(36) NOT NULL,
+    user_id CHAR(26) NOT NULL,
+    booking_id VARCHAR(36),
     
     -- Feedback Details
     feedback_type ENUM('suggestion', 'complaint', 'praise', 'question', 'review'),
@@ -415,8 +417,8 @@ CREATE TABLE IF NOT EXISTS customer_feedback (
     
     -- Metadata
     metadata JSON,
-    created_by BIGINT,
-    updated_by BIGINT,
+    created_by CHAR(36),
+    updated_by CHAR(36),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP NULL,
@@ -426,7 +428,7 @@ CREATE TABLE IF NOT EXISTS customer_feedback (
     INDEX idx_feedback_type (feedback_type),
     INDEX idx_feedback_status (feedback_status),
     INDEX idx_feedback_rating (overall_rating),
-    CONSTRAINT fk_feedback_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id)
+    CONSTRAINT fk_feedback_tenant FOREIGN KEY (tenant_id) REFERENCES `tenant`(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================
@@ -434,15 +436,15 @@ CREATE TABLE IF NOT EXISTS customer_feedback (
 -- ============================================
 
 CREATE TABLE IF NOT EXISTS customer_activity_log (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    tenant_id BIGINT NOT NULL,
-    user_id BIGINT NOT NULL,
+    id CHAR(26) PRIMARY KEY,
+    tenant_id VARCHAR(36) NOT NULL,
+    user_id CHAR(26) NOT NULL,
     
     -- Activity Details
     activity_type VARCHAR(100),
     activity_description TEXT,
     entity_type VARCHAR(100),
-    entity_id BIGINT,
+    entity_id VARCHAR(36),
     
     -- Action Details
     action_taken VARCHAR(100),
@@ -463,7 +465,7 @@ CREATE TABLE IF NOT EXISTS customer_activity_log (
     INDEX idx_activity_type (activity_type),
     INDEX idx_activity_created (created_at DESC),
     INDEX idx_entity_activity (entity_type, entity_id),
-    CONSTRAINT fk_activity_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id)
+    CONSTRAINT fk_activity_tenant FOREIGN KEY (tenant_id) REFERENCES `tenant`(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================
@@ -471,9 +473,9 @@ CREATE TABLE IF NOT EXISTS customer_activity_log (
 -- ============================================
 
 CREATE TABLE IF NOT EXISTS customer_preferences (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    tenant_id BIGINT NOT NULL,
-    user_id BIGINT NOT NULL,
+    id CHAR(26) PRIMARY KEY,
+    tenant_id VARCHAR(36) NOT NULL,
+    user_id CHAR(26) NOT NULL,
     
     -- Notification Preferences
     email_notifications BOOLEAN DEFAULT TRUE,
@@ -506,13 +508,20 @@ CREATE TABLE IF NOT EXISTS customer_preferences (
     
     -- Metadata
     metadata JSON,
-    created_by BIGINT,
-    updated_by BIGINT,
+    created_by CHAR(36),
+    updated_by CHAR(36),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP NULL,
     
     UNIQUE KEY uk_customer_preferences (tenant_id, user_id),
     INDEX idx_tenant_preferences (tenant_id),
-    CONSTRAINT fk_pref_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id)
+    CONSTRAINT fk_pref_tenant FOREIGN KEY (tenant_id) REFERENCES `tenant`(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+SET FOREIGN_KEY_CHECKS = 1;
+
+
+
+
+

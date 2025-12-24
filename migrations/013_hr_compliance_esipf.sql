@@ -10,7 +10,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- EPF (EMPLOYEE PROVIDENT FUND) CONFIGURATION TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `epf_configuration` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `organization_name` VARCHAR(255),
     `epf_number` VARCHAR(50) UNIQUE,
@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS `epf_configuration` (
 -- ESI (EMPLOYEE STATE INSURANCE) CONFIGURATION TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `esi_configuration` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `esi_number` VARCHAR(50) UNIQUE,
     `employer_contribution_rate` DECIMAL(5, 2) DEFAULT 3.25,
@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS `esi_configuration` (
 -- EMPLOYEE EPF REGISTRATION TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `employee_epf_registration` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `employee_id` VARCHAR(36) NOT NULL,
     `uan_number` VARCHAR(50) UNIQUE NOT NULL,
@@ -79,7 +79,7 @@ CREATE TABLE IF NOT EXISTS `employee_epf_registration` (
 -- EMPLOYEE ESI REGISTRATION TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `employee_esi_registration` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `employee_id` VARCHAR(36) NOT NULL,
     `esi_number` VARCHAR(50) UNIQUE NOT NULL,
@@ -104,7 +104,7 @@ CREATE TABLE IF NOT EXISTS `employee_esi_registration` (
 -- EPF CONTRIBUTION RECORD TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `epf_contribution` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `employee_id` VARCHAR(36) NOT NULL,
     `payroll_month` DATE NOT NULL,
@@ -131,7 +131,7 @@ CREATE TABLE IF NOT EXISTS `epf_contribution` (
 -- ESI CONTRIBUTION RECORD TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `esi_contribution` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `employee_id` VARCHAR(36) NOT NULL,
     `payroll_month` DATE NOT NULL,
@@ -159,7 +159,7 @@ CREATE TABLE IF NOT EXISTS `esi_contribution` (
 -- EPF MEMBER PASSBOOK TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `epf_passbook` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `employee_id` VARCHAR(36) NOT NULL,
     `opening_balance` DECIMAL(18, 2) DEFAULT 0,
@@ -180,7 +180,7 @@ CREATE TABLE IF NOT EXISTS `epf_passbook` (
 -- ESI CLAIM TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `esi_claim` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `employee_id` VARCHAR(36) NOT NULL,
     `claim_number` VARCHAR(50) UNIQUE NOT NULL,
@@ -205,7 +205,7 @@ CREATE TABLE IF NOT EXISTS `esi_claim` (
 -- STATUTORY COMPLIANCE RECORD TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `statutory_compliance_record` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `compliance_type` VARCHAR(50),
     `compliance_month` DATE NOT NULL,

@@ -10,7 +10,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- BANK STATEMENT TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `bank_statement` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `bank_account_id` VARCHAR(36) NOT NULL,
     `statement_date` DATE NOT NULL,
@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS `bank_statement` (
 -- BANK TRANSACTION TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `bank_transaction` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `bank_statement_id` VARCHAR(36) NOT NULL,
     `transaction_date` DATE NOT NULL,
@@ -66,7 +66,7 @@ CREATE TABLE IF NOT EXISTS `bank_transaction` (
 -- BANK RECONCILIATION MATCHING TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `bank_reconciliation_match` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `bank_statement_id` VARCHAR(36) NOT NULL,
     `bank_transaction_id` VARCHAR(36) NOT NULL,
@@ -93,7 +93,7 @@ CREATE TABLE IF NOT EXISTS `bank_reconciliation_match` (
 -- UNCLEARED ITEMS TABLE (Outstanding cheques, pending deposits)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `uncleared_item` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `bank_account_id` VARCHAR(36) NOT NULL,
     `item_type` VARCHAR(50),
@@ -122,7 +122,7 @@ CREATE TABLE IF NOT EXISTS `uncleared_item` (
 -- CASH FLOW FORECAST TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `cash_flow_forecast` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `forecast_date` DATE NOT NULL,
     `forecast_period` VARCHAR(50),
@@ -144,7 +144,7 @@ CREATE TABLE IF NOT EXISTS `cash_flow_forecast` (
 -- CASH FLOW ITEM TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `cash_flow_item` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `cash_flow_forecast_id` VARCHAR(36) NOT NULL,
     `item_description` VARCHAR(255),

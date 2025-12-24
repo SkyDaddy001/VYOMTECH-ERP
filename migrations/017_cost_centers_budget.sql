@@ -10,7 +10,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- COST CENTER MASTER TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `cost_center` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `cost_center_code` VARCHAR(50) NOT NULL,
     `cost_center_name` VARCHAR(255) NOT NULL,
@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS `cost_center` (
 -- COST ALLOCATION TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `cost_allocation` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `cost_center_id` VARCHAR(36) NOT NULL,
     `allocation_date` DATE NOT NULL,
@@ -62,7 +62,7 @@ CREATE TABLE IF NOT EXISTS `cost_allocation` (
 -- COST CENTER EXPENSE DISTRIBUTION TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `cost_distribution` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `source_cost_center_id` VARCHAR(36) NOT NULL,
     `target_cost_center_id` VARCHAR(36) NOT NULL,
@@ -89,7 +89,7 @@ CREATE TABLE IF NOT EXISTS `cost_distribution` (
 -- COST CENTER WISE PROFIT & LOSS TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `cost_center_pl` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `cost_center_id` VARCHAR(36) NOT NULL,
     `fiscal_period` VARCHAR(10),
@@ -116,7 +116,7 @@ CREATE TABLE IF NOT EXISTS `cost_center_pl` (
 -- BUDGET MASTER TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `budget` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `budget_name` VARCHAR(255) NOT NULL,
     `budget_code` VARCHAR(50),
@@ -146,7 +146,7 @@ CREATE TABLE IF NOT EXISTS `budget` (
 -- BUDGET LINE ITEMS TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `budget_line` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `budget_id` VARCHAR(36) NOT NULL,
     `account_id` VARCHAR(36),
@@ -173,7 +173,7 @@ CREATE TABLE IF NOT EXISTS `budget_line` (
 -- BUDGET vs ACTUAL VARIANCE TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `budget_variance` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `budget_id` VARCHAR(36) NOT NULL,
     `budget_line_id` VARCHAR(36),

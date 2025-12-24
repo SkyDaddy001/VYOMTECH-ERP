@@ -10,7 +10,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- CREATE LEAD_STATUS_LOG TABLE - Track all status changes
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `lead_status_log` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `lead_id` VARCHAR(36) NOT NULL,
     `old_status` VARCHAR(100),
@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS `lead_status_log` (
 -- CREATE LEAD_PIPELINE_CONFIG TABLE - Store pipeline configurations
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `lead_pipeline_config` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `status` VARCHAR(100) NOT NULL,
     `pipeline_stage` VARCHAR(50) NOT NULL,

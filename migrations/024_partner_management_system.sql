@@ -8,7 +8,7 @@
 -- Stores partner organizations (portals, channel partners, vendors, customers)
 
 CREATE TABLE IF NOT EXISTS partners (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    id CHAR(26) PRIMARY KEY,
     tenant_id VARCHAR(36) COLLATE utf8mb4_unicode_ci NOT NULL,
     partner_code VARCHAR(50) NOT NULL UNIQUE,
     organization_name VARCHAR(150) NOT NULL,
@@ -62,7 +62,7 @@ CREATE TABLE IF NOT EXISTS partners (
     document_urls JSON,
     
     -- Audit Fields
-    created_by BIGINT NOT NULL,
+    created_by CHAR(36) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP NULL,
@@ -85,8 +85,8 @@ CREATE TABLE IF NOT EXISTS partners (
 -- Stores user accounts for partner organizations
 
 CREATE TABLE IF NOT EXISTS partner_users (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    partner_id BIGINT NOT NULL,
+    id CHAR(26) PRIMARY KEY,
+    partner_id VARCHAR(36) NOT NULL,
     tenant_id VARCHAR(36) COLLATE utf8mb4_unicode_ci NOT NULL,
     
     -- Authentication
@@ -143,8 +143,8 @@ CREATE INDEX idx_partner_users_email_tenant ON partner_users(email, tenant_id);
 -- ============================================================================
 
 CREATE TABLE IF NOT EXISTS partner_audit_log (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    partner_id BIGINT NOT NULL,
+    id CHAR(26) PRIMARY KEY,
+    partner_id VARCHAR(36) NOT NULL,
     tenant_id VARCHAR(36) COLLATE utf8mb4_unicode_ci NOT NULL,
     action VARCHAR(50) NOT NULL, -- 'created', 'updated', 'status_changed', 'suspended', 'deleted'
     changed_fields JSON,
@@ -166,8 +166,8 @@ CREATE TABLE IF NOT EXISTS partner_audit_log (
 -- ============================================================================
 
 CREATE TABLE IF NOT EXISTS partner_payouts (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    partner_id BIGINT NOT NULL,
+    id CHAR(26) PRIMARY KEY,
+    partner_id VARCHAR(36) NOT NULL,
     tenant_id VARCHAR(36) COLLATE utf8mb4_unicode_ci NOT NULL,
     
     period_start DATE NOT NULL,
@@ -182,7 +182,7 @@ CREATE TABLE IF NOT EXISTS partner_payouts (
     payout_date DATE,
     payout_reference VARCHAR(100),
     
-    created_by BIGINT,
+    created_by CHAR(36),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
@@ -194,3 +194,6 @@ CREATE TABLE IF NOT EXISTS partner_payouts (
     CONSTRAINT fk_payouts_partner FOREIGN KEY (partner_id) REFERENCES partners(id) ON DELETE CASCADE,
     CONSTRAINT fk_payouts_tenant FOREIGN KEY (tenant_id) REFERENCES tenant(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+
+

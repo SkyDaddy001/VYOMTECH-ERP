@@ -10,7 +10,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- WAREHOUSE TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `warehouse` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `warehouse_code` VARCHAR(50) NOT NULL,
     `warehouse_name` VARCHAR(255) NOT NULL,
@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS `warehouse` (
 -- INVENTORY ITEM (STOCK KEEPING UNIT - SKU) TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `inventory_item` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `sku` VARCHAR(50) NOT NULL,
     `item_name` VARCHAR(255) NOT NULL,
@@ -75,7 +75,7 @@ CREATE TABLE IF NOT EXISTS `inventory_item` (
 -- INVENTORY ITEM VENDOR TABLE (Multiple vendors per item)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `inventory_item_vendor` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `inventory_item_id` VARCHAR(36) NOT NULL,
     `vendor_id` VARCHAR(36) NOT NULL,
@@ -102,7 +102,7 @@ CREATE TABLE IF NOT EXISTS `inventory_item_vendor` (
 -- STOCK LEVEL TABLE (Current inventory quantity by warehouse)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `stock_level` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `inventory_item_id` VARCHAR(36) NOT NULL,
     `warehouse_id` VARCHAR(36) NOT NULL,
@@ -128,7 +128,7 @@ CREATE TABLE IF NOT EXISTS `stock_level` (
 -- STOCK MOVEMENT TABLE (Detailed transaction log)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `stock_movement` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `inventory_item_id` VARCHAR(36) NOT NULL,
     `warehouse_id` VARCHAR(36) NOT NULL,
@@ -162,7 +162,7 @@ CREATE TABLE IF NOT EXISTS `stock_movement` (
 -- BATCH/LOT TRACKING TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `inventory_batch` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `inventory_item_id` VARCHAR(36) NOT NULL,
     `batch_number` VARCHAR(100) NOT NULL,
@@ -191,7 +191,7 @@ CREATE TABLE IF NOT EXISTS `inventory_batch` (
 -- SERIAL NUMBER TRACKING TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `inventory_serial` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `inventory_item_id` VARCHAR(36) NOT NULL,
     `serial_number` VARCHAR(100) NOT NULL,
@@ -219,7 +219,7 @@ CREATE TABLE IF NOT EXISTS `inventory_serial` (
 -- INVENTORY VALUATION METHOD TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `inventory_valuation` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `inventory_item_id` VARCHAR(36) NOT NULL,
     `valuation_method` VARCHAR(50),
@@ -247,7 +247,7 @@ CREATE TABLE IF NOT EXISTS `inventory_valuation` (
 -- STOCK ADJUSTMENT TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `stock_adjustment` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `adjustment_number` VARCHAR(50) NOT NULL,
     `adjustment_date` DATE NOT NULL,
@@ -277,7 +277,7 @@ CREATE TABLE IF NOT EXISTS `stock_adjustment` (
 -- STOCK ADJUSTMENT LINE TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `stock_adjustment_line` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `adjustment_id` VARCHAR(36) NOT NULL,
     `inventory_item_id` VARCHAR(36) NOT NULL,
@@ -302,7 +302,7 @@ CREATE TABLE IF NOT EXISTS `stock_adjustment_line` (
 -- PHYSICAL INVENTORY COUNT TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `physical_inventory` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `count_number` VARCHAR(50) NOT NULL,
     `warehouse_id` VARCHAR(36) NOT NULL,
@@ -334,7 +334,7 @@ CREATE TABLE IF NOT EXISTS `physical_inventory` (
 -- PHYSICAL INVENTORY COUNT DETAIL TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `physical_inventory_detail` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `physical_inventory_id` VARCHAR(36) NOT NULL,
     `inventory_item_id` VARCHAR(36) NOT NULL,
@@ -358,7 +358,7 @@ CREATE TABLE IF NOT EXISTS `physical_inventory_detail` (
 -- INVENTORY TRANSFER TABLE (Inter-warehouse transfers)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `inventory_transfer` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `transfer_number` VARCHAR(50) NOT NULL,
     `from_warehouse_id` VARCHAR(36) NOT NULL,
@@ -390,7 +390,7 @@ CREATE TABLE IF NOT EXISTS `inventory_transfer` (
 -- INVENTORY TRANSFER LINE TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `inventory_transfer_line` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `transfer_id` VARCHAR(36) NOT NULL,
     `inventory_item_id` VARCHAR(36) NOT NULL,
@@ -412,7 +412,7 @@ CREATE TABLE IF NOT EXISTS `inventory_transfer_line` (
 -- MINIMUM STOCK ALERT TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `min_stock_alert` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `inventory_item_id` VARCHAR(36) NOT NULL,
     `warehouse_id` VARCHAR(36) NOT NULL,
@@ -440,7 +440,7 @@ CREATE TABLE IF NOT EXISTS `min_stock_alert` (
 -- INVENTORY DAMAGE/OBSOLESCENCE TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `inventory_damage` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `damage_number` VARCHAR(50) NOT NULL,
     `inventory_item_id` VARCHAR(36) NOT NULL,

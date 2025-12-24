@@ -10,7 +10,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- VENDOR TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `vendor` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `vendor_code` VARCHAR(50) UNIQUE NOT NULL,
     `name` VARCHAR(255) NOT NULL,
@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS `vendor` (
 -- VENDOR CONTACT TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `vendor_contact` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `vendor_id` VARCHAR(36) NOT NULL,
     `name` VARCHAR(100) NOT NULL,
@@ -62,7 +62,7 @@ CREATE TABLE IF NOT EXISTS `vendor_contact` (
 -- VENDOR ADDRESS TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `vendor_address` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `vendor_id` VARCHAR(36) NOT NULL,
     `type` VARCHAR(50),
@@ -84,7 +84,7 @@ CREATE TABLE IF NOT EXISTS `vendor_address` (
 -- PURCHASE REQUISITION TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `purchase_requisition` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `requisition_number` VARCHAR(50) UNIQUE NOT NULL,
     `requester_id` VARCHAR(36),
@@ -109,7 +109,7 @@ CREATE TABLE IF NOT EXISTS `purchase_requisition` (
 -- PURCHASE ORDER TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `purchase_order` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `po_number` VARCHAR(50) UNIQUE NOT NULL,
     `vendor_id` VARCHAR(36) NOT NULL,
@@ -147,7 +147,7 @@ CREATE TABLE IF NOT EXISTS `purchase_order` (
 -- PO LINE ITEM TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `po_line_item` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `po_id` VARCHAR(36) NOT NULL,
     `line_number` INT NOT NULL,
@@ -174,7 +174,7 @@ CREATE TABLE IF NOT EXISTS `po_line_item` (
 -- GOODS RECEIPT NOTE TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `goods_receipt` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `grn_number` VARCHAR(50) UNIQUE NOT NULL,
     `po_id` VARCHAR(36) NOT NULL,
@@ -198,7 +198,7 @@ CREATE TABLE IF NOT EXISTS `goods_receipt` (
 -- GRN LINE ITEM TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `grn_line_item` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `grn_id` VARCHAR(36) NOT NULL,
     `po_line_item_id` VARCHAR(36),

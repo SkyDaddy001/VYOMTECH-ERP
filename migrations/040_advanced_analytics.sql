@@ -6,10 +6,12 @@
 -- ============================================
 
 -- Real-time dashboard metrics and KPIs
+SET FOREIGN_KEY_CHECKS = 0;
+
 CREATE TABLE IF NOT EXISTS analytics_dashboards (
-  id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  tenant_id BIGINT NOT NULL,
-  user_id BIGINT NOT NULL,
+  id CHAR(26) PRIMARY KEY,
+  tenant_id VARCHAR(36) NOT NULL,
+  user_id CHAR(26) NOT NULL,
   dashboard_name VARCHAR(255) NOT NULL,
   dashboard_description TEXT,
   dashboard_type ENUM('executive', 'manager', 'agent', 'custom') DEFAULT 'custom',
@@ -20,8 +22,8 @@ CREATE TABLE IF NOT EXISTS analytics_dashboards (
   refresh_interval INT DEFAULT 300,
   data_date_range VARCHAR(50),
   last_refreshed_at TIMESTAMP,
-  created_by BIGINT,
-  updated_by BIGINT,
+  created_by CHAR(36),
+  updated_by CHAR(36),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   deleted_at TIMESTAMP NULL,
@@ -33,8 +35,8 @@ CREATE TABLE IF NOT EXISTS analytics_dashboards (
 
 -- Analytics widgets (building blocks for dashboards)
 CREATE TABLE IF NOT EXISTS analytics_widgets (
-  id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  tenant_id BIGINT NOT NULL,
+  id CHAR(26) PRIMARY KEY,
+  tenant_id VARCHAR(36) NOT NULL,
   widget_name VARCHAR(255) NOT NULL,
   widget_type ENUM('metric', 'chart', 'table', 'gauge', 'timeline', 'heatmap', 'funnel') NOT NULL,
   metric_source VARCHAR(100),
@@ -47,8 +49,8 @@ CREATE TABLE IF NOT EXISTS analytics_widgets (
   drill_down_target VARCHAR(255),
   widget_config JSON,
   refresh_interval INT DEFAULT 300,
-  created_by BIGINT,
-  updated_by BIGINT,
+  created_by CHAR(36),
+  updated_by CHAR(36),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   deleted_at TIMESTAMP NULL,
@@ -60,8 +62,8 @@ CREATE TABLE IF NOT EXISTS analytics_widgets (
 
 -- Real-time KPI tracking
 CREATE TABLE IF NOT EXISTS analytics_kpis (
-  id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  tenant_id BIGINT NOT NULL,
+  id CHAR(26) PRIMARY KEY,
+  tenant_id VARCHAR(36) NOT NULL,
   kpi_name VARCHAR(255) NOT NULL,
   kpi_description TEXT,
   kpi_category ENUM('sales', 'customer', 'finance', 'operations', 'performance', 'quality') NOT NULL,
@@ -78,9 +80,9 @@ CREATE TABLE IF NOT EXISTS analytics_kpis (
   time_period ENUM('hour', 'day', 'week', 'month', 'quarter', 'year') DEFAULT 'month',
   measurement_date DATE,
   last_updated_at TIMESTAMP,
-  owner_id BIGINT,
-  created_by BIGINT,
-  updated_by BIGINT,
+  owner_id VARCHAR(36),
+  created_by CHAR(36),
+  updated_by CHAR(36),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   deleted_at TIMESTAMP NULL,
@@ -96,8 +98,8 @@ CREATE TABLE IF NOT EXISTS analytics_kpis (
 
 -- Report definitions and templates
 CREATE TABLE IF NOT EXISTS analytics_reports (
-  id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  tenant_id BIGINT NOT NULL,
+  id CHAR(26) PRIMARY KEY,
+  tenant_id VARCHAR(36) NOT NULL,
   report_name VARCHAR(255) NOT NULL,
   report_description TEXT,
   report_type ENUM('operational', 'financial', 'sales', 'customer', 'performance', 'compliance', 'custom') NOT NULL,
@@ -119,8 +121,8 @@ CREATE TABLE IF NOT EXISTS analytics_reports (
   last_generated_at TIMESTAMP NULL,
   next_scheduled_run TIMESTAMP NULL,
   recipient_emails JSON,
-  created_by BIGINT,
-  updated_by BIGINT,
+  created_by CHAR(36),
+  updated_by CHAR(36),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   deleted_at TIMESTAMP NULL,
@@ -132,9 +134,9 @@ CREATE TABLE IF NOT EXISTS analytics_reports (
 
 -- Generated report instances
 CREATE TABLE IF NOT EXISTS analytics_report_instances (
-  id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  tenant_id BIGINT NOT NULL,
-  report_id BIGINT NOT NULL,
+  id CHAR(26) PRIMARY KEY,
+  tenant_id VARCHAR(36) NOT NULL,
+  report_id VARCHAR(36) NOT NULL,
   report_name VARCHAR(255) NOT NULL,
   report_type VARCHAR(100),
   generation_start_time TIMESTAMP,
@@ -170,8 +172,8 @@ CREATE TABLE IF NOT EXISTS analytics_report_instances (
 
 -- Time series data points for trend analysis
 CREATE TABLE IF NOT EXISTS analytics_timeseries (
-  id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  tenant_id BIGINT NOT NULL,
+  id CHAR(26) PRIMARY KEY,
+  tenant_id VARCHAR(36) NOT NULL,
   metric_name VARCHAR(255) NOT NULL,
   metric_category VARCHAR(100),
   metric_value DECIMAL(15, 4),
@@ -193,8 +195,8 @@ CREATE TABLE IF NOT EXISTS analytics_timeseries (
 
 -- Trend analysis and forecasting
 CREATE TABLE IF NOT EXISTS analytics_trends (
-  id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  tenant_id BIGINT NOT NULL,
+  id CHAR(26) PRIMARY KEY,
+  tenant_id VARCHAR(36) NOT NULL,
   metric_name VARCHAR(255) NOT NULL,
   analysis_type ENUM('linear', 'exponential', 'moving_average', 'seasonal') NOT NULL,
   time_period_days INT,
@@ -208,8 +210,8 @@ CREATE TABLE IF NOT EXISTS analytics_trends (
   correlation_with_other_metrics JSON,
   seasonal_pattern VARCHAR(100),
   analysis_date DATE,
-  created_by BIGINT,
-  updated_by BIGINT,
+  created_by CHAR(36),
+  updated_by CHAR(36),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   deleted_at TIMESTAMP NULL,
@@ -224,8 +226,8 @@ CREATE TABLE IF NOT EXISTS analytics_trends (
 
 -- Pre-aggregated metrics for fast querying
 CREATE TABLE IF NOT EXISTS analytics_aggregates (
-  id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  tenant_id BIGINT NOT NULL,
+  id CHAR(26) PRIMARY KEY,
+  tenant_id VARCHAR(36) NOT NULL,
   aggregate_name VARCHAR(255) NOT NULL,
   aggregate_type ENUM('hourly', 'daily', 'weekly', 'monthly') NOT NULL,
   aggregate_date DATE,
@@ -250,9 +252,9 @@ CREATE TABLE IF NOT EXISTS analytics_aggregates (
 
 -- Detailed breakdown for drill-down analytics
 CREATE TABLE IF NOT EXISTS analytics_drilldown (
-  id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  tenant_id BIGINT NOT NULL,
-  parent_metric_id BIGINT,
+  id CHAR(26) PRIMARY KEY,
+  tenant_id VARCHAR(36) NOT NULL,
+  parent_metric_id VARCHAR(36),
   parent_metric_name VARCHAR(255),
   drill_level INT,
   drill_dimension VARCHAR(100),
@@ -276,11 +278,11 @@ CREATE TABLE IF NOT EXISTS analytics_drilldown (
 
 -- User dashboard and report preferences
 CREATE TABLE IF NOT EXISTS analytics_user_preferences (
-  id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  tenant_id BIGINT NOT NULL,
-  user_id BIGINT NOT NULL,
-  default_dashboard_id BIGINT,
-  default_report_id BIGINT,
+  id CHAR(26) PRIMARY KEY,
+  tenant_id VARCHAR(36) NOT NULL,
+  user_id CHAR(26) NOT NULL,
+  default_dashboard_id VARCHAR(36),
+  default_report_id VARCHAR(36),
   preferred_time_zone VARCHAR(50),
   preferred_currency VARCHAR(10),
   date_format VARCHAR(20),
@@ -293,8 +295,8 @@ CREATE TABLE IF NOT EXISTS analytics_user_preferences (
   chart_preferences JSON,
   saved_filters JSON,
   export_format_default VARCHAR(20),
-  created_by BIGINT,
-  updated_by BIGINT,
+  created_by CHAR(36),
+  updated_by CHAR(36),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   deleted_at TIMESTAMP NULL,
@@ -309,12 +311,12 @@ CREATE TABLE IF NOT EXISTS analytics_user_preferences (
 
 -- Analytics access and usage audit trail
 CREATE TABLE IF NOT EXISTS analytics_audit_log (
-  id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  tenant_id BIGINT NOT NULL,
-  user_id BIGINT,
+  id CHAR(26) PRIMARY KEY,
+  tenant_id VARCHAR(36) NOT NULL,
+  user_id CHAR(26),
   action_type ENUM('view_dashboard', 'create_dashboard', 'edit_dashboard', 'delete_dashboard', 'generate_report', 'download_report', 'share_dashboard', 'export_data', 'view_widget', 'drill_down') NOT NULL,
   resource_type VARCHAR(100),
-  resource_id BIGINT,
+  resource_id VARCHAR(36),
   resource_name VARCHAR(255),
   action_details JSON,
   ip_address VARCHAR(45),
@@ -337,8 +339,8 @@ CREATE TABLE IF NOT EXISTS analytics_audit_log (
 
 -- Custom metric definitions
 CREATE TABLE IF NOT EXISTS analytics_custom_metrics (
-  id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  tenant_id BIGINT NOT NULL,
+  id CHAR(26) PRIMARY KEY,
+  tenant_id VARCHAR(36) NOT NULL,
   metric_name VARCHAR(255) NOT NULL,
   metric_description TEXT,
   metric_formula VARCHAR(500),
@@ -352,8 +354,8 @@ CREATE TABLE IF NOT EXISTS analytics_custom_metrics (
   output_decimal_places INT DEFAULT 2,
   refresh_frequency ENUM('real_time', 'hourly', 'daily', 'weekly', 'manual') DEFAULT 'daily',
   last_refresh_at TIMESTAMP NULL,
-  created_by BIGINT,
-  updated_by BIGINT,
+  created_by CHAR(36),
+  updated_by CHAR(36),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   deleted_at TIMESTAMP NULL,
@@ -369,8 +371,8 @@ CREATE TABLE IF NOT EXISTS analytics_custom_metrics (
 
 -- Analytics alerts and thresholds
 CREATE TABLE IF NOT EXISTS analytics_alerts (
-  id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  tenant_id BIGINT NOT NULL,
+  id CHAR(26) PRIMARY KEY,
+  tenant_id VARCHAR(36) NOT NULL,
   alert_name VARCHAR(255) NOT NULL,
   alert_type ENUM('threshold', 'anomaly', 'trend', 'comparison') NOT NULL,
   metric_name VARCHAR(255),
@@ -386,8 +388,8 @@ CREATE TABLE IF NOT EXISTS analytics_alerts (
   recipient_user_ids JSON,
   last_triggered_at TIMESTAMP NULL,
   trigger_count INT DEFAULT 0,
-  created_by BIGINT,
-  updated_by BIGINT,
+  created_by CHAR(36),
+  updated_by CHAR(36),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   deleted_at TIMESTAMP NULL,
@@ -399,9 +401,9 @@ CREATE TABLE IF NOT EXISTS analytics_alerts (
 
 -- Alert history and trigger logs
 CREATE TABLE IF NOT EXISTS analytics_alert_logs (
-  id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  tenant_id BIGINT NOT NULL,
-  alert_id BIGINT NOT NULL,
+  id CHAR(26) PRIMARY KEY,
+  tenant_id VARCHAR(36) NOT NULL,
+  alert_id VARCHAR(36) NOT NULL,
   alert_name VARCHAR(255),
   metric_name VARCHAR(255),
   metric_value DECIMAL(15, 4),
@@ -420,3 +422,10 @@ CREATE TABLE IF NOT EXISTS analytics_alert_logs (
   INDEX idx_acknowledged (acknowledged_at),
   FOREIGN KEY (alert_id) REFERENCES analytics_alerts(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+SET FOREIGN_KEY_CHECKS = 1;
+
+
+
+
+

@@ -1,0 +1,142 @@
+// ============================================================
+// CORE MULTI-TENANT TABLES (Foundation)
+// ============================================================
+// Migration: 001_foundation.sql
+// Purpose: Tenant, User, Auth, Teams, System Config
+// Tables: 7
+
+model Tenant {
+  id                   String   @id @db.Char(36)
+  name                 String   @db.VarChar(255)
+  domain               String   @unique @db.VarChar(255)
+  status               String   @default("active") @db.VarChar(50)
+  maxUsers             Int      @default(100) @map("max_users")
+  maxConcurrentCalls   Int      @default(50) @map("max_concurrent_calls")
+  aiBudgetMonthly      Decimal  @default(1000.00) @map("ai_budget_monthly") @db.Decimal(15, 2)
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  // Relations - Core only
+  users                User[]
+  currentTenantUsers   User[] @relation(name: "currentTenant")
+  teams                Team[]
+  systemConfigs        SystemConfig[]
+  auditLogs            AuditLog[]
+
+  @@index([domain])
+  @@index([status])
+  @@map("tenant")
+}
+
+model User {
+  id                 String   @id @db.Char(36) // UUID
+  email              String   @unique @db.VarChar(255)
+  passwordHash       String   @db.VarChar(255) @map("password_hash")
+  role               String   @default("user") @db.VarChar(50)
+  tenantId           String   @db.VarChar(36) @map("tenant_id")
+  currentTenantId    String?  @db.VarChar(36) @map("current_tenant_id")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  tenant             Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  currentTenant      Tenant?  @relation(name: "currentTenant", fields: [currentTenantId], references: [id], onDelete: SetNull)
+  passwordResetTokens PasswordResetToken[]
+  authTokens         AuthToken[]
+  auditLogs          AuditLog[]
+  userRoles          UserRole[]
+  accessLogs         AccessLog[]
+  // Module-specific relations defined in their respective schema files
+
+  @@index([email])
+  @@index([tenantId])
+  @@index([role])
+  @@map("user")
+}
+
+model PasswordResetToken {
+  id                 String   @id @db.Char(26) // ULID
+  userId             String   @db.Char(36) @map("user_id")
+  token              String   @unique @db.VarChar(255)
+  expiresAt          DateTime @map("expires_at")
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@map("password_reset_token")
+}
+
+model AuthToken {
+  id                 String   @id @db.Char(26) // ULID
+  userId             String   @db.Char(36) @map("user_id")
+  token              String   @unique @db.VarChar(500)
+  expiresAt          DateTime @map("expires_at")
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@map("auth_token")
+}
+
+model Team {
+  id                 String   @id @db.Char(26) // ULID
+  tenantId           String   @db.VarChar(36) @map("tenant_id")
+  teamName           String   @db.VarChar(255) @map("team_name")
+  description        String?  @db.LongText
+  status             String   @default("active") @db.VarChar(50)
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  tenant             Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([status])
+  @@map("team")
+}
+
+model SystemConfig {
+  id                 String   @id @db.Char(26) // ULID
+  tenantId           String   @db.VarChar(36) @map("tenant_id")
+  configKey          String   @db.VarChar(255) @map("config_key")
+  configValue        String?  @db.LongText @map("config_value")
+  configType         String   @db.VarChar(50) @map("config_type")
+  description        String?  @db.LongText
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  tenant             Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, configKey])
+  @@index([tenantId])
+  @@map("system_config")
+}
+
+model AuditLog {
+  id                 String   @id @db.Char(26) // ULID
+  tenantId           String   @db.VarChar(36) @map("tenant_id")
+  userId             String?  @db.Char(36) @map("user_id")
+  action             String   @db.VarChar(100)
+  entityType         String   @db.VarChar(100) @map("entity_type")
+  entityId           String?  @db.VarChar(36) @map("entity_id")
+  changes            Json?  @map("changes")
+  ipAddress          String?  @db.VarChar(45) @map("ip_address")
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  // Relations
+  tenant             Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user               User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId])
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("audit_log")
+}

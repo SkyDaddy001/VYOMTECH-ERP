@@ -190,24 +190,24 @@ TO ENABLE AUTO-RESET:
 
 1. Update cmd/main.go:
 
-   ```go
+   ``go
    // After database initialization
    demoService := services.NewDemoResetService(db)
    demoService.StartScheduler()
-   ```
+   ``
 
 2. Load migration 025 in database
 
 3. Optionally schedule cron job:
-   ```bash
+   ``bash
    0 0 1 * * /path/to/scripts/reset-demo-data.sh
-   ```
+   ``
 
 TO DISPLAY DEMO CREDENTIALS ON LOGIN:
 
 1. In your login page component:
 
-   ```tsx
+   ``tsx
    import { DemoCredentials } from '@/app/demo-credentials';
 
    export default function LoginPage() {
@@ -218,7 +218,7 @@ TO DISPLAY DEMO CREDENTIALS ON LOGIN:
        </div>
      );
    }
-   ```
+   ``
 
 ================================================================================
 TESTING COVERAGE

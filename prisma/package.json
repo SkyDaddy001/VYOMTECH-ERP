@@ -1,0 +1,30 @@
+{
+  "name": "vyomtech-erp-prisma",
+  "version": "1.0.0",
+  "description": "Prisma ORM configuration for VyomTech ERP",
+  "private": true,
+  "scripts": {
+    "generate": "npx prisma generate",
+    "migrate": "npx prisma migrate deploy",
+    "seed": "npx prisma db seed",
+    "reset": "npx prisma migrate reset --force",
+    "studio": "npx prisma studio",
+    "push": "npx prisma db push",
+    "status": "npx prisma migrate status"
+  },
+  "prisma": {
+    "seed": "ts-node seed.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.7.1",
+    "bcryptjs": "^2.4.3",
+    "ulid": "^2.3.0"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.2",
+    "@types/node": "^20.19.27",
+    "prisma": "^5.7.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}

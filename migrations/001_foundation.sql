@@ -10,7 +10,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- TENANT MANAGEMENT
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `tenant` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `name` VARCHAR(255) NOT NULL,
     `domain` VARCHAR(255) UNIQUE NOT NULL,
     `status` VARCHAR(50) NOT NULL DEFAULT 'active',
@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS `tenant` (
 -- USER MANAGEMENT
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `user` (
-    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `email` VARCHAR(255) UNIQUE NOT NULL,
     `password_hash` VARCHAR(255) NOT NULL,
     `role` VARCHAR(50) DEFAULT 'user',
@@ -46,8 +46,8 @@ CREATE TABLE IF NOT EXISTS `user` (
 -- PASSWORD RESET TOKENS
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `password_reset_token` (
-    `id` INT AUTO_INCREMENT PRIMARY KEY,
-    `user_id` INT NOT NULL,
+    `id` CHAR(36) PRIMARY KEY,
+    `user_id` CHAR(36) NOT NULL,
     `token` VARCHAR(255) UNIQUE NOT NULL,
     `expires_at` TIMESTAMP NOT NULL,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS `password_reset_token` (
 -- TEAM MANAGEMENT
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `team` (
-    `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
+    `id` CHAR(26) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `name` VARCHAR(255) NOT NULL,
     `description` TEXT,
@@ -75,7 +75,7 @@ CREATE TABLE IF NOT EXISTS `team` (
 -- SYSTEM CONFIGURATION
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `system_config` (
-    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36),
     `config_key` VARCHAR(255) NOT NULL,
     `config_value` LONGTEXT,
@@ -93,8 +93,8 @@ CREATE TABLE IF NOT EXISTS `system_config` (
 -- AUTHENTICATION TOKENS
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `auth_token` (
-    `id` INT AUTO_INCREMENT PRIMARY KEY,
-    `user_id` INT NOT NULL,
+    `id` CHAR(36) PRIMARY KEY,
+    `user_id` CHAR(36) NOT NULL,
     `token_hash` VARCHAR(255) UNIQUE NOT NULL,
     `token_type` VARCHAR(50) DEFAULT 'jwt',
     `expires_at` TIMESTAMP NOT NULL,
@@ -111,9 +111,9 @@ CREATE TABLE IF NOT EXISTS `auth_token` (
 -- AUDIT LOG
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `audit_log` (
-    `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
+    `id` CHAR(26) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
-    `user_id` INT,
+    `user_id` CHAR(36),
     `action` VARCHAR(100) NOT NULL,
     `entity_type` VARCHAR(100) NOT NULL,
     `entity_id` VARCHAR(36),

@@ -1,0 +1,223 @@
+// ============================================================
+// TEAM COLLABORATION & WEBRTC MODULE
+// ============================================================
+// Migrations: 021_team_collaboration_webrtc.sql
+// Purpose: Team Chat, Meetings, Work Items, Notifications
+// Tables: 18
+
+model TeamChatChannel {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  channelName       String   @db.VarChar(100) @map("channel_name")
+  channelType       String   @db.VarChar(50) @map("channel_type")
+  isPublic          Boolean  @default(true) @map("is_public")
+  description       String?  @db.Text
+  createdBy         String?  @db.VarChar(36) @map("created_by")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+  members           TeamChatMember[]
+  messages          TeamChatMessage[]
+
+  @@index([tenantId])
+  @@map("team_chat_channel")
+}
+
+model TeamChatMember {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  channelId         String   @db.VarChar(36) @map("channel_id")
+  userId            String   @db.Char(36) @map("user_id")
+  role              String   @db.VarChar(50)
+  joinedAt          DateTime @default(now()) @map("joined_at")
+
+  // Relations
+  channel           TeamChatChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  @@unique([channelId, userId])
+  @@index([tenantId])
+  @@map("team_chat_member")
+}
+
+model TeamChatMessage {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  channelId         String   @db.VarChar(36) @map("channel_id")
+  senderId          String   @db.Char(36) @map("sender_id")
+  message           String?  @db.LongText
+  attachments       Json?    @map("attachments")
+  editedAt          DateTime? @map("edited_at")
+  deletedAt         DateTime? @map("deleted_at")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+  channel           TeamChatChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  reactions         TeamChatReaction[]
+
+  @@index([tenantId])
+  @@index([channelId])
+  @@map("team_chat_message")
+}
+
+model TeamChatReaction {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  messageId         String   @db.VarChar(36) @map("message_id")
+  userId            String   @db.Char(36) @map("user_id")
+  emoji             String   @db.VarChar(10)
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+  message           TeamChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("team_chat_reaction")
+}
+
+model VoiceVideoCall {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  sessionId         String   @unique @db.VarChar(100) @map("session_id")
+  initiatorId       String   @db.Char(36) @map("initiator_id")
+  participantIds    String   @db.Text @map("participant_ids")
+  callType          String   @db.VarChar(50) @map("call_type")
+  status            String   @db.VarChar(50)
+  startTime         DateTime @map("start_time")
+  endTime           DateTime? @map("end_time")
+  duration          Int      @default(0)
+  recordingUrl      String?  @db.VarChar(500) @map("recording_url")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@index([sessionId])
+  @@map("voice_video_call")
+}
+
+model Meeting {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  meetingTitle      String   @db.VarChar(255) @map("meeting_title")
+  meetingStartTime  DateTime @map("meeting_start_time")
+  meetingEndTime    DateTime? @map("meeting_end_time")
+  organizerId       String   @db.Char(36) @map("organizer_id")
+  participantIds    String?  @db.Text @map("participant_ids")
+  description       String?  @db.Text
+  location          String?  @db.VarChar(255)
+  status            String   @db.VarChar(50)
+  recordingUrl      String?  @db.VarChar(500) @map("recording_url")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@index([organizerId])
+  @@map("meeting")
+}
+
+model WorkItem {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  title             String   @db.VarChar(255)
+  description       String?  @db.LongText
+  assignedTo        String?  @db.Char(36) @map("assigned_to")
+  status            String   @db.VarChar(50)
+  priority          String   @db.VarChar(50)
+  dueDate           DateTime? @map("due_date") @db.Date
+  completionDate    DateTime? @map("completion_date")
+  createdBy         String?  @db.Char(36) @map("created_by")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+  comments          WorkItemComment[]
+
+  @@index([tenantId])
+  @@index([status])
+  @@map("work_item")
+}
+
+model WorkItemComment {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  workItemId        String   @db.VarChar(36) @map("work_item_id")
+  userId            String   @db.Char(36) @map("user_id")
+  comment           String   @db.LongText
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+  workItem          WorkItem @relation(fields: [workItemId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("work_item_comment")
+}
+
+model Notification {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  userId            String   @db.Char(36) @map("user_id")
+  title             String   @db.VarChar(255)
+  message           String?  @db.LongText
+  type              String   @db.VarChar(50)
+  entityId          String?  @db.VarChar(36) @map("entity_id")
+  entityType        String?  @db.VarChar(100) @map("entity_type")
+  isRead            Boolean  @default(false) @map("is_read")
+  readAt            DateTime? @map("read_at")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@index([userId])
+  @@index([isRead])
+  @@map("notification")
+}
+
+model TaskAssignment {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  workItemId        String   @db.VarChar(36) @map("work_item_id")
+  assignedTo        String   @db.Char(36) @map("assigned_to")
+  assignedBy        String   @db.Char(36) @map("assigned_by")
+  assignmentDate    DateTime @map("assignment_date")
+  dueDate           DateTime? @map("due_date") @db.Date
+  priority          String   @db.VarChar(50)
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@map("task_assignment")
+}
+
+model ProjectTimeline {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  projectId         String   @db.VarChar(36) @map("project_id")
+  milestone         String   @db.VarChar(255)
+  targetDate        DateTime @map("target_date") @db.Date
+  completionDate    DateTime? @map("completion_date") @db.Date
+  status            String   @db.VarChar(50)
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@map("project_timeline")
+}
+
+model TeamMeetingNotes {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  meetingId         String   @db.VarChar(36) @map("meeting_id")
+  notes             String?  @db.LongText
+  actionItems       String?  @db.Text @map("action_items")
+  attendees         String?  @db.Text
+  createdBy         String?  @db.Char(36) @map("created_by")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@map("team_meeting_notes")
+}

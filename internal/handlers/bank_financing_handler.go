@@ -3,9 +3,10 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/gin-gonic/gin"
 	"vyomtech-backend/internal/models"
 	"vyomtech-backend/internal/services"
+
+	"github.com/gin-gonic/gin"
 )
 
 // ============================================================================
@@ -83,19 +84,19 @@ func (h *BankFinancingHandler) CreateBankFinancing(c *gin.Context) {
 	}
 
 	financing := &models.BankFinancing{
-		TenantID:               tenantID,
-		BookingID:              req.BookingID,
-		BankID:                 bankID,
-		LoanAmount:             req.LoanAmount,
-		SanctionedAmount:       req.SanctionedAmount,
-		LoanType:               req.LoanType,
-		InterestRate:           interestRate,
-		TenureMonths:           tenureMonths,
-		ApplicationRefNo:       appRefNo,
-		SanctionLetterURL:      sanctionLetterURL,
-		Status:                 "draft",
-		CreatedBy:              userIDPtr,
-		UpdatedBy:              userIDPtr,
+		TenantID:          tenantID,
+		BookingID:         req.BookingID,
+		BankID:            bankID,
+		LoanAmount:        req.LoanAmount,
+		SanctionedAmount:  req.SanctionedAmount,
+		LoanType:          req.LoanType,
+		InterestRate:      interestRate,
+		TenureMonths:      tenureMonths,
+		ApplicationRefNo:  appRefNo,
+		SanctionLetterURL: sanctionLetterURL,
+		Status:            "draft",
+		CreatedBy:         userIDPtr,
+		UpdatedBy:         userIDPtr,
 	}
 
 	created, err := h.financingService.CreateBankFinancing(c.Request.Context(), financing)
@@ -195,16 +196,16 @@ func (h *BankFinancingHandler) CreateBankDisbursement(c *gin.Context) {
 	}
 
 	disbursement := &models.BankDisbursement{
-		TenantID:             tenantID,
-		FinancingID:          financingID,
-		DisbursementNumber:   req.DisbursementNumber,
-		ScheduledAmount:      req.ScheduledAmount,
-		MilestoneID:          milestoneID,
-		MilestonePercentage:  milestonePercentage,
-		ClaimDocumentURL:     claimDocURL,
-		Status:               "pending",
-		CreatedBy:            userIDPtr,
-		UpdatedBy:            userIDPtr,
+		TenantID:            tenantID,
+		FinancingID:         financingID,
+		DisbursementNumber:  req.DisbursementNumber,
+		ScheduledAmount:     req.ScheduledAmount,
+		MilestoneID:         milestoneID,
+		MilestonePercentage: milestonePercentage,
+		ClaimDocumentURL:    claimDocURL,
+		Status:              "pending",
+		CreatedBy:           userIDPtr,
+		UpdatedBy:           userIDPtr,
 	}
 
 	created, err := h.financingService.CreateBankDisbursement(c.Request.Context(), disbursement)
@@ -259,14 +260,14 @@ func (h *BankFinancingHandler) CreateBankNOC(c *gin.Context) {
 	}
 
 	noc := &models.BankNOC{
-		TenantID:       tenantID,
-		FinancingID:    financingID,
-		NOCType:        req.NOCType,
-		NOCAmount:      nocAmount,
-		Remarks:        remarks,
-		Status:         "requested",
-		CreatedBy:      userIDPtr,
-		UpdatedBy:      userIDPtr,
+		TenantID:    tenantID,
+		FinancingID: financingID,
+		NOCType:     req.NOCType,
+		NOCAmount:   nocAmount,
+		Remarks:     remarks,
+		Status:      "requested",
+		CreatedBy:   userIDPtr,
+		UpdatedBy:   userIDPtr,
 	}
 
 	created, err := h.financingService.CreateBankNOC(c.Request.Context(), noc)
@@ -345,19 +346,19 @@ func (h *BankFinancingHandler) CreateBankCollection(c *gin.Context) {
 	}
 
 	collection := &models.BankCollectionTracking{
-		TenantID:            tenantID,
-		FinancingID:         financingID,
-		CollectionType:      req.CollectionType,
-		CollectionAmount:    req.CollectionAmount,
-		PaymentMode:         paymentMode,
-		PaymentReferenceNo:  paymentRefNo,
-		EMIMonth:            emiMonth,
-		EMINumber:           emiNumber,
-		PrincipalAmount:     principalAmount,
-		InterestAmount:      interestAmount,
-		Status:              "recorded",
-		CreatedBy:           userIDPtr,
-		UpdatedBy:           userIDPtr,
+		TenantID:           tenantID,
+		FinancingID:        financingID,
+		CollectionType:     req.CollectionType,
+		CollectionAmount:   req.CollectionAmount,
+		PaymentMode:        paymentMode,
+		PaymentReferenceNo: paymentRefNo,
+		EMIMonth:           emiMonth,
+		EMINumber:          emiNumber,
+		PrincipalAmount:    principalAmount,
+		InterestAmount:     interestAmount,
+		Status:             "recorded",
+		CreatedBy:          userIDPtr,
+		UpdatedBy:          userIDPtr,
 	}
 
 	created, err := h.financingService.CreateBankCollection(c.Request.Context(), collection)
@@ -428,16 +429,16 @@ func (h *BankFinancingHandler) CreateBank(c *gin.Context) {
 	}
 
 	bank := &models.Bank{
-		TenantID:                   tenantID,
-		BankName:                   req.BankName,
-		BranchName:                 req.BranchName,
-		IFSCCode:                   ifscCode,
-		BranchContact:              branchContact,
-		BranchEmail:                branchEmail,
-		RelationshipManagerName:    rmName,
-		RelationshipManagerPhone:   rmPhone,
-		RelationshipManagerEmail:   rmEmail,
-		Status:                     "active",
+		TenantID:                 tenantID,
+		BankName:                 req.BankName,
+		BranchName:               req.BranchName,
+		IFSCCode:                 ifscCode,
+		BranchContact:            branchContact,
+		BranchEmail:              branchEmail,
+		RelationshipManagerName:  rmName,
+		RelationshipManagerPhone: rmPhone,
+		RelationshipManagerEmail: rmEmail,
+		Status:                   "active",
 	}
 
 	created, err := h.financingService.CreateBank(c.Request.Context(), bank)
@@ -468,4 +469,84 @@ func (h *BankFinancingHandler) ListBanks(c *gin.Context) {
 		"data":    banks,
 		"count":   len(banks),
 	})
+}
+
+// ============================================================================
+// HTTP HANDLER WRAPPERS (For Gorilla mux compatibility)
+// ============================================================================
+
+// CreateBankFinancingHTTP wraps the Gin handler for HTTP
+func (h *BankFinancingHandler) CreateBankFinancingHTTP(w http.ResponseWriter, r *http.Request) {
+	c, _ := gin.CreateTestContext(w)
+	c.Request = r
+	c.Set("tenant_id", r.Header.Get("X-Tenant-ID"))
+	c.Set("user_id", r.Header.Get("X-User-ID"))
+	h.CreateBankFinancing(c)
+}
+
+// ListBankFinancingHTTP wraps the Gin handler for HTTP
+func (h *BankFinancingHandler) ListBankFinancingHTTP(w http.ResponseWriter, r *http.Request) {
+	c, _ := gin.CreateTestContext(w)
+	c.Request = r
+	c.Set("tenant_id", r.Header.Get("X-Tenant-ID"))
+	c.Set("user_id", r.Header.Get("X-User-ID"))
+	h.ListBankFinancing(c)
+}
+
+// GetBankFinancingHTTP wraps the Gin handler for HTTP
+func (h *BankFinancingHandler) GetBankFinancingHTTP(w http.ResponseWriter, r *http.Request) {
+	c, _ := gin.CreateTestContext(w)
+	c.Request = r
+	c.Params = []gin.Param{{Key: "id", Value: r.PathValue("id")}}
+	c.Set("tenant_id", r.Header.Get("X-Tenant-ID"))
+	c.Set("user_id", r.Header.Get("X-User-ID"))
+	h.GetBankFinancing(c)
+}
+
+// CreateBankDisbursementHTTP wraps the Gin handler for HTTP
+func (h *BankFinancingHandler) CreateBankDisbursementHTTP(w http.ResponseWriter, r *http.Request) {
+	c, _ := gin.CreateTestContext(w)
+	c.Request = r
+	c.Params = []gin.Param{{Key: "id", Value: r.PathValue("id")}}
+	c.Set("tenant_id", r.Header.Get("X-Tenant-ID"))
+	c.Set("user_id", r.Header.Get("X-User-ID"))
+	h.CreateBankDisbursement(c)
+}
+
+// CreateBankNOCHTTP wraps the Gin handler for HTTP
+func (h *BankFinancingHandler) CreateBankNOCHTTP(w http.ResponseWriter, r *http.Request) {
+	c, _ := gin.CreateTestContext(w)
+	c.Request = r
+	c.Params = []gin.Param{{Key: "id", Value: r.PathValue("id")}}
+	c.Set("tenant_id", r.Header.Get("X-Tenant-ID"))
+	c.Set("user_id", r.Header.Get("X-User-ID"))
+	h.CreateBankNOC(c)
+}
+
+// CreateBankCollectionHTTP wraps the Gin handler for HTTP
+func (h *BankFinancingHandler) CreateBankCollectionHTTP(w http.ResponseWriter, r *http.Request) {
+	c, _ := gin.CreateTestContext(w)
+	c.Request = r
+	c.Params = []gin.Param{{Key: "id", Value: r.PathValue("id")}}
+	c.Set("tenant_id", r.Header.Get("X-Tenant-ID"))
+	c.Set("user_id", r.Header.Get("X-User-ID"))
+	h.CreateBankCollection(c)
+}
+
+// CreateBankHTTP wraps the Gin handler for HTTP
+func (h *BankFinancingHandler) CreateBankHTTP(w http.ResponseWriter, r *http.Request) {
+	c, _ := gin.CreateTestContext(w)
+	c.Request = r
+	c.Set("tenant_id", r.Header.Get("X-Tenant-ID"))
+	c.Set("user_id", r.Header.Get("X-User-ID"))
+	h.CreateBank(c)
+}
+
+// ListBanksHTTP wraps the Gin handler for HTTP
+func (h *BankFinancingHandler) ListBanksHTTP(w http.ResponseWriter, r *http.Request) {
+	c, _ := gin.CreateTestContext(w)
+	c.Request = r
+	c.Set("tenant_id", r.Header.Get("X-Tenant-ID"))
+	c.Set("user_id", r.Header.Get("X-User-ID"))
+	h.ListBanks(c)
 }

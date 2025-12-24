@@ -1,0 +1,185 @@
+// ============================================================
+// CIVIL/CONSTRUCTION MODULE
+// ============================================================
+// Purpose: Construction Project Management, Materials, Labor
+// Tables: 11
+
+model ConstructionProject {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  projectCode       String   @unique @db.VarChar(50) @map("project_code")
+  projectName       String   @db.VarChar(255) @map("project_name")
+  location          String   @db.Text
+  projectManager    String?  @db.VarChar(36) @map("project_manager")
+  startDate         DateTime @map("start_date") @db.Date
+  completionDate    DateTime? @map("completion_date") @db.Date
+  estimatedBudget   Decimal  @db.Decimal(15, 2) @map("estimated_budget")
+  actualBudget      Decimal  @db.Decimal(15, 2) @default(0) @map("actual_budget")
+  status            String   @default("planning") @db.VarChar(50)
+  percentageComplete Decimal @default(0) @db.Decimal(5, 2) @map("percentage_complete")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+  phases            ConstructionPhase[]
+  materials         ConstructionMaterial[]
+  laborEntries      ConstructionLabor[]
+  equipment         ConstructionEquipment[]
+  qualityChecks     ConstructionQualityCheck[]
+  safetyIncidents   ConstructionSafety[]
+  siteVisits        SiteVisit[]
+
+  @@index([tenantId])
+  @@map("construction_project")
+}
+
+model ConstructionPhase {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  projectId         String   @db.VarChar(36) @map("project_id")
+  phaseName         String   @db.VarChar(255) @map("phase_name")
+  description       String?  @db.Text
+  startDate         DateTime @map("start_date") @db.Date
+  expectedEndDate   DateTime @map("expected_end_date") @db.Date
+  actualEndDate     DateTime? @map("actual_end_date") @db.Date
+  budgetedAmount    Decimal  @db.Decimal(15, 2) @map("budgeted_amount")
+  actualAmount      Decimal  @db.Decimal(15, 2) @default(0) @map("actual_amount")
+  status            String   @default("not_started") @db.VarChar(50)
+  sequence          Int
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+  project           ConstructionProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("construction_phase")
+}
+
+model ConstructionMaterial {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  projectId         String   @db.VarChar(36) @map("project_id")
+  materialCode      String   @db.VarChar(100) @map("material_code")
+  materialName      String   @db.VarChar(255) @map("material_name")
+  quantity          Decimal  @db.Decimal(18, 4)
+  unit              String   @db.VarChar(50)
+  unitCost          Decimal  @db.Decimal(15, 2) @map("unit_cost")
+  totalCost         Decimal  @db.Decimal(15, 2) @map("total_cost")
+  supplier          String?  @db.VarChar(255)
+  deliveryDate      DateTime @map("delivery_date") @db.Date
+  receivedQuantity  Decimal  @default(0) @db.Decimal(18, 4) @map("received_quantity")
+  wastageQuantity   Decimal  @default(0) @db.Decimal(18, 4) @map("wastage_quantity")
+  status            String   @default("pending") @db.VarChar(50)
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+  project           ConstructionProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("construction_material")
+}
+
+model ConstructionLabor {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  projectId         String   @db.VarChar(36) @map("project_id")
+  laborDate         DateTime @map("labor_date") @db.Date
+  laborType         String   @db.VarChar(100) @map("labor_type")
+  workers           Int
+  hoursPerWorker    Decimal  @db.Decimal(5, 2) @map("hours_per_worker")
+  ratePerHour       Decimal  @db.Decimal(10, 2) @map("rate_per_hour")
+  totalCost         Decimal  @db.Decimal(15, 2) @map("total_cost")
+  supervisor        String?  @db.VarChar(36)
+  notes             String?  @db.Text
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+  project           ConstructionProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("construction_labor")
+}
+
+model ConstructionEquipment {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  projectId         String   @db.VarChar(36) @map("project_id")
+  equipmentCode     String   @unique @db.VarChar(100) @map("equipment_code")
+  equipmentName     String   @db.VarChar(255) @map("equipment_name")
+  equipmentType     String   @db.VarChar(100) @map("equipment_type")
+  allocationDate    DateTime @map("allocation_date") @db.Date
+  releaseDate       DateTime? @map("release_date") @db.Date
+  dailyCost         Decimal  @db.Decimal(15, 2) @map("daily_cost")
+  totalCost         Decimal  @db.Decimal(15, 2) @default(0) @map("total_cost")
+  status            String   @default("allocated") @db.VarChar(50)
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+  project           ConstructionProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("construction_equipment")
+}
+
+model ConstructionQualityCheck {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  projectId         String   @db.VarChar(36) @map("project_id")
+  checkDate         DateTime @map("check_date") @db.Date
+  checkType         String   @db.VarChar(100) @map("check_type")
+  checkedBy         String   @db.VarChar(36) @map("checked_by")
+  area              String   @db.VarChar(255)
+  findings          String?  @db.LongText
+  status            String   @db.VarChar(50)
+  passedCriteria    Int      @map("passed_criteria")
+  totalCriteria     Int      @map("total_criteria")
+  nextCheckDate     DateTime? @map("next_check_date") @db.Date
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+  project           ConstructionProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("construction_quality_check")
+}
+
+model ConstructionSafety {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  projectId         String   @db.VarChar(36) @map("project_id")
+  incidentDate      DateTime @map("incident_date") @db.Date
+  incidentType      String   @db.VarChar(100) @map("incident_type")
+  severity          String   @db.VarChar(50)
+  description       String   @db.LongText
+  reportedBy        String   @db.VarChar(36) @map("reported_by")
+  affectedWorkers   Int?     @map("affected_workers")
+  lostDays          Int?     @map("lost_days")
+  investigationRequired Boolean @default(false) @map("investigation_required")
+  status            String   @default("reported") @db.VarChar(50)
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+  project           ConstructionProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("construction_safety")
+}
+
+model SiteVisit {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  projectId         String   @db.VarChar(36) @map("project_id")
+  visitDate         DateTime @map("visit_date") @db.Date
+  visitedBy         String   @db.VarChar(36) @map("visited_by")
+  purpose           String   @db.Text
+  observations      String?  @db.LongText
+  photographs       String?  @db.LongText
+  actionsRequired   String?  @db.LongText @map("actions_required")
+  status            String   @default("completed") @db.VarChar(50)
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+  project           ConstructionProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("site_visit")
+}

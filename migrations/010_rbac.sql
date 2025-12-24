@@ -10,7 +10,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- ROLE TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `role` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `role_name` VARCHAR(100) NOT NULL,
     `description` TEXT,
@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS `role` (
 -- PERMISSION TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `permission` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `permission_name` VARCHAR(100) NOT NULL,
     `description` TEXT,
@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS `permission` (
 -- ROLE PERMISSION TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `role_permission` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `role_id` VARCHAR(36) NOT NULL,
     `permission_id` VARCHAR(36) NOT NULL,
@@ -64,7 +64,7 @@ CREATE TABLE IF NOT EXISTS `role_permission` (
 -- USER ROLE TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `user_role` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `user_id` INT NOT NULL,
     `role_id` VARCHAR(36) NOT NULL,
@@ -85,7 +85,7 @@ CREATE TABLE IF NOT EXISTS `user_role` (
 -- RESOURCE TABLE (API ENDPOINTS & FEATURES)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `resource` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `resource_name` VARCHAR(100) NOT NULL,
     `resource_type` VARCHAR(50),
@@ -102,7 +102,7 @@ CREATE TABLE IF NOT EXISTS `resource` (
 -- ACCESS LOG TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `access_log` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `user_id` INT,
     `resource_id` VARCHAR(36),

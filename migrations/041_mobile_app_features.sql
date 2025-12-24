@@ -11,7 +11,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- MOBILE APP CONFIGURATIONS
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `mobile_app` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `app_name` VARCHAR(255) NOT NULL,
     `app_type` VARCHAR(50) NOT NULL DEFAULT 'ios', -- ios, android, cross-platform
@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS `mobile_app` (
 -- MOBILE DEVICE REGISTRATION
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `mobile_device` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `user_id` INT NOT NULL,
     `app_id` VARCHAR(36) NOT NULL,
@@ -101,7 +101,7 @@ CREATE TABLE IF NOT EXISTS `mobile_device` (
 -- MOBILE USER SESSIONS
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `mobile_session` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `user_id` INT NOT NULL,
     `device_id` VARCHAR(36) NOT NULL,
@@ -146,7 +146,7 @@ CREATE TABLE IF NOT EXISTS `mobile_session` (
 -- APP PUSH NOTIFICATIONS
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `app_notification` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `app_id` VARCHAR(36) NOT NULL,
     `user_id` INT,
@@ -202,7 +202,7 @@ CREATE TABLE IF NOT EXISTS `app_notification` (
 -- MOBILE APP FEATURES & FEATURE FLAGS
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `app_feature` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `app_id` VARCHAR(36) NOT NULL,
     `feature_name` VARCHAR(255) NOT NULL,
@@ -244,7 +244,7 @@ CREATE TABLE IF NOT EXISTS `app_feature` (
 -- MOBILE APP USER SETTINGS & PREFERENCES
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `app_setting` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `user_id` INT NOT NULL,
     `app_id` VARCHAR(36) NOT NULL,
@@ -279,7 +279,7 @@ CREATE TABLE IF NOT EXISTS `app_setting` (
 -- OFFLINE DATA CACHE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `offline_data` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `device_id` VARCHAR(36) NOT NULL,
     `app_id` VARCHAR(36) NOT NULL,
@@ -323,7 +323,7 @@ CREATE TABLE IF NOT EXISTS `offline_data` (
 -- MOBILE APP CRASH REPORTING
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `app_crash` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `app_id` VARCHAR(36) NOT NULL,
     `device_id` VARCHAR(36) NOT NULL,
@@ -381,7 +381,7 @@ CREATE TABLE IF NOT EXISTS `app_crash` (
 -- MOBILE DEVICE ANALYTICS
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `device_analytic` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `app_id` VARCHAR(36) NOT NULL,
     `device_id` VARCHAR(36) NOT NULL,
@@ -437,7 +437,7 @@ CREATE TABLE IF NOT EXISTS `device_analytic` (
 -- MOBILE APP UPDATES & VERSION TRACKING
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `app_update` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `app_id` VARCHAR(36) NOT NULL,
     `version` VARCHAR(50) NOT NULL,
@@ -493,7 +493,7 @@ CREATE TABLE IF NOT EXISTS `app_update` (
 -- DEVICE UPDATE HISTORY
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `device_update_history` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `device_id` VARCHAR(36) NOT NULL,
     `app_id` VARCHAR(36) NOT NULL,

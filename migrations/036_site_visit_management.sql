@@ -10,7 +10,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- SITE VISIT SCHEDULE TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `site_visit_schedule` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `lead_id` VARCHAR(36) NULL,
     `visitor_name` VARCHAR(100) NOT NULL,
@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS `site_visit_schedule` (
 -- SITE VISIT LOG TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `site_visit_log` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `visit_schedule_id` VARCHAR(36) NOT NULL,
     `check_in_time` DATETIME,

@@ -1,0 +1,232 @@
+// ============================================================
+// VOIP & CALL CENTER MODULE
+// ============================================================
+// Migrations: 009_call_center_ai.sql, 019_click_to_call_system.sql
+// Purpose: Click-to-Call, Call Routing, IVR, VoIP Management, Recording
+// Tables: 25+
+
+model VOIPProvider {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  providerName      String   @db.VarChar(100) @map("provider_name")
+  apiKey            String   @db.VarChar(500) @map("api_key")
+  apiSecret         String   @db.VarChar(500) @map("api_secret")
+  endpoint          String?  @db.VarChar(255)
+  isActive          Boolean  @default(true) @map("is_active")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@map("voip_provider")
+}
+
+model ClickToCallSession {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  sessionId         String   @unique @db.VarChar(100) @map("session_id")
+  initiatorId       String   @db.VarChar(36) @map("initiator_id")
+  receiverId        String?  @db.VarChar(36) @map("receiver_id")
+  initiatorPhone    String   @db.VarChar(20) @map("initiator_phone")
+  receiverPhone     String?  @db.VarChar(20) @map("receiver_phone")
+  status            String   @db.VarChar(50)
+  duration          Int      @default(0)
+  recordingUrl      String?  @db.VarChar(500) @map("recording_url")
+  startTime         DateTime @map("start_time")
+  endTime           DateTime? @map("end_time")
+  callType          String?  @db.VarChar(50) @map("call_type")
+  notes             String?  @db.Text
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@index([sessionId])
+  @@map("click_to_call_session")
+}
+
+model CallRoutingRule {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  ruleName          String   @db.VarChar(100) @map("rule_name")
+  priority          Int
+  source            String?  @db.VarChar(255)
+  destination       String?  @db.VarChar(255)
+  routingType       String   @db.VarChar(50) @map("routing_type")
+  targetNumber      String?  @db.VarChar(20) @map("target_number")
+  targetGroupId     String?  @db.VarChar(36) @map("target_group_id")
+  isActive          Boolean  @default(true) @map("is_active")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@map("call_routing_rule")
+}
+
+model CallDTMFInteraction {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  sessionId         String   @db.VarChar(36) @map("session_id")
+  dtmfSequence      String   @db.VarChar(50) @map("dtmf_sequence")
+  action            String   @db.VarChar(100)
+  timestamp         DateTime @default(now())
+
+  // Relations
+
+  @@index([tenantId])
+  @@index([sessionId])
+  @@map("call_dtmf_interaction")
+}
+
+model IVRMenu {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  menuName          String   @db.VarChar(100) @map("menu_name")
+  prompt            String   @db.Text
+  recordingUrl      String?  @db.VarChar(500) @map("recording_url")
+  isActive          Boolean  @default(true) @map("is_active")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+  options           IVRMenuOption[]
+
+  @@index([tenantId])
+  @@map("ivr_menu")
+}
+
+model IVRMenuOption {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  menuId            String   @db.VarChar(36) @map("menu_id")
+  optionKey         String   @db.VarChar(10) @map("option_key")
+  optionLabel       String   @db.VarChar(255) @map("option_label")
+  actionType        String   @db.VarChar(50) @map("action_type")
+  actionValue       String?  @db.VarChar(255) @map("action_value")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+  menu              IVRMenu  @relation(fields: [menuId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("ivr_menu_option")
+}
+
+model CallRecording {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  sessionId         String   @db.VarChar(36) @map("session_id")
+  recordingUrl      String   @db.VarChar(500) @map("recording_url")
+  duration          Int      @default(0)
+  fileSize          BigInt?  @map("file_size")
+  format            String?  @db.VarChar(50)
+  startTime         DateTime @map("start_time")
+  endTime           DateTime? @map("end_time")
+  isTranscribed     Boolean  @default(false) @map("is_transcribed")
+  transcription     String?  @db.LongText
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@index([sessionId])
+  @@map("call_recording")
+}
+
+model Agent {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  agentCode         String   @unique @db.VarChar(50) @map("agent_code")
+  userId            String?  @db.Char(36) @map("user_id")
+  name              String   @db.VarChar(255)
+  email             String?  @db.VarChar(255)
+  phone             String?  @db.VarChar(20)
+  extension         String?  @db.VarChar(20)
+  queue             String?  @db.VarChar(100)
+  status            String   @default("offline") @db.VarChar(50)
+  totalCallsHandled Int      @default(0) @map("total_calls_handled")
+  averageCallDuration Int   @default(0) @map("average_call_duration")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+  performanceRecords AgentPerformance[]
+
+  @@index([tenantId])
+  @@index([agentCode])
+  @@map("agent")
+}
+
+model Campaign {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  campaignName      String   @db.VarChar(255) @map("campaign_name")
+  campaignType      String   @db.VarChar(50) @map("campaign_type")
+  startDate         DateTime @map("start_date") @db.Date
+  endDate           DateTime? @map("end_date") @db.Date
+  targetCount       Int      @map("target_count")
+  completedCount    Int      @default(0) @map("completed_count")
+  successCount      Int      @default(0) @map("success_count")
+  status            String   @default("pending") @db.VarChar(50)
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@map("campaign")
+}
+
+model AIModel {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  modelName         String   @db.VarChar(255) @map("model_name")
+  modelVersion      String   @db.VarChar(50) @map("model_version")
+  modelType         String   @db.VarChar(50) @map("model_type")
+  description       String?  @db.Text
+  accuracy          Decimal? @db.Decimal(5, 2)
+  trainingDate      DateTime? @map("training_date") @db.Date
+  isActive          Boolean  @default(true) @map("is_active")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@map("ai_model")
+}
+
+model AIInteraction {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  sessionId         String   @db.VarChar(36) @map("session_id")
+  modelId           String?  @db.VarChar(36) @map("model_id")
+  input             String?  @db.LongText
+  output            String?  @db.LongText
+  confidence        Decimal? @db.Decimal(5, 2)
+  processingTime    Int?     @map("processing_time")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@index([sessionId])
+  @@map("ai_interaction")
+}
+
+model AgentPerformance {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  agentId           String   @db.VarChar(36) @map("agent_id")
+  reportPeriod      String   @db.VarChar(50) @map("report_period")
+  totalCalls        Int      @default(0) @map("total_calls")
+  answeredCalls     Int      @default(0) @map("answered_calls")
+  missedCalls       Int      @default(0) @map("missed_calls")
+  averageHandleTime Int      @default(0) @map("average_handle_time")
+  customerSatisfaction Decimal? @db.Decimal(3, 1) @map("customer_satisfaction")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+  agent             Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, agentId, reportPeriod])
+  @@index([tenantId])
+  @@map("agent_performance")
+}

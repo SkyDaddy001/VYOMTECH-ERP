@@ -13,7 +13,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 
 -- Booking/Unit Allocation
 CREATE TABLE IF NOT EXISTS `booking` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `booking_code` VARCHAR(50) UNIQUE NOT NULL,
     `unit_id` VARCHAR(36) NOT NULL,
@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS `booking` (
 
 -- Applicant/Client Details
 CREATE TABLE IF NOT EXISTS `client` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `booking_id` VARCHAR(36) NOT NULL,
     `applicant_type` VARCHAR(50),
@@ -65,7 +65,7 @@ CREATE TABLE IF NOT EXISTS `client` (
 
 -- Power of Attorney (PoA) Details
 CREATE TABLE IF NOT EXISTS `power_of_attorney` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `booking_id` VARCHAR(36) NOT NULL,
     `first_name` VARCHAR(100) NOT NULL,
@@ -94,7 +94,7 @@ CREATE TABLE IF NOT EXISTS `power_of_attorney` (
 
 -- Payment Schedule & Records
 CREATE TABLE IF NOT EXISTS `payment_schedule` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `booking_id` VARCHAR(36) NOT NULL,
     `payment_stage` INT,
@@ -113,7 +113,7 @@ CREATE TABLE IF NOT EXISTS `payment_schedule` (
 
 -- Payment Details/Records
 CREATE TABLE IF NOT EXISTS `payment` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `booking_id` VARCHAR(36) NOT NULL,
     `payment_schedule_id` VARCHAR(36),
@@ -141,7 +141,7 @@ CREATE TABLE IF NOT EXISTS `payment` (
 
 -- Bank Loan Details
 CREATE TABLE IF NOT EXISTS `bank_loan` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `booking_id` VARCHAR(36) NOT NULL,
     `bank_name` VARCHAR(255) NOT NULL,
@@ -163,7 +163,7 @@ CREATE TABLE IF NOT EXISTS `bank_loan` (
 
 -- Car Parking Details
 CREATE TABLE IF NOT EXISTS `car_parking` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `booking_id` VARCHAR(36) NOT NULL,
     `parking_type` VARCHAR(50),
@@ -179,7 +179,7 @@ CREATE TABLE IF NOT EXISTS `car_parking` (
 
 -- GST/Registration Details
 CREATE TABLE IF NOT EXISTS `registration_details` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `booking_id` VARCHAR(36) NOT NULL,
     `gst_applicable` BOOLEAN DEFAULT FALSE,
@@ -199,7 +199,7 @@ CREATE TABLE IF NOT EXISTS `registration_details` (
 
 -- Additional Charges/Maintenance
 CREATE TABLE IF NOT EXISTS `additional_charges` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `booking_id` VARCHAR(36) NOT NULL,
     `maintenance_charge` DECIMAL(15, 2),

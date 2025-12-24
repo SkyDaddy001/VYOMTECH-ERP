@@ -2,44 +2,44 @@
 
 ## Endpoints Summary
 
-```
+``
 GET    /api/v1/rbac/roles                    → List all roles
 GET    /api/v1/rbac/roles/:id                → Get specific role
 GET    /api/v1/rbac/permissions              → List permissions
 POST   /api/v1/rbac/roles                    → Create role (admin)
 PUT    /api/v1/rbac/roles/:id/permissions    → Assign permissions (admin)
 DELETE /api/v1/rbac/roles/:id                → Delete role (admin)
-```
+``
 
 ---
 
 ## Required Headers
 
-```
+``
 Authorization: Bearer <JWT_TOKEN>
 X-Tenant-ID: <TENANT_ID>
 Content-Type: application/json
-```
+``
 
 ---
 
 ## Request Bodies
 
 ### Create Role
-```json
+``json
 {
   "role_name": "string (required)",
   "description": "string (optional)",
   "is_active": "boolean (optional)"
 }
-```
+``
 
 ### Assign Permissions
-```json
+``json
 {
   "permission_ids": ["string array (required)"]
 }
-```
+``
 
 ---
 
@@ -60,54 +60,54 @@ Content-Type: application/json
 
 ## Success Response Format
 
-```json
+``json
 {
   "message": "Operation description",
   "data": {
     // Response-specific data
   }
 }
-```
+``
 
 ---
 
 ## Error Response Format
 
-```json
+``json
 {
   "error": "HTTP Status Text",
   "message": "Detailed error message",
   "code": 400
 }
-```
+``
 
 ---
 
 ## Common cURL Commands
 
 ### List Roles
-```bash
+``bash
 curl -X GET http://localhost:8080/api/v1/rbac/roles \
   -H "Authorization: Bearer $TOKEN" \
   -H "X-Tenant-ID: $TENANT"
-```
+``
 
 ### Get Specific Role
-```bash
+``bash
 curl -X GET http://localhost:8080/api/v1/rbac/roles/role-id \
   -H "Authorization: Bearer $TOKEN" \
   -H "X-Tenant-ID: $TENANT"
-```
+``
 
 ### List Permissions
-```bash
+``bash
 curl -X GET http://localhost:8080/api/v1/rbac/permissions \
   -H "Authorization: Bearer $TOKEN" \
   -H "X-Tenant-ID: $TENANT"
-```
+``
 
 ### Create Role (Admin)
-```bash
+``bash
 curl -X POST http://localhost:8080/api/v1/rbac/roles \
   -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H "X-Tenant-ID: $TENANT" \
@@ -117,10 +117,10 @@ curl -X POST http://localhost:8080/api/v1/rbac/roles \
     "description": "Team manager role",
     "is_active": true
   }'
-```
+``
 
 ### Assign Permissions (Admin)
-```bash
+``bash
 curl -X PUT http://localhost:8080/api/v1/rbac/roles/role-id/permissions \
   -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H "X-Tenant-ID: $TENANT" \
@@ -128,14 +128,14 @@ curl -X PUT http://localhost:8080/api/v1/rbac/roles/role-id/permissions \
   -d '{
     "permission_ids": ["perm-1", "perm-2", "perm-3"]
   }'
-```
+``
 
 ### Delete Role (Admin)
-```bash
+``bash
 curl -X DELETE http://localhost:8080/api/v1/rbac/roles/role-id \
   -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H "X-Tenant-ID: $TENANT"
-```
+``
 
 ---
 
@@ -184,7 +184,7 @@ Legend: ✅ = All authenticated users, 🔒 = Admin only
 ## Database Tables
 
 ### role
-```
+``
 id (UUID)
 tenant_id (UUID)
 role_name (string, unique per tenant)
@@ -192,10 +192,10 @@ description (text)
 is_active (boolean)
 created_at (timestamp)
 updated_at (timestamp)
-```
+``
 
 ### permission
-```
+``
 id (UUID)
 tenant_id (UUID)
 permission_name (string, unique per tenant)
@@ -203,47 +203,47 @@ description (text)
 resource (string)
 action (string)
 created_at (timestamp)
-```
+``
 
 ### role_permission
-```
+``
 id (UUID)
 tenant_id (UUID)
 role_id (UUID)
 permission_id (UUID)
 created_at (timestamp)
-```
+``
 
 ---
 
 ## Example Workflow
 
 ### 1. Login and Get Token
-```bash
+``bash
 TOKEN=$(curl -s -X POST http://localhost:8080/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"admin@test.com","password":"password"}' \
   | jq -r '.data.token')
 
 TENANT="test-tenant-001"
-```
+``
 
 ### 2. List Existing Roles
-```bash
+``bash
 curl -X GET http://localhost:8080/api/v1/rbac/roles \
   -H "Authorization: Bearer $TOKEN" \
   -H "X-Tenant-ID: $TENANT" | jq '.'
-```
+``
 
 ### 3. Get Available Permissions
-```bash
+``bash
 curl -X GET http://localhost:8080/api/v1/rbac/permissions \
   -H "Authorization: Bearer $TOKEN" \
   -H "X-Tenant-ID: $TENANT" | jq '.data[] | {id, permission_name}'
-```
+``
 
 ### 4. Create New Role
-```bash
+``bash
 ROLE=$(curl -s -X POST http://localhost:8080/api/v1/rbac/roles \
   -H "Authorization: Bearer $TOKEN" \
   -H "X-Tenant-ID: $TENANT" \
@@ -255,10 +255,10 @@ ROLE=$(curl -s -X POST http://localhost:8080/api/v1/rbac/roles \
   }' | jq -r '.data.id')
 
 echo "Created role: $ROLE"
-```
+``
 
 ### 5. Assign Permissions
-```bash
+``bash
 curl -X PUT http://localhost:8080/api/v1/rbac/roles/$ROLE/permissions \
   -H "Authorization: Bearer $TOKEN" \
   -H "X-Tenant-ID: $TENANT" \
@@ -270,14 +270,14 @@ curl -X PUT http://localhost:8080/api/v1/rbac/roles/$ROLE/permissions \
       "perm-sales-update"
     ]
   }' | jq '.'
-```
+``
 
 ### 6. Verify Role
-```bash
+``bash
 curl -X GET http://localhost:8080/api/v1/rbac/roles/$ROLE \
   -H "Authorization: Bearer $TOKEN" \
   -H "X-Tenant-ID: $TENANT" | jq '.data | {id, role_name, permissions}'
-```
+``
 
 ---
 

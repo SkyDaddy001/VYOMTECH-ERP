@@ -10,7 +10,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- SALES LEAD TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `sales_lead` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `lead_code` VARCHAR(50) UNIQUE NOT NULL,
     `first_name` VARCHAR(100),
@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS `sales_lead` (
 -- SALES CUSTOMER TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `sales_customer` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `customer_code` VARCHAR(50) UNIQUE NOT NULL,
     `customer_name` VARCHAR(255) NOT NULL,
@@ -100,7 +100,7 @@ CREATE TABLE IF NOT EXISTS `sales_customer` (
 -- SALES QUOTATION TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `sales_quotation` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `quotation_number` VARCHAR(50) UNIQUE NOT NULL,
     `customer_id` VARCHAR(36) NOT NULL,
@@ -132,7 +132,7 @@ CREATE TABLE IF NOT EXISTS `sales_quotation` (
 -- SALES QUOTATION ITEM TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `sales_quotation_item` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `quotation_id` VARCHAR(36) NOT NULL,
     `line_number` INT NOT NULL,
@@ -155,7 +155,7 @@ CREATE TABLE IF NOT EXISTS `sales_quotation_item` (
 -- SALES ORDER TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `sales_order` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `order_number` VARCHAR(50) UNIQUE NOT NULL,
     `customer_id` VARCHAR(36) NOT NULL,
@@ -192,7 +192,7 @@ CREATE TABLE IF NOT EXISTS `sales_order` (
 -- SALES ORDER ITEM TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `sales_order_item` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `order_id` VARCHAR(36) NOT NULL,
     `line_number` INT NOT NULL,
@@ -215,7 +215,7 @@ CREATE TABLE IF NOT EXISTS `sales_order_item` (
 -- SALES INVOICE TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `sales_invoice` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `invoice_number` VARCHAR(50) UNIQUE NOT NULL,
     `customer_id` VARCHAR(36) NOT NULL,

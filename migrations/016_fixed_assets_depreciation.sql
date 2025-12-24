@@ -10,7 +10,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- FIXED ASSET MASTER TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `fixed_asset` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `asset_code` VARCHAR(50) NOT NULL,
     `asset_name` VARCHAR(255) NOT NULL,
@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS `fixed_asset` (
 -- DEPRECIATION SCHEDULE TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `depreciation_schedule` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `fixed_asset_id` VARCHAR(36) NOT NULL,
     `fiscal_year` VARCHAR(10),
@@ -79,7 +79,7 @@ CREATE TABLE IF NOT EXISTS `depreciation_schedule` (
 -- ASSET REVALUATION TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `asset_revaluation` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `fixed_asset_id` VARCHAR(36) NOT NULL,
     `revaluation_date` DATE NOT NULL,
@@ -104,7 +104,7 @@ CREATE TABLE IF NOT EXISTS `asset_revaluation` (
 -- ASSET DISPOSAL TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `asset_disposal` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `fixed_asset_id` VARCHAR(36) NOT NULL,
     `disposal_date` DATE NOT NULL,
@@ -135,7 +135,7 @@ CREATE TABLE IF NOT EXISTS `asset_disposal` (
 -- ASSET MAINTENANCE LOG TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `asset_maintenance` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `fixed_asset_id` VARCHAR(36) NOT NULL,
     `maintenance_date` DATE NOT NULL,
@@ -166,7 +166,7 @@ CREATE TABLE IF NOT EXISTS `asset_maintenance` (
 -- ASSET TRANSFER TABLE (For asset movement between locations/departments)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `asset_transfer` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `fixed_asset_id` VARCHAR(36) NOT NULL,
     `transfer_date` DATE NOT NULL,

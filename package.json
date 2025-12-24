@@ -1,0 +1,43 @@
+{
+  "name": "vyomtech-erp",
+  "version": "1.0.0",
+  "description": "VyomTech ERP - Multi-tenant AI-powered ERP System",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "prisma"
+  ],
+  "scripts": {
+    "dev": "docker-compose up",
+    "down": "docker-compose down",
+    "build": "docker-compose build",
+    "prisma:generate": "cd prisma && npx prisma generate",
+    "prisma:migrate": "cd prisma && npx prisma migrate deploy",
+    "prisma:seed": "cd prisma && npx prisma db seed",
+    "prisma:reset": "cd prisma && npx prisma migrate reset --force",
+    "prisma:studio": "cd prisma && npx prisma studio",
+    "prisma:push": "cd prisma && npx prisma db push",
+    "frontend:dev": "cd frontend && npm run dev",
+    "frontend:build": "cd frontend && npm run build",
+    "backend:build": "go build -o bin/main cmd/main.go",
+    "backend:run": "go run cmd/main.go",
+    "test": "echo 'Run tests in respective folders'",
+    "setup": "npm install && npm run prisma:generate && npm run prisma:migrate && npm run prisma:seed",
+    "health-check": "bash system-health-check.sh"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.7.1",
+    "ulid": "^2.3.0"
+  },
+  "devDependencies": {
+    "prisma": "^5.7.1",
+    "@types/node": "^20.10.6",
+    "typescript": "^5.3.3",
+    "ts-node": "^10.9.2",
+    "bcryptjs": "^2.4.3"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}

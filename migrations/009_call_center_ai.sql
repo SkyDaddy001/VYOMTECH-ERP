@@ -10,7 +10,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- AGENT TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `agent` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `agent_code` VARCHAR(50) UNIQUE NOT NULL,
     `first_name` VARCHAR(100) NOT NULL,
@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS `agent` (
 -- CALL TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `call` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `lead_id` VARCHAR(36),
     `agent_id` VARCHAR(36),
@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS `call` (
 -- CALL LOG TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `call_log` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `call_id` VARCHAR(36) NOT NULL,
     `event` VARCHAR(50),
@@ -75,7 +75,7 @@ CREATE TABLE IF NOT EXISTS `call_log` (
 -- CAMPAIGN TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `campaign` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `campaign_name` VARCHAR(255) NOT NULL,
     `campaign_type` VARCHAR(50),
@@ -98,7 +98,7 @@ CREATE TABLE IF NOT EXISTS `campaign` (
 -- AI MODEL TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `ai_model` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `model_name` VARCHAR(255) NOT NULL,
     `model_type` VARCHAR(50),
@@ -120,7 +120,7 @@ CREATE TABLE IF NOT EXISTS `ai_model` (
 -- AI INTERACTION TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `ai_interaction` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `model_id` VARCHAR(36),
     `lead_id` VARCHAR(36),
@@ -142,7 +142,7 @@ CREATE TABLE IF NOT EXISTS `ai_interaction` (
 -- COMMUNICATION TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `communication` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `lead_id` VARCHAR(36),
     `communication_type` VARCHAR(50),
@@ -166,7 +166,7 @@ CREATE TABLE IF NOT EXISTS `communication` (
 -- AGENT PERFORMANCE TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `agent_performance` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `agent_id` VARCHAR(36) NOT NULL,
     `performance_date` DATE NOT NULL,

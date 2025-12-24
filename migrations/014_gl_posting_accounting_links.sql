@@ -11,7 +11,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- GL POSTING TEMPLATE TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `gl_posting_template` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `template_name` VARCHAR(255) NOT NULL,
     `template_type` VARCHAR(50),
@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS `gl_posting_template` (
 -- GL POSTING TEMPLATE LINE TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `gl_posting_template_line` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `template_id` VARCHAR(36) NOT NULL,
     `line_number` INT,
@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS `gl_posting_template_line` (
 -- PAYROLL GL POSTING TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `payroll_gl_posting` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `payroll_record_id` VARCHAR(36) NOT NULL,
     `journal_entry_id` VARCHAR(36),
@@ -83,7 +83,7 @@ CREATE TABLE IF NOT EXISTS `payroll_gl_posting` (
 -- PURCHASE GL POSTING TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `purchase_gl_posting` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `purchase_order_id` VARCHAR(36) NOT NULL,
     `journal_entry_id` VARCHAR(36),
@@ -113,7 +113,7 @@ CREATE TABLE IF NOT EXISTS `purchase_gl_posting` (
 -- SALES GL POSTING TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `sales_gl_posting` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `sales_invoice_id` VARCHAR(36) NOT NULL,
     `journal_entry_id` VARCHAR(36),
@@ -144,7 +144,7 @@ CREATE TABLE IF NOT EXISTS `sales_gl_posting` (
 -- CONSTRUCTION GL POSTING TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `construction_gl_posting` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `boq_id` BIGINT NOT NULL,
     `journal_entry_id` VARCHAR(36),
@@ -174,7 +174,7 @@ CREATE TABLE IF NOT EXISTS `construction_gl_posting` (
 -- REAL ESTATE GL POSTING TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `real_estate_gl_posting` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `booking_id` VARCHAR(36) NOT NULL,
     `journal_entry_id` VARCHAR(36),
@@ -204,7 +204,7 @@ CREATE TABLE IF NOT EXISTS `real_estate_gl_posting` (
 -- GL POSTING AUDIT TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `gl_posting_audit` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `entity_type` VARCHAR(50),
     `entity_id` VARCHAR(36),
@@ -225,7 +225,7 @@ CREATE TABLE IF NOT EXISTS `gl_posting_audit` (
 -- ACCOUNT MAPPING TABLE (Module to GL Account mapping)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `account_mapping` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `module_name` VARCHAR(100) NOT NULL,
     `mapping_type` VARCHAR(100) NOT NULL,

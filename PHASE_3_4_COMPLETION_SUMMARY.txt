@@ -23,7 +23,7 @@
 
 ### 📝 Code Deliverables
 
-```
+``
 NEW FILES:
 ├─ internal/handlers/rbac_handler.go (317 lines)
 │  └─ Complete RBAC handler with 6 endpoint methods
@@ -43,7 +43,7 @@ MODIFIED FILES:
 │
 └─ pkg/router/router.go (+25 lines)
    └─ Added RBAC route registration block
-```
+``
 
 ### 🔐 Security Features
 
@@ -78,7 +78,7 @@ MODIFIED FILES:
 
 ### Request Flow
 
-```
+``
 Client Request
     ↓
 AuthMiddleware (validates JWT, extracts user context)
@@ -92,7 +92,7 @@ RBACHandler Method
 Database (MySQL 8.0)
     ↓
 Response (JSON)
-```
+``
 
 ### Key Components
 
@@ -107,36 +107,36 @@ Response (JSON)
 ## Implementation Highlights
 
 ### Multi-Tenancy
-```
+``
 ✓ Automatic tenant isolation via X-Tenant-ID header
 ✓ Database-level filtering with WHERE tenant_id = ?
 ✓ Role names can be identical across tenants (unique per tenant)
 ✓ Zero cross-tenant data leakage risk
-```
+``
 
 ### Authorization
-```
+``
 ✓ JWT token validation required
 ✓ Admin-only operations protected
 ✓ Non-admin users get 403 Forbidden
 ✓ Audit-ready (logs all operations)
-```
+``
 
 ### Data Consistency
-```
+``
 ✓ Transactional updates for permission assignments
 ✓ Soft deletes maintain audit trail
 ✓ Unique constraints prevent duplicates
 ✓ Foreign key constraints ensure referential integrity
-```
+``
 
 ### Error Handling
-```
+``
 ✓ Structured error responses
 ✓ Appropriate HTTP status codes
 ✓ Detailed error messages
 ✓ No sensitive data leakage
-```
+``
 
 ---
 
@@ -144,7 +144,7 @@ Response (JSON)
 
 ### Create a New Role (Admin)
 
-```bash
+``bash
 curl -X POST http://localhost:8080/api/v1/rbac/roles \
   -H "Authorization: Bearer <token>" \
   -H "X-Tenant-ID: tenant-001" \
@@ -164,11 +164,11 @@ curl -X POST http://localhost:8080/api/v1/rbac/roles \
     "permissions": []
   }
 }
-```
+``
 
 ### Assign Permissions (Admin)
 
-```bash
+``bash
 curl -X PUT http://localhost:8080/api/v1/rbac/roles/role-uuid-001/permissions \
   -H "Authorization: Bearer <token>" \
   -H "X-Tenant-ID: tenant-001" \
@@ -185,11 +185,11 @@ curl -X PUT http://localhost:8080/api/v1/rbac/roles/role-uuid-001/permissions \
     "permission_ids": ["perm-001", "perm-002", "perm-003"]
   }
 }
-```
+``
 
 ### Get Role with Permissions
 
-```bash
+``bash
 curl -X GET http://localhost:8080/api/v1/rbac/roles/role-uuid-001 \
   -H "Authorization: Bearer <token>" \
   -H "X-Tenant-ID: tenant-001"
@@ -216,7 +216,7 @@ curl -X GET http://localhost:8080/api/v1/rbac/roles/role-uuid-001 \
     ]
   }
 }
-```
+``
 
 ---
 
@@ -229,22 +229,22 @@ curl -X GET http://localhost:8080/api/v1/rbac/roles/role-uuid-001 \
 - ✅ AuthService running
 
 ### Build Verification
-```bash
+``bash
 $ go build -o bin/main cmd/main.go
 # No output = Success (zero compilation errors)
-```
+``
 
 ### Server Startup
-```bash
+``bash
 ./bin/main
 # RBAC routes automatically registered with other services
-```
+``
 
 ### Testing
-```bash
+``bash
 bash test-rbac-api.sh
 # Runs 13 tests with colorized output
-```
+``
 
 ---
 
@@ -294,19 +294,19 @@ bash test-rbac-api.sh
 ## Quick Start Guide
 
 ### 1. Build the Project
-```bash
+``bash
 cd /path/to/VYOMTECH-ERP
 go build -o bin/main cmd/main.go
-```
+``
 
 ### 2. Start the Server
-```bash
+``bash
 ./bin/main
 # Server starts with all routes registered, including RBAC
-```
+``
 
 ### 3. Test Endpoints
-```bash
+``bash
 # Get your JWT token from login first
 TOKEN="your-jwt-token"
 TENANT="your-tenant-id"
@@ -322,12 +322,12 @@ curl -X POST http://localhost:8080/api/v1/rbac/roles \
   -H "X-Tenant-ID: $TENANT" \
   -H "Content-Type: application/json" \
   -d '{"role_name":"Tester","description":"Test role","is_active":true}'
-```
+``
 
 ### 4. Run Full Test Suite
-```bash
+``bash
 bash test-rbac-api.sh
-```
+``
 
 ---
 

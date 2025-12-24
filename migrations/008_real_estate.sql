@@ -10,7 +10,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- PROPERTY PROJECT TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `property_project` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `project_name` VARCHAR(255) NOT NULL,
     `project_code` VARCHAR(50) UNIQUE NOT NULL,
@@ -56,7 +56,7 @@ CREATE TABLE IF NOT EXISTS `property_project` (
 -- PROPERTY BLOCK TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `property_block` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `project_id` VARCHAR(36) NOT NULL,
     `block_name` VARCHAR(100) NOT NULL,
@@ -77,7 +77,7 @@ CREATE TABLE IF NOT EXISTS `property_block` (
 -- PROPERTY UNIT TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `property_unit` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `project_id` VARCHAR(36) NOT NULL,
     `block_id` VARCHAR(36) NOT NULL,
@@ -110,7 +110,7 @@ CREATE TABLE IF NOT EXISTS `property_unit` (
 -- UNIT COST SHEET TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `unit_cost_sheet` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `unit_id` VARCHAR(36) NOT NULL,
     `rate_per_sqft` DECIMAL(18, 2),
@@ -172,7 +172,7 @@ CREATE TABLE IF NOT EXISTS `unit_cost_sheet` (
 -- PROPERTY BOOKING TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `property_booking` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `unit_id` VARCHAR(36) NOT NULL,
     `customer_id` VARCHAR(36),
@@ -199,7 +199,7 @@ CREATE TABLE IF NOT EXISTS `property_booking` (
 -- PAYMENT PLAN TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `payment_plan` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `booking_id` VARCHAR(36) NOT NULL,
     `plan_name` VARCHAR(100) NOT NULL,
@@ -217,7 +217,7 @@ CREATE TABLE IF NOT EXISTS `payment_plan` (
 -- INSTALLMENT TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `installment` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `payment_plan_id` VARCHAR(36) NOT NULL,
     `installment_number` INT NOT NULL,

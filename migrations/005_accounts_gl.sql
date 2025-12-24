@@ -10,7 +10,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- CHART OF ACCOUNTS TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `chart_of_account` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `account_code` VARCHAR(50) NOT NULL,
     `account_name` VARCHAR(255) NOT NULL,
@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS `chart_of_account` (
 -- FINANCIAL PERIOD TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `financial_period` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `period_name` VARCHAR(100) NOT NULL,
     `period_type` VARCHAR(50),
@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS `financial_period` (
 -- JOURNAL ENTRY TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `journal_entry` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `entry_date` DATE NOT NULL,
     `reference_number` VARCHAR(100),
@@ -83,7 +83,7 @@ CREATE TABLE IF NOT EXISTS `journal_entry` (
 -- JOURNAL ENTRY DETAIL TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `journal_entry_detail` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `journal_entry_id` VARCHAR(36) NOT NULL,
     `account_id` VARCHAR(36) NOT NULL,
@@ -106,7 +106,7 @@ CREATE TABLE IF NOT EXISTS `journal_entry_detail` (
 -- GL ACCOUNT BALANCE TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `gl_account_balance` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `account_id` VARCHAR(36) NOT NULL,
     `fiscal_period` DATE NOT NULL,
@@ -128,7 +128,7 @@ CREATE TABLE IF NOT EXISTS `gl_account_balance` (
 -- TRIAL BALANCE TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `trial_balance` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `period_id` VARCHAR(36) NOT NULL,
     `account_id` VARCHAR(36) NOT NULL,
@@ -149,7 +149,7 @@ CREATE TABLE IF NOT EXISTS `trial_balance` (
 -- INCOME STATEMENT TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `income_statement` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `period_id` VARCHAR(36) NOT NULL,
     `revenue_total` DECIMAL(18, 2) DEFAULT 0,
@@ -174,7 +174,7 @@ CREATE TABLE IF NOT EXISTS `income_statement` (
 -- BALANCE SHEET TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `balance_sheet` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `period_id` VARCHAR(36) NOT NULL,
     `current_assets` DECIMAL(18, 2) DEFAULT 0,

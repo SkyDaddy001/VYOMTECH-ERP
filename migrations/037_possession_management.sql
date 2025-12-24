@@ -3,10 +3,12 @@
 -- ====================================
 
 -- Possession status tracking table
+SET FOREIGN_KEY_CHECKS = 0;
+
 CREATE TABLE IF NOT EXISTS possession_statuses (
-  id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  tenant_id BIGINT NOT NULL,
-  booking_id BIGINT NOT NULL,
+  id CHAR(26) PRIMARY KEY,
+  tenant_id VARCHAR(36) NOT NULL,
+  booking_id VARCHAR(36) NOT NULL,
   status VARCHAR(50) NOT NULL DEFAULT 'pending', -- pending, in_progress, completed, cancelled
   possession_date DATETIME,
   estimated_possession_date DATETIME,
@@ -15,8 +17,8 @@ CREATE TABLE IF NOT EXISTS possession_statuses (
   is_complete BOOLEAN DEFAULT FALSE,
   completion_percentage DECIMAL(5, 2) DEFAULT 0,
   notes LONGTEXT,
-  created_by BIGINT,
-  updated_by BIGINT,
+  created_by CHAR(36),
+  updated_by CHAR(36),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   deleted_at DATETIME NULL,
@@ -26,15 +28,15 @@ CREATE TABLE IF NOT EXISTS possession_statuses (
   KEY idx_booking_status (booking_id, status),
   KEY idx_possession_type (tenant_id, possession_type),
   KEY idx_created_at (created_at),
-  FOREIGN KEY (tenant_id) REFERENCES tenants(id),
-  FOREIGN KEY (booking_id) REFERENCES bookings(id)
+  FOREIGN KEY (tenant_id) REFERENCES `tenant`(id),
+  FOREIGN KEY (booking_id) REFERENCES booking(id)
 );
 
 -- Possession documents tracking table
 CREATE TABLE IF NOT EXISTS possession_documents (
-  id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  tenant_id BIGINT NOT NULL,
-  possession_id BIGINT NOT NULL,
+  id CHAR(26) PRIMARY KEY,
+  tenant_id VARCHAR(36) NOT NULL,
+  possession_id VARCHAR(36) NOT NULL,
   document_type VARCHAR(100) NOT NULL, -- possession_letter, handover_checklist, keys, utilities_list, final_statement, insurance_doc
   document_name VARCHAR(255) NOT NULL,
   document_url VARCHAR(500),
@@ -51,8 +53,8 @@ CREATE TABLE IF NOT EXISTS possession_documents (
   uploaded_by BIGINT,
   uploaded_at DATETIME,
   metadata JSON,
-  created_by BIGINT,
-  updated_by BIGINT,
+  created_by CHAR(36),
+  updated_by CHAR(36),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   deleted_at DATETIME NULL,
@@ -61,16 +63,16 @@ CREATE TABLE IF NOT EXISTS possession_documents (
   KEY idx_document_type (tenant_id, document_type),
   KEY idx_document_status (document_status),
   KEY idx_verified_by (verified_by),
-  FOREIGN KEY (tenant_id) REFERENCES tenants(id),
+  FOREIGN KEY (tenant_id) REFERENCES `tenant`(id),
   FOREIGN KEY (possession_id) REFERENCES possession_statuses(id),
-  FOREIGN KEY (verified_by) REFERENCES users(id)
+  FOREIGN KEY (verified_by) REFERENCES `user`(id)
 );
 
 -- Registration process tracking table
 CREATE TABLE IF NOT EXISTS possession_registrations (
-  id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  tenant_id BIGINT NOT NULL,
-  possession_id BIGINT NOT NULL,
+  id CHAR(26) PRIMARY KEY,
+  tenant_id VARCHAR(36) NOT NULL,
+  possession_id VARCHAR(36) NOT NULL,
   registration_type VARCHAR(50) NOT NULL, -- registration, name_transfer, title_transfer, mortgage_release
   registration_number VARCHAR(100),
   registration_office VARCHAR(255),
@@ -86,8 +88,8 @@ CREATE TABLE IF NOT EXISTS possession_registrations (
   remarks LONGTEXT,
   approved_by BIGINT,
   approved_at DATETIME,
-  created_by BIGINT,
-  updated_by BIGINT,
+  created_by CHAR(36),
+  updated_by CHAR(36),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   deleted_at DATETIME NULL,
@@ -97,16 +99,16 @@ CREATE TABLE IF NOT EXISTS possession_registrations (
   KEY idx_registration_status (registration_status),
   KEY idx_registration_number (registration_number),
   KEY idx_approved_by (approved_by),
-  FOREIGN KEY (tenant_id) REFERENCES tenants(id),
+  FOREIGN KEY (tenant_id) REFERENCES `tenant`(id),
   FOREIGN KEY (possession_id) REFERENCES possession_statuses(id),
-  FOREIGN KEY (approved_by) REFERENCES users(id)
+  FOREIGN KEY (approved_by) REFERENCES `user`(id)
 );
 
 -- Possession certificates table
 CREATE TABLE IF NOT EXISTS possession_certificates (
-  id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  tenant_id BIGINT NOT NULL,
-  possession_id BIGINT NOT NULL,
+  id CHAR(26) PRIMARY KEY,
+  tenant_id VARCHAR(36) NOT NULL,
+  possession_id VARCHAR(36) NOT NULL,
   certificate_type VARCHAR(50) NOT NULL, -- possession_certificate, occupancy_certificate, completion_certificate, no_dues_certificate
   certificate_number VARCHAR(100),
   issuing_authority VARCHAR(255),
@@ -123,8 +125,8 @@ CREATE TABLE IF NOT EXISTS possession_certificates (
   verified_at DATETIME,
   verification_notes LONGTEXT,
   metadata JSON,
-  created_by BIGINT,
-  updated_by BIGINT,
+  created_by CHAR(36),
+  updated_by CHAR(36),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   deleted_at DATETIME NULL,
@@ -134,18 +136,18 @@ CREATE TABLE IF NOT EXISTS possession_certificates (
   KEY idx_possession_certificate (possession_id),
   KEY idx_certificate_status (certificate_status),
   KEY idx_verified_by (verified_by),
-  FOREIGN KEY (tenant_id) REFERENCES tenants(id),
+  FOREIGN KEY (tenant_id) REFERENCES `tenant`(id),
   FOREIGN KEY (possession_id) REFERENCES possession_statuses(id),
-  FOREIGN KEY (verified_by) REFERENCES users(id)
+  FOREIGN KEY (verified_by) REFERENCES `user`(id)
 );
 
 -- Possession approvals and sign-offs table
 CREATE TABLE IF NOT EXISTS possession_approvals (
-  id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  tenant_id BIGINT NOT NULL,
-  possession_id BIGINT NOT NULL,
+  id CHAR(26) PRIMARY KEY,
+  tenant_id VARCHAR(36) NOT NULL,
+  possession_id VARCHAR(36) NOT NULL,
   approval_type VARCHAR(50) NOT NULL, -- possession_approval, document_approval, registration_approval, final_approval
-  approver_id BIGINT NOT NULL,
+  approver_id CHAR(26) NOT NULL,
   approver_role VARCHAR(100),
   approval_status VARCHAR(50) NOT NULL DEFAULT 'pending', -- pending, approved, rejected, conditional
   approval_notes LONGTEXT,
@@ -156,8 +158,8 @@ CREATE TABLE IF NOT EXISTS possession_approvals (
   sequence_order INT,
   is_final_approval BOOLEAN DEFAULT FALSE,
   metadata JSON,
-  created_by BIGINT,
-  updated_by BIGINT,
+  created_by CHAR(36),
+  updated_by CHAR(36),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   deleted_at DATETIME NULL,
@@ -167,19 +169,19 @@ CREATE TABLE IF NOT EXISTS possession_approvals (
   KEY idx_approver_id (approver_id),
   KEY idx_approval_status (approval_status),
   KEY idx_sequence_order (possession_id, sequence_order),
-  FOREIGN KEY (tenant_id) REFERENCES tenants(id),
+  FOREIGN KEY (tenant_id) REFERENCES `tenant`(id),
   FOREIGN KEY (possession_id) REFERENCES possession_statuses(id),
-  FOREIGN KEY (approver_id) REFERENCES users(id)
+  FOREIGN KEY (approver_id) REFERENCES `user`(id)
 );
 
 -- Possession audit log table
 CREATE TABLE IF NOT EXISTS possession_audit_log (
-  id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  tenant_id BIGINT NOT NULL,
-  possession_id BIGINT NOT NULL,
+  id CHAR(26) PRIMARY KEY,
+  tenant_id VARCHAR(36) NOT NULL,
+  possession_id VARCHAR(36) NOT NULL,
   action VARCHAR(100) NOT NULL,
   entity_type VARCHAR(50) NOT NULL, -- possession, document, registration, certificate, approval
-  entity_id BIGINT,
+  entity_id VARCHAR(36),
   old_value LONGTEXT,
   new_value LONGTEXT,
   change_reason VARCHAR(500),
@@ -194,9 +196,9 @@ CREATE TABLE IF NOT EXISTS possession_audit_log (
   KEY idx_action (action),
   KEY idx_entity (entity_type, entity_id),
   KEY idx_performed_by (performed_by),
-  FOREIGN KEY (tenant_id) REFERENCES tenants(id),
+  FOREIGN KEY (tenant_id) REFERENCES `tenant`(id),
   FOREIGN KEY (possession_id) REFERENCES possession_statuses(id),
-  FOREIGN KEY (performed_by) REFERENCES users(id)
+  FOREIGN KEY (performed_by) REFERENCES `user`(id)
 );
 
 -- Create indexes for improved query performance
@@ -205,3 +207,10 @@ CREATE INDEX idx_pos_type_status ON possession_statuses(tenant_id, possession_ty
 CREATE INDEX idx_reg_dates ON possession_registrations(submission_date, expected_completion_date);
 CREATE INDEX idx_cert_dates ON possession_certificates(issue_date, validity_date);
 CREATE INDEX idx_approval_dates ON possession_approvals(approval_date, valid_till);
+
+SET FOREIGN_KEY_CHECKS = 1;
+
+
+
+
+

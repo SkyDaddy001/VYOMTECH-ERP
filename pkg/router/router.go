@@ -168,9 +168,10 @@ func SetupRoutesWithPhase3C(
 	aiRecommendationsHandler *handlers.AIRecommendationsHandler,
 	siteVisitHandler *handlers.SiteVisitHandler,
 	integrationHandler *handlers.IntegrationHandler,
+	bankFinancingHandler *handlers.BankFinancingHandler,
 	log *logger.Logger,
 ) *mux.Router {
-	return setupRoutes(authService, tenantService, passwordResetHandler, agentService, gamificationService, leadService, callService, campaignService, aiOrchestrator, webSocketHub, leadScoringService, dashboardService, taskService, notificationService, customizationService, phase3cServices, salesService, realEstateService, civilService, constructionService, boqService, hrService, glService, rbacService, reraComplianceHandler, hrComplianceHandler, taxComplianceHandler, financialDashboardHandler, hrDashboardHandler, complianceDashboardHandler, salesDashboardHandler, brokerHandler, jointApplicantHandler, documentHandler, possessionHandler, titleHandler, customerPortalHandler, analyticsHandler, userAdminHandler, tenantAdminHandler, mobileHandler, aiRecommendationsHandler, siteVisitHandler, integrationHandler, log)
+	return setupRoutes(authService, tenantService, passwordResetHandler, agentService, gamificationService, leadService, callService, campaignService, aiOrchestrator, webSocketHub, leadScoringService, dashboardService, taskService, notificationService, customizationService, phase3cServices, salesService, realEstateService, civilService, constructionService, boqService, hrService, glService, rbacService, reraComplianceHandler, hrComplianceHandler, taxComplianceHandler, financialDashboardHandler, hrDashboardHandler, complianceDashboardHandler, salesDashboardHandler, brokerHandler, jointApplicantHandler, documentHandler, possessionHandler, titleHandler, customerPortalHandler, analyticsHandler, userAdminHandler, tenantAdminHandler, mobileHandler, aiRecommendationsHandler, siteVisitHandler, integrationHandler, bankFinancingHandler, log)
 }
 
 func setupRoutes(
@@ -218,6 +219,7 @@ func setupRoutes(
 	aiRecommendationsHandler *handlers.AIRecommendationsHandler,
 	siteVisitHandler *handlers.SiteVisitHandler,
 	integrationHandler *handlers.IntegrationHandler,
+	bankFinancingHandler *handlers.BankFinancingHandler,
 	log *logger.Logger,
 ) *mux.Router {
 	r := mux.NewRouter()
@@ -1463,6 +1465,33 @@ func setupRoutes(
 		// GET    /api/v1/integrations/providers/{providerID}/sync-jobs - List sync jobs
 		// GET    /api/v1/integrations/providers/{providerID}/errors - List error logs
 		// GET    /api/v1/integrations/stats - Get integration statistics
+	}
+
+	// ============================================
+	// BANK FINANCING ROUTES
+	// ============================================
+	if bankFinancingHandler != nil {
+		bankFinancingRoutes := v1.PathPrefix("/financing").Subrouter()
+		bankFinancingRoutes.Use(middleware.AuthMiddleware(authService, log))
+		bankFinancingRoutes.Use(middleware.TenantIsolationMiddleware(log))
+
+		// Bank Financing Routes
+		bankFinancingRoutes.HandleFunc("", bankFinancingHandler.CreateBankFinancingHTTP).Methods("POST")
+		bankFinancingRoutes.HandleFunc("", bankFinancingHandler.ListBankFinancingHTTP).Methods("GET")
+		bankFinancingRoutes.HandleFunc("/{id}", bankFinancingHandler.GetBankFinancingHTTP).Methods("GET")
+
+		// Disbursement Routes
+		bankFinancingRoutes.HandleFunc("/{id}/disbursement", bankFinancingHandler.CreateBankDisbursementHTTP).Methods("POST")
+
+		// NOC Routes
+		bankFinancingRoutes.HandleFunc("/{id}/noc", bankFinancingHandler.CreateBankNOCHTTP).Methods("POST")
+
+		// Collection Routes
+		bankFinancingRoutes.HandleFunc("/{id}/collection", bankFinancingHandler.CreateBankCollectionHTTP).Methods("POST")
+
+		// Bank Master Routes
+		bankFinancingRoutes.HandleFunc("/banks", bankFinancingHandler.CreateBankHTTP).Methods("POST")
+		bankFinancingRoutes.HandleFunc("/banks", bankFinancingHandler.ListBanksHTTP).Methods("GET")
 	}
 
 	// ============================================

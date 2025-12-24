@@ -7,8 +7,8 @@
 -- Description: Master list of brokers/agents
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS broker_profile (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    tenant_id BIGINT NOT NULL,
+    id CHAR(26) PRIMARY KEY,
+    tenant_id VARCHAR(36) NOT NULL,
     
     -- Broker Details
     broker_name VARCHAR(100) NOT NULL,
@@ -45,9 +45,9 @@ CREATE TABLE IF NOT EXISTS broker_profile (
     total_commission_paid DECIMAL(15, 2) DEFAULT 0,
     
     -- Metadata
-    created_by BIGINT,
+    created_by CHAR(36),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_by BIGINT,
+    updated_by CHAR(36),
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP NULL,
     
@@ -63,9 +63,9 @@ CREATE TABLE IF NOT EXISTS broker_profile (
 -- Description: Commission rates and slabs for brokers
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS broker_commission_structure (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    tenant_id BIGINT NOT NULL,
-    broker_id BIGINT NOT NULL,
+    id CHAR(26) PRIMARY KEY,
+    tenant_id VARCHAR(36) NOT NULL,
+    broker_id VARCHAR(36) NOT NULL,
     
     -- Commission Type
     commission_type VARCHAR(50) NOT NULL, -- percentage, fixed_amount, slab_based
@@ -98,9 +98,9 @@ CREATE TABLE IF NOT EXISTS broker_commission_structure (
     status VARCHAR(50) DEFAULT 'active', -- active, inactive
     
     -- Metadata
-    created_by BIGINT,
+    created_by CHAR(36),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_by BIGINT,
+    updated_by CHAR(36),
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP NULL,
     
@@ -116,17 +116,17 @@ CREATE TABLE IF NOT EXISTS broker_commission_structure (
 -- Description: Links bookings to brokers for commission tracking
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS broker_booking_link (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    tenant_id BIGINT NOT NULL,
-    broker_id BIGINT NOT NULL,
-    booking_id BIGINT NOT NULL,
+    id CHAR(26) PRIMARY KEY,
+    tenant_id VARCHAR(36) NOT NULL,
+    broker_id VARCHAR(36) NOT NULL,
+    booking_id VARCHAR(36) NOT NULL,
     
     -- Booking Details
     unit_price DECIMAL(15, 2),
     booking_amount DECIMAL(15, 2),
     
     -- Commission Calculation
-    commission_structure_id BIGINT,
+    commission_structure_id VARCHAR(36),
     commission_percentage DECIMAL(5, 2),
     commission_amount DECIMAL(12, 2),
     
@@ -140,9 +140,9 @@ CREATE TABLE IF NOT EXISTS broker_booking_link (
     payment_date DATETIME,
     
     -- Metadata
-    created_by BIGINT,
+    created_by CHAR(36),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_by BIGINT,
+    updated_by CHAR(36),
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP NULL,
     
@@ -160,9 +160,9 @@ CREATE TABLE IF NOT EXISTS broker_booking_link (
 -- Description: Commission payout tracking and reconciliation
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS broker_commission_payout (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    tenant_id BIGINT NOT NULL,
-    broker_id BIGINT NOT NULL,
+    id CHAR(26) PRIMARY KEY,
+    tenant_id VARCHAR(36) NOT NULL,
+    broker_id VARCHAR(36) NOT NULL,
     
     -- Payout Period
     payout_period_from DATE NOT NULL,
@@ -191,9 +191,9 @@ CREATE TABLE IF NOT EXISTS broker_commission_payout (
     payment_proof_url VARCHAR(500),
     
     -- Metadata
-    created_by BIGINT,
+    created_by CHAR(36),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_by BIGINT,
+    updated_by CHAR(36),
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP NULL,
     
@@ -217,3 +217,6 @@ CREATE INDEX idx_broker_performance ON broker_profile(total_bookings, total_comm
 -- ============================================================================
 -- MIGRATION COMPLETE
 -- ============================================================================
+
+
+

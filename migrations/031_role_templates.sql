@@ -10,7 +10,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- ROLE TEMPLATE TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `role_template` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `name` VARCHAR(100) NOT NULL,
     `description` TEXT,
@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS `role_template` (
 -- TEMPLATE INSTANCE TABLE (tracks role creation from templates)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `template_instance` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `template_id` VARCHAR(36),
     `role_id` VARCHAR(36) NOT NULL,

@@ -1,0 +1,113 @@
+// ============================================================
+// COST CENTERS & BUDGET CONTROL MODULE
+// ============================================================
+// Purpose: Cost Allocation, Budget Planning, Variance Analysis
+// Tables: 7
+
+model CostCenter {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  costCenterCode    String   @unique @db.VarChar(50) @map("cost_center_code")
+  costCenterName    String   @db.VarChar(255) @map("cost_center_name")
+  department        String?  @db.VarChar(100)
+  parentCostCenterId String? @db.VarChar(36) @map("parent_cost_center_id")
+  manager           String?  @db.VarChar(36)
+  status            String   @default("active") @db.VarChar(50)
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+  costAllocations   CostAllocation[]
+  budgets           Budget[]
+
+  @@index([tenantId])
+  @@map("cost_center")
+}
+
+model CostAllocation {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  costCenterId      String   @db.VarChar(36) @map("cost_center_id")
+  glAccountId       String   @db.VarChar(36) @map("gl_account_id")
+  amount            Decimal  @db.Decimal(15, 2)
+  percentage        Decimal  @db.Decimal(5, 2)
+  allocationMethod  String   @db.VarChar(50) @map("allocation_method")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+  costCenter        CostCenter @relation(fields: [costCenterId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("cost_allocation")
+}
+
+model Budget {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  budgetCode        String   @unique @db.VarChar(50) @map("budget_code")
+  budgetName        String   @db.VarChar(255) @map("budget_name")
+  costCenterId      String   @db.VarChar(36) @map("cost_center_id")
+  fiscalYear        Int      @map("fiscal_year")
+  budgetPeriod      String   @db.VarChar(20) @map("budget_period")
+  budgetedAmount    Decimal  @db.Decimal(15, 2) @map("budgeted_amount")
+  actualAmount      Decimal  @db.Decimal(15, 2) @default(0) @map("actual_amount")
+  committedAmount   Decimal  @db.Decimal(15, 2) @default(0) @map("committed_amount")
+  availableAmount   Decimal  @db.Decimal(15, 2) @map("available_amount")
+  status            String   @default("active") @db.VarChar(50)
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+  costCenter        CostCenter @relation(fields: [costCenterId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("budget")
+}
+
+model BudgetVariance {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  budgetId          String   @db.VarChar(36) @map("budget_id")
+  variancePeriod    String   @db.VarChar(20) @map("variance_period")
+  budgetedAmount    Decimal  @db.Decimal(15, 2) @map("budgeted_amount")
+  actualAmount      Decimal  @db.Decimal(15, 2) @map("actual_amount")
+  varianceAmount    Decimal  @db.Decimal(15, 2) @map("variance_amount")
+  variancePercentage Decimal @db.Decimal(5, 2) @map("variance_percentage")
+  varianceType      String   @db.VarChar(20) @map("variance_type")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@map("budget_variance")
+}
+
+model BudgetAllocation {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  budgetId          String   @db.VarChar(36) @map("budget_id")
+  glAccountId       String   @db.VarChar(36) @map("gl_account_id")
+  allocatedAmount   Decimal  @db.Decimal(15, 2) @map("allocated_amount")
+  spentAmount       Decimal  @db.Decimal(15, 2) @default(0) @map("spent_amount")
+  remainingAmount   Decimal  @db.Decimal(15, 2) @map("remaining_amount")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@map("budget_allocation")
+}
+
+model BudgetApproval {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  budgetId          String   @db.VarChar(36) @map("budget_id")
+  approvedBy        String   @db.VarChar(36) @map("approved_by")
+  approvalDate      DateTime @map("approval_date") @db.Date
+  comments          String?  @db.Text
+  status            String   @db.VarChar(50)
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@map("budget_approval")
+}

@@ -1,0 +1,116 @@
+// ============================================================
+// FIXED ASSETS MODULE
+// ============================================================
+// Migrations: 016_fixed_assets_depreciation.sql
+// Purpose: Asset Management, Depreciation, Disposal, Maintenance
+// Tables: 6
+
+model FixedAsset {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  assetCode         String   @unique @db.VarChar(50) @map("asset_code")
+  assetName         String   @db.VarChar(255) @map("asset_name")
+  assetCategory     String   @db.VarChar(100) @map("asset_category")
+  acquisitionDate   DateTime @map("acquisition_date") @db.Date
+  acquisitionCost   Decimal  @db.Decimal(15, 2) @map("acquisition_cost")
+  currentValue      Decimal  @db.Decimal(15, 2) @map("current_value")
+  location          String?  @db.VarChar(255)
+  status            String   @default("active") @db.VarChar(50)
+  usefulLife        Int?     @map("useful_life")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+  depreciationSchedules DepreciationSchedule[]
+
+  @@index([tenantId])
+  @@index([assetCode])
+  @@map("fixed_asset")
+}
+
+model DepreciationSchedule {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  assetId           String   @db.VarChar(36) @map("asset_id")
+  period            String   @db.VarChar(50)
+  openingValue      Decimal  @db.Decimal(15, 2) @map("opening_value")
+  depreciationRate  Decimal  @db.Decimal(5, 2) @map("depreciation_rate")
+  depreciationAmount Decimal @db.Decimal(15, 2) @map("depreciation_amount")
+  closingValue      Decimal  @db.Decimal(15, 2) @map("closing_value")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+  asset             FixedAsset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("depreciation_schedule")
+}
+
+model AssetRevaluation {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  assetId           String   @db.VarChar(36) @map("asset_id")
+  revaluationDate   DateTime @map("revaluation_date") @db.Date
+  previousValue     Decimal  @db.Decimal(15, 2) @map("previous_value")
+  newValue          Decimal  @db.Decimal(15, 2) @map("new_value")
+  revaluationGainLoss Decimal @db.Decimal(15, 2) @map("revaluation_gain_loss")
+  reason            String?  @db.Text
+  createdBy         String?  @db.VarChar(36) @map("created_by")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@map("asset_revaluation")
+}
+
+model AssetDisposal {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  assetId           String   @db.VarChar(36) @map("asset_id")
+  disposalDate      DateTime @map("disposal_date") @db.Date
+  disposalMethod    String   @db.VarChar(50) @map("disposal_method")
+  disposalPrice     Decimal  @db.Decimal(15, 2) @map("disposal_price")
+  bookValue         Decimal  @db.Decimal(15, 2) @map("book_value")
+  gainLoss          Decimal  @db.Decimal(15, 2) @map("gain_loss")
+  approvedBy        String?  @db.VarChar(36) @map("approved_by")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@map("asset_disposal")
+}
+
+model AssetMaintenance {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  assetId           String   @db.VarChar(36) @map("asset_id")
+  maintenanceType   String   @db.VarChar(50) @map("maintenance_type")
+  maintenanceDate   DateTime @map("maintenance_date") @db.Date
+  cost              Decimal  @db.Decimal(15, 2)
+  vendor            String?  @db.VarChar(255)
+  notes             String?  @db.Text
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@map("asset_maintenance")
+}
+
+model AssetTransfer {
+  id                String   @id @db.Char(36)
+  tenantId          String   @db.VarChar(36) @map("tenant_id")
+  assetId           String   @db.VarChar(36) @map("asset_id")
+  transferDate      DateTime @map("transfer_date") @db.Date
+  fromLocation      String   @db.VarChar(255) @map("from_location")
+  toLocation        String   @db.VarChar(255) @map("to_location")
+  reason            String?  @db.Text
+  approvedBy        String?  @db.VarChar(36) @map("approved_by")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+
+  @@index([tenantId])
+  @@map("asset_transfer")
+}

@@ -10,7 +10,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- ANALYTICS TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `analytics` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `metric_name` VARCHAR(100) NOT NULL,
     `metric_category` VARCHAR(50),
@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS `analytics` (
 -- DASHBOARD WIDGET TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `dashboard_widget` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `user_id` INT,
     `widget_type` VARCHAR(50),
@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS `dashboard_widget` (
 -- BILLING SUBSCRIPTION TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `billing_subscription` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `subscription_plan` VARCHAR(100) NOT NULL,
     `plan_type` VARCHAR(50),
@@ -71,7 +71,7 @@ CREATE TABLE IF NOT EXISTS `billing_subscription` (
 -- BILLING INVOICE TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `billing_invoice` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `invoice_number` VARCHAR(50) UNIQUE NOT NULL,
     `subscription_id` VARCHAR(36),
@@ -97,7 +97,7 @@ CREATE TABLE IF NOT EXISTS `billing_invoice` (
 -- PAYMENT TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `payment` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `invoice_id` VARCHAR(36),
     `amount` DECIMAL(18, 2),
@@ -118,7 +118,7 @@ CREATE TABLE IF NOT EXISTS `payment` (
 -- GAMIFICATION LEVEL TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `gamification_level` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `level_name` VARCHAR(100) NOT NULL,
     `level_number` INT,
@@ -135,7 +135,7 @@ CREATE TABLE IF NOT EXISTS `gamification_level` (
 -- GAMIFICATION ACHIEVEMENT TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `gamification_achievement` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `achievement_name` VARCHAR(255) NOT NULL,
     `achievement_type` VARCHAR(50),
@@ -152,7 +152,7 @@ CREATE TABLE IF NOT EXISTS `gamification_achievement` (
 -- USER GAMIFICATION PROFILE TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `user_gamification` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `user_id` INT NOT NULL,
     `total_points` INT DEFAULT 0,
@@ -172,7 +172,7 @@ CREATE TABLE IF NOT EXISTS `user_gamification` (
 -- LEADERBOARD TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `leaderboard` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `user_id` INT NOT NULL,
     `rank` INT,

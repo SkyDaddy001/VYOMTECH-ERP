@@ -1,8 +1,10 @@
 -- Phase 3.4: Integration Hub (Third-party integrations, webhooks, API gateway)
 
 -- Integration Providers Configuration
+SET FOREIGN_KEY_CHECKS = 0;
+
 CREATE TABLE IF NOT EXISTS integration_providers (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    id CHAR(26) PRIMARY KEY,
     tenant_id VARCHAR(50) NOT NULL,
     name VARCHAR(100) NOT NULL,
     type ENUM('CRM', 'ERP', 'ACCOUNTING', 'COMMUNICATION', 'ANALYTICS', 'PAYMENT', 'LOGISTICS') NOT NULL,
@@ -26,10 +28,10 @@ CREATE TABLE IF NOT EXISTS integration_providers (
 
 -- API Credentials Management
 CREATE TABLE IF NOT EXISTS integration_credentials (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    id CHAR(26) PRIMARY KEY,
     tenant_id VARCHAR(50) NOT NULL,
-    provider_id BIGINT NOT NULL,
-    user_id BIGINT NOT NULL,
+    provider_id VARCHAR(36) NOT NULL,
+    user_id CHAR(26) NOT NULL,
     api_key VARCHAR(500),
     api_secret VARCHAR(500),
     access_token VARCHAR(1000),
@@ -51,9 +53,9 @@ CREATE TABLE IF NOT EXISTS integration_credentials (
 
 -- Webhook Configurations
 CREATE TABLE IF NOT EXISTS integration_webhooks (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    id CHAR(26) PRIMARY KEY,
     tenant_id VARCHAR(50) NOT NULL,
-    provider_id BIGINT NOT NULL,
+    provider_id VARCHAR(36) NOT NULL,
     event_type VARCHAR(100) NOT NULL,
     webhook_url VARCHAR(500) NOT NULL,
     is_active BOOLEAN DEFAULT TRUE,
@@ -73,9 +75,9 @@ CREATE TABLE IF NOT EXISTS integration_webhooks (
 
 -- Webhook Events Log
 CREATE TABLE IF NOT EXISTS integration_webhook_events (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    id CHAR(26) PRIMARY KEY,
     tenant_id VARCHAR(50) NOT NULL,
-    webhook_id BIGINT NOT NULL,
+    webhook_id VARCHAR(36) NOT NULL,
     event_type VARCHAR(100) NOT NULL,
     event_data JSON NOT NULL,
     status ENUM('PENDING', 'DELIVERED', 'FAILED', 'RETRYING') DEFAULT 'PENDING',
@@ -92,9 +94,9 @@ CREATE TABLE IF NOT EXISTS integration_webhook_events (
 
 -- Data Synchronization Mappings
 CREATE TABLE IF NOT EXISTS integration_field_mappings (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    id CHAR(26) PRIMARY KEY,
     tenant_id VARCHAR(50) NOT NULL,
-    provider_id BIGINT NOT NULL,
+    provider_id VARCHAR(36) NOT NULL,
     source_entity VARCHAR(100) NOT NULL,
     source_field VARCHAR(100) NOT NULL,
     target_entity VARCHAR(100) NOT NULL,
@@ -113,9 +115,9 @@ CREATE TABLE IF NOT EXISTS integration_field_mappings (
 
 -- Integration Sync Jobs
 CREATE TABLE IF NOT EXISTS integration_sync_jobs (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    id CHAR(26) PRIMARY KEY,
     tenant_id VARCHAR(50) NOT NULL,
-    provider_id BIGINT NOT NULL,
+    provider_id VARCHAR(36) NOT NULL,
     sync_type ENUM('FULL', 'INCREMENTAL', 'DELTA') DEFAULT 'INCREMENTAL',
     status ENUM('SCHEDULED', 'RUNNING', 'COMPLETED', 'FAILED') DEFAULT 'SCHEDULED',
     last_sync_at TIMESTAMP NULL,
@@ -135,10 +137,10 @@ CREATE TABLE IF NOT EXISTS integration_sync_jobs (
 
 -- Integration API Rate Limiting
 CREATE TABLE IF NOT EXISTS integration_rate_limits (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    id CHAR(26) PRIMARY KEY,
     tenant_id VARCHAR(50) NOT NULL,
-    provider_id BIGINT NOT NULL,
-    user_id BIGINT,
+    provider_id VARCHAR(36) NOT NULL,
+    user_id CHAR(26),
     requests_count INT DEFAULT 0,
     limit_window_start TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     limit_window_end TIMESTAMP NULL,
@@ -152,9 +154,9 @@ CREATE TABLE IF NOT EXISTS integration_rate_limits (
 
 -- Integration Errors & Logs
 CREATE TABLE IF NOT EXISTS integration_error_logs (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    id CHAR(26) PRIMARY KEY,
     tenant_id VARCHAR(50) NOT NULL,
-    provider_id BIGINT NOT NULL,
+    provider_id VARCHAR(36) NOT NULL,
     error_code VARCHAR(50),
     error_message TEXT NOT NULL,
     error_details JSON,
@@ -173,13 +175,13 @@ CREATE TABLE IF NOT EXISTS integration_error_logs (
 
 -- Integration Audit Trail
 CREATE TABLE IF NOT EXISTS integration_audit_logs (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    id CHAR(26) PRIMARY KEY,
     tenant_id VARCHAR(50) NOT NULL,
-    provider_id BIGINT NOT NULL,
-    user_id BIGINT,
+    provider_id VARCHAR(36) NOT NULL,
+    user_id CHAR(26),
     action VARCHAR(100) NOT NULL,
     resource_type VARCHAR(100),
-    resource_id BIGINT,
+    resource_id VARCHAR(36),
     old_values JSON,
     new_values JSON,
     ip_address VARCHAR(45),
@@ -190,3 +192,9 @@ CREATE TABLE IF NOT EXISTS integration_audit_logs (
     KEY idx_user_id (user_id),
     KEY idx_action (action)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+SET FOREIGN_KEY_CHECKS = 1;
+
+
+
+

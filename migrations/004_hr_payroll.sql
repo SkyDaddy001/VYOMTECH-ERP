@@ -10,7 +10,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- EMPLOYEE TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `employee` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `first_name` VARCHAR(100) NOT NULL,
     `last_name` VARCHAR(100),
@@ -52,7 +52,7 @@ CREATE TABLE IF NOT EXISTS `employee` (
 -- ATTENDANCE TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `attendance` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `employee_id` VARCHAR(36) NOT NULL,
     `attendance_date` DATE NOT NULL,
@@ -75,7 +75,7 @@ CREATE TABLE IF NOT EXISTS `attendance` (
 -- LEAVE TYPE TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `leave_type` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `leave_type_name` VARCHAR(100) NOT NULL,
     `description` TEXT,
@@ -92,7 +92,7 @@ CREATE TABLE IF NOT EXISTS `leave_type` (
 -- LEAVE REQUEST TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `leave_request` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `employee_id` VARCHAR(36) NOT NULL,
     `leave_type_id` VARCHAR(36) NOT NULL,
@@ -118,7 +118,7 @@ CREATE TABLE IF NOT EXISTS `leave_request` (
 -- PAYROLL RECORD TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `payroll_record` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `employee_id` VARCHAR(36) NOT NULL,
     `payroll_month` DATE NOT NULL,

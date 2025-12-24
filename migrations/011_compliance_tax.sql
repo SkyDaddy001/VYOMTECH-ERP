@@ -10,7 +10,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- COMPLIANCE RECORD TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `compliance_record` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `compliance_type` VARCHAR(100) NOT NULL,
     `title` VARCHAR(255),
@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS `compliance_record` (
 -- COMPLIANCE CHECKLIST TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `compliance_checklist` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `compliance_record_id` VARCHAR(36) NOT NULL,
     `item_number` INT,
@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS `compliance_checklist` (
 -- TAX CALCULATION TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `tax_calculation` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `tax_period` DATE NOT NULL,
     `tax_type` VARCHAR(50),
@@ -78,7 +78,7 @@ CREATE TABLE IF NOT EXISTS `tax_calculation` (
 -- AUDIT TRAIL TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `audit_trail` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `entity_type` VARCHAR(100),
     `entity_id` VARCHAR(36),
@@ -98,7 +98,7 @@ CREATE TABLE IF NOT EXISTS `audit_trail` (
 -- REGULATORY REQUIREMENT TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `regulatory_requirement` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `requirement_name` VARCHAR(255) NOT NULL,
     `requirement_type` VARCHAR(100),
@@ -119,7 +119,7 @@ CREATE TABLE IF NOT EXISTS `regulatory_requirement` (
 -- DOCUMENT MANAGEMENT TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `document` (
-    `id` VARCHAR(36) PRIMARY KEY,
+    `id` CHAR(36) PRIMARY KEY,
     `tenant_id` VARCHAR(36) NOT NULL,
     `document_type` VARCHAR(50),
     `document_name` VARCHAR(255) NOT NULL,
