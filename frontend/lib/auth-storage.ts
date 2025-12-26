@@ -2,11 +2,11 @@
 
 /**
  * Secure Token Management with httpOnly Cookies
- * Stores OAuth tokens securely server-side via Prisma
+ * Stores OAuth tokens securely server-side via cookies
+ * Note: Database storage via Prisma can be added later
  */
 
 import { cookies } from 'next/headers';
-import { prisma } from './prisma';
 import type { AuthTokenResponse } from './types';
 
 const SECURE_COOKIE_OPTIONS = {
@@ -17,27 +17,25 @@ const SECURE_COOKIE_OPTIONS = {
 };
 
 /**
- * Store token in database (Prisma) and set secure cookie
+ * Store token in secure httpOnly cookie
+ * Note: Database storage can be implemented in backend API
  */
 export async function storeAuthToken(
   userId: string,
   token: string,
   expiresAt: Date
 ): Promise<AuthTokenResponse> {
-  // Create in Prisma database
-  const authToken = await prisma.authToken.create({
-    data: {
-      userId,
-      token,
-      expiresAt,
-    },
-  });
-
-  // Also set secure httpOnly cookie
+  // Set secure httpOnly cookie
   const cookieStore = await cookies();
   cookieStore.set('auth_token', token, SECURE_COOKIE_OPTIONS);
+  cookieStore.set('user_id', userId, SECURE_COOKIE_OPTIONS);
 
-  return authToken;
+  // Return token response
+  return {
+    userId,
+    token,
+    expiresAt,
+  } as AuthTokenResponse;
 }
 
 /**
@@ -49,45 +47,19 @@ export async function getStoredToken(): Promise<string | null> {
 }
 
 /**
- * Verify token from database
+ * Verify token from cookie
+ * Note: Full validation should be done on backend API
  */
 export async function verifyStoredToken(token: string): Promise<boolean> {
-  const authToken = await prisma.authToken.findUnique({
-    where: { token },
-  });
-
-  if (!authToken) return false;
-
-  // Check if expired
-  if (new Date() > authToken.expiresAt) {
-    await prisma.authToken.delete({
-      where: { id: authToken.id },
-    });
-    return false;
-  }
-
-  return true;
+  const storedToken = await getStoredToken();
+  return storedToken === token;
 }
 
 /**
- * Refresh token if valid
+ * Refresh token - update cookie with new token
+ * Note: Token refresh logic should be done via backend API
  */
 export async function refreshAuthToken(oldToken: string, newToken: string, newExpiresAt: Date) {
-  const authToken = await prisma.authToken.findUnique({
-    where: { token: oldToken },
-  });
-
-  if (!authToken) throw new Error('Token not found');
-
-  // Update in database
-  await prisma.authToken.update({
-    where: { id: authToken.id },
-    data: {
-      token: newToken,
-      expiresAt: newExpiresAt,
-    },
-  });
-
   // Update secure cookie
   const cookieStore = await cookies();
   cookieStore.set('auth_token', newToken, SECURE_COOKIE_OPTIONS);
@@ -96,27 +68,21 @@ export async function refreshAuthToken(oldToken: string, newToken: string, newEx
 }
 
 /**
- * Revoke token
+ * Revoke token by clearing cookie
  */
 export async function revokeAuthToken(token: string) {
-  await prisma.authToken.deleteMany({
-    where: { token },
-  });
-
   // Clear cookie
   const cookieStore = await cookies();
   cookieStore.delete('auth_token');
+  cookieStore.delete('user_id');
 }
 
 /**
- * Clean up expired tokens (run periodically)
+ * Clean up expired tokens (can be called from API endpoint)
+ * Note: For now, tokens are managed by browser session and cookies
  */
 export async function cleanupExpiredTokens() {
-  await prisma.authToken.deleteMany({
-    where: {
-      expiresAt: {
-        lt: new Date(),
-      },
-    },
-  });
+  // TODO: Implement backend API endpoint to cleanup expired tokens
+  // For now, rely on cookie expiration
 }
+

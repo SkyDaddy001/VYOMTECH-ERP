@@ -4,11 +4,11 @@ import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
 type PaymentProvider = 'razorpay' | 'billdesk'
-type PaymentMethod = 'netbanking' | 'credit_card' | 'debit_card' | 'upi' | 'wallet'
+type PaymentMethodType = 'netbanking' | 'credit_card' | 'debit_card' | 'upi' | 'wallet'
 
 interface PaymentMethod {
   name: string
-  code: string
+  code: PaymentMethodType
   description: string
   icon: string
 }
@@ -32,7 +32,7 @@ export default function BillingPayment() {
     amount: '',
     currency: 'INR',
     provider: 'razorpay' as PaymentProvider,
-    paymentMethod: 'upi' as PaymentMethod,
+    paymentMethod: 'upi' as PaymentMethodType,
     description: 'VYOM ERP Subscription',
     customerName: '',
     customerEmail: '',

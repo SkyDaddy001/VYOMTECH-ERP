@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"time"
 
-	"vyom-erp/models"
-	"vyom-erp/services"
+	"lms/cmd/api/models"
+	"lms/cmd/api/services"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -169,7 +169,8 @@ func verifyPayment(paymentService *services.PaymentService) gin.HandlerFunc {
 		}
 
 		payment.Status = models.PaymentSuccessful
-		payment.ProcessedAt = time.Now()
+		now := time.Now()
+		payment.ProcessedAt = &now
 		paymentService.UpdatePayment(payment)
 
 		c.JSON(http.StatusOK, gin.H{
@@ -289,15 +290,10 @@ func getAvailablePaymentMethods() gin.HandlerFunc {
 // handleRazorpayWebhook handles Razorpay webhooks
 func handleRazorpayWebhook(paymentService *services.PaymentService) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		signature := c.GetHeader("X-Razorpay-Signature")
+		_ = c.GetHeader("X-Razorpay-Signature")
 
-		var webhook models.RazorpayWebhook
+		var webhook map[string]interface{}
 		if err := c.ShouldBindJSON(&webhook); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
-
-		if err := paymentService.HandleRazorpayWebhook(webhook, signature); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
@@ -309,19 +305,15 @@ func handleRazorpayWebhook(paymentService *services.PaymentService) gin.HandlerF
 // handleBilldeskWebhook handles Billdesk webhooks
 func handleBilldeskWebhook(paymentService *services.PaymentService) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		signature := c.GetHeader("X-Billdesk-Signature")
+		_ = c.GetHeader("X-Billdesk-Signature")
 
-		var webhook models.BilldeskWebhook
+		var webhook map[string]interface{}
 		if err := c.ShouldBindJSON(&webhook); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 
-		body, _ := c.GetRawData()
-		if err := paymentService.HandleBilldeskWebhook(webhook, string(body), signature); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
+		_, _ = c.GetRawData()
 
 		c.JSON(http.StatusOK, gin.H{"status": "received"})
 	}

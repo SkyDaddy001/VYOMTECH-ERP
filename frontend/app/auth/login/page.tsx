@@ -20,6 +20,10 @@ export default function LoginPage() {
       // Get authorization URL from backend
       const authUrl = await apiClient.getAuthorizationUrl(provider);
 
+      if (!authUrl) {
+        throw new Error('No authorization URL received');
+      }
+
       // Redirect to OAuth provider
       window.location.href = authUrl;
     } catch (err) {

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"vyom-erp/cmd/api/models"
+	"lms/cmd/api/models"
 )
 
 // ===== CHART OF ACCOUNTS SERVICE =====
@@ -196,7 +196,7 @@ func (s *JournalEntryService) CreateJournalEntry(tenantID string, entry *models.
 		}
 	}
 
-	return entry.ID, tx.Commit().Error
+	return entry.ID, tx.Commit()
 }
 
 func (s *JournalEntryService) GetJournalEntry(tenantID, entryID string) (*models.JournalEntry, []*models.JournalEntryLine, error) {

@@ -3,6 +3,8 @@
  * All requests use types derived from Prisma schema
  */
 
+'use client';
+
 import axios, { AxiosInstance } from 'axios';
 import { getStoredToken } from './auth-storage';
 import type {
@@ -233,6 +235,209 @@ class APIClient {
   async revokeOAuthToken(provider: 'google' | 'meta'): Promise<void> {
     await this.client.post(`/oauth/${provider}/revoke`);
   }
+
+  // ===== SALES ENDPOINTS =====
+
+  /**
+   * List sales
+   */
+  async listSales(): Promise<any[]> {
+    const response = await this.client.get('/sales');
+    return response.data.data || [];
+  }
+
+  /**
+   * Create sale
+   */
+  async createSale(data: any): Promise<any> {
+    const response = await this.client.post('/sales', data);
+    return response.data.data;
+  }
+
+  /**
+   * Delete sale
+   */
+  async deleteSale(id: string): Promise<void> {
+    await this.client.delete(`/sales/${id}`);
+  }
+
+  // ===== LEADS ENDPOINTS =====
+
+  /**
+   * List leads
+   */
+  async listLeads(): Promise<any[]> {
+    const response = await this.client.get('/leads');
+    return response.data.data || [];
+  }
+
+  /**
+   * Create lead
+   */
+  async createLead(data: any): Promise<any> {
+    const response = await this.client.post('/leads', data);
+    return response.data.data;
+  }
+
+  /**
+   * Delete lead
+   */
+  async deleteLead(id: string): Promise<void> {
+    await this.client.delete(`/leads/${id}`);
+  }
+
+  // ===== MARKETING ENDPOINTS =====
+
+  /**
+   * List marketing campaigns
+   */
+  async listMarketingCampaigns(): Promise<any[]> {
+    const response = await this.client.get('/marketing-campaigns');
+    return response.data.data || [];
+  }
+
+  /**
+   * Create marketing campaign
+   */
+  async createMarketingCampaign(data: any): Promise<any> {
+    const response = await this.client.post('/marketing-campaigns', data);
+    return response.data.data;
+  }
+
+  /**
+   * Delete marketing campaign
+   */
+  async deleteMarketingCampaign(id: string): Promise<void> {
+    await this.client.delete(`/marketing-campaigns/${id}`);
+  }
+
+  // ===== SITE VISITS ENDPOINTS =====
+
+  /**
+   * List site visits
+   */
+  async listSiteVisits(): Promise<any[]> {
+    const response = await this.client.get('/site-visits');
+    return response.data.data || [];
+  }
+
+  /**
+   * Create site visit
+   */
+  async createSiteVisit(data: any): Promise<any> {
+    const response = await this.client.post('/site-visits', data);
+    return response.data.data;
+  }
+
+  /**
+   * Delete site visit
+   */
+  async deleteSiteVisit(id: string): Promise<void> {
+    await this.client.delete(`/site-visits/${id}`);
+  }
+
+  // ===== SPRINTS ENDPOINTS =====
+
+  /**
+   * List sprints
+   */
+  async listSprints(): Promise<any[]> {
+    const response = await this.client.get('/sprints');
+    return response.data.data || [];
+  }
+
+  /**
+   * Create sprint
+   */
+  async createSprint(data: any): Promise<any> {
+    const response = await this.client.post('/sprints', data);
+    return response.data.data;
+  }
+
+  /**
+   * Delete sprint
+   */
+  async deleteSprint(id: string): Promise<void> {
+    await this.client.delete(`/sprints/${id}`);
+  }
+
+  // ===== AUTH ENDPOINTS =====
+
+  /**
+   * Login user
+   */
+  async login(email: string, password: string): Promise<any> {
+    const response = await this.client.post('/auth/login', { email, password });
+    return response.data.data;
+  }
+
+  /**
+   * Get current user
+   */
+  async getCurrentUser(): Promise<any> {
+    const response = await this.client.get('/auth/me');
+    return response.data.data;
+  }
+
+  // ===== GENERIC HTTP METHODS =====
+  /**
+   * Generic GET request
+   */
+  async get<T = any>(endpoint: string, config?: any): Promise<T> {
+    const response = await this.client.get<T>(endpoint, config);
+    return (response as any).data?.data || (response as any).data;
+  }
+
+  /**
+   * Generic POST request
+   */
+  async post<T = any>(endpoint: string, data?: any, config?: any): Promise<T> {
+    const response = await this.client.post<T>(endpoint, data, config);
+    return (response as any).data?.data || (response as any).data;
+  }
+
+  /**
+   * Generic PATCH request
+   */
+  async patch<T = any>(endpoint: string, data?: any, config?: any): Promise<T> {
+    const response = await this.client.patch<T>(endpoint, data, config);
+    return (response as any).data?.data || (response as any).data;
+  }
+
+  /**
+   * Generic PUT request
+   */
+  async put<T = any>(endpoint: string, data?: any, config?: any): Promise<T> {
+    const response = await this.client.put<T>(endpoint, data, config);
+    return (response as any).data?.data || (response as any).data;
+  }
+
+  /**
+   * Generic DELETE request
+   */
+  async delete<T = any>(endpoint: string, config?: any): Promise<T> {
+    const response = await this.client.delete<T>(endpoint, config);
+    return (response as any).data?.data || (response as any).data;
+  }
+
+  /**
+   * Set auth token
+   */
+  setAuthToken(token: string): void {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('authToken', token);
+    }
+  }
+
+  /**
+   * Clear auth token
+   */
+  clearAuthToken(): void {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('authToken');
+    }
+  }
 }
 
 export const apiClient = new APIClient();
+

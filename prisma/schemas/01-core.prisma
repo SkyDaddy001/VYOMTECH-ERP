@@ -46,7 +46,7 @@ model Tenant {
   agentPerformanceMetrics AgentPerformanceMetric[]
   // User billing & tracking
   userCount            TenantUserCount?
-  
+  credentials          TenantCredential[]
   @@index([domain])
   @@index([status])
   @@map("tenant")

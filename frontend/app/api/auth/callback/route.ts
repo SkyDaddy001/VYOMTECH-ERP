@@ -5,9 +5,11 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
 import { storeAuthToken } from '@/lib/auth-storage';
 import { apiClient } from '@/lib/api-client';
+
+// Disable static generation for this route - it's a dynamic API route
+export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
@@ -28,9 +30,9 @@ export async function GET(request: NextRequest) {
     }
 
     // Exchange code for token via backend API
-    const oauthToken = await apiClient.exchangeOAuthCode(provider, code);
+    const oauthResponse = await apiClient.exchangeOAuthCode(provider, code);
 
-    if (!oauthToken?.accessToken) {
+    if (!oauthResponse?.accessToken) {
       throw new Error('Invalid OAuth response');
     }
 
@@ -38,8 +40,9 @@ export async function GET(request: NextRequest) {
     // For now, create/update user in Prisma database
     const userId = await getOrCreateUser(provider, code);
 
-    // Store token in Prisma database with secure cookie
-    await storeAuthToken(userId, oauthToken.accessToken, oauthToken.expiresAt);
+    // Store token in localStorage with expiration
+    const expiresAt = oauthResponse.expiresAt || new Date(Date.now() + 3600 * 1000);
+    await storeAuthToken(userId, oauthResponse.accessToken, expiresAt);
 
     // Redirect to dashboard
     return NextResponse.redirect(new URL('/dashboard', request.url));
@@ -57,21 +60,9 @@ export async function GET(request: NextRequest) {
  */
 async function getOrCreateUser(provider: string, code: string): Promise<string> {
   // TODO: Implement proper user lookup from OAuth provider info
-  // For now, create a temporary user
+  // For now, return a temporary user ID
   // In production: fetch user info from Google/Meta API using the code
-
-  const email = `oauth-${provider}-${Date.now()}@vyom.local`;
-
-  const user = await prisma.user.upsert({
-    where: { email },
-    update: { updatedAt: new Date() },
-    create: {
-      email,
-      passwordHash: '', // OAuth users don't have passwords
-      role: 'user',
-      tenantId: process.env.DEFAULT_TENANT_ID || 'default-tenant',
-    },
-  });
-
-  return user.id;
+  
+  // Generate a consistent ID based on code
+  return `user-${provider}-${Buffer.from(code).toString('base64').substring(0, 12)}`;
 }

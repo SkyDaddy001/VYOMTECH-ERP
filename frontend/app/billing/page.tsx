@@ -1,262 +1,305 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useAuth } from '@/lib/hooks/useAuth';
+import tenantService, { type Tenant } from '@/services/tenant-service';
 
-interface BillingData {
-  currentOverages: number;
-  costPerOverage: number;
-  totalOverageCost: number;
-  projectedMonthlyOverage: number;
-  overageHistory: Array<{
-    date: string;
-    overageCount: number;
-    cost: number;
-  }>;
+interface Invoice {
+  id: string;
+  date: string;
+  amount: number;
+  status: 'paid' | 'pending' | 'failed';
+  description: string;
 }
 
-export default function BillingOverview() {
-  const [billingData, setBillingData] = useState<BillingData | null>(null);
-  const [loading, setLoading] = useState(true);
+export default function BillingPage() {
+  const { user, isLoading: authLoading } = useAuth();
+  const [tenant, setTenant] = useState<Tenant | null>(null);
+  const [invoices, setInvoices] = useState<Invoice[]>([
+    {
+      id: 'INV-001',
+      date: '2025-12-01',
+      amount: 299.99,
+      status: 'paid',
+      description: 'Monthly subscription - 100 users',
+    },
+    {
+      id: 'INV-002',
+      date: '2025-11-01',
+      amount: 299.99,
+      status: 'paid',
+      description: 'Monthly subscription - 100 users',
+    },
+  ]);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   useEffect(() => {
-    loadBillingData();
-    const interval = setInterval(loadBillingData, 60000); // Refresh every minute
-    return () => clearInterval(interval);
-  }, []);
+    if (authLoading || !user) return;
+    loadData();
+  }, [authLoading, user]);
 
-  const loadBillingData = async () => {
+  const loadData = async () => {
     try {
-      setLoading(true);
+      setIsLoading(true);
+      const tenantData = await tenantService.getCurrentTenant();
+      setTenant(tenantData);
       setError(null);
-
-      const response = await fetch('/api/v1/tenant/users/billing/check', {
-        headers: { Authorization: `Bearer ${localStorage.getItem('authToken')}` },
-      });
-
-      if (!response.ok) throw new Error('Failed to load billing data');
-
-      const data = await response.json();
-      setBillingData(data);
     } catch (err) {
-      setError('Failed to load billing information');
-      console.error(err);
+      setError(err instanceof Error ? err.message : 'Failed to load billing data');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount);
+  const statusColor = (status: string) => {
+    switch (status) {
+      case 'paid':
+        return 'bg-green-100 text-green-800';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'failed':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
-  };
-
-  if (loading) {
+  if (authLoading || isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+        <div className="text-gray-600">Loading...</div>
       </div>
     );
   }
 
-  if (!billingData) {
-    return <div>No billing data available</div>;
-  }
-
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gray-50 py-12 px-4">
+      <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Billing & Overage Charges</h1>
-          <p className="text-gray-600 mt-2">Monitor your current and projected overage costs</p>
+          <h1 className="text-3xl font-bold text-gray-900">Billing & Invoices</h1>
+          <p className="text-gray-600 mt-2">Manage your subscription and payments</p>
         </div>
 
-        {/* Error Message */}
+        {/* Error Alert */}
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
             {error}
           </div>
         )}
 
-        {/* Key Metrics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          {/* Current Overages */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          {/* Current Plan */}
           <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-gray-600 text-sm font-medium">Current Overages</p>
-            <p className="text-3xl font-bold text-red-600 mt-2">{billingData.currentOverages}</p>
-            <p className="text-gray-500 text-xs mt-2">Users exceeding limit</p>
+            <h3 className="font-semibold text-gray-900 mb-4">Current Plan</h3>
+            <div className="space-y-3">
+              <div>
+                <p className="text-sm text-gray-600">Plan Type</p>
+                <p className="text-xl font-bold text-gray-900">Professional</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Users Included</p>
+                <p className="text-xl font-bold text-gray-900">{tenant?.maxUsers}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Monthly Cost</p>
+                <p className="text-xl font-bold text-blue-600">$299.99</p>
+              </div>
+              <button className="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition">
+                Upgrade Plan
+              </button>
+            </div>
           </div>
 
-          {/* Cost per Overage */}
+          {/* Usage */}
           <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-gray-600 text-sm font-medium">Cost per Overage User</p>
-            <p className="text-3xl font-bold text-blue-600 mt-2">
-              {formatCurrency(billingData.costPerOverage)}
-            </p>
-            <p className="text-gray-500 text-xs mt-2">Monthly charge per user</p>
+            <h3 className="font-semibold text-gray-900 mb-4">Usage</h3>
+            <div className="space-y-3">
+              <div>
+                <p className="text-sm text-gray-600">Active Users</p>
+                <p className="text-xl font-bold text-gray-900">{tenant?.activeUsers}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Seats Available</p>
+                <p className="text-xl font-bold text-green-600">
+                  {(tenant?.maxUsers || 0) - (tenant?.activeUsers || 0)}
+                </p>
+              </div>
+              <div className="mt-4">
+                <div className="flex justify-between mb-2">
+                  <p className="text-sm text-gray-600">Usage</p>
+                  <p className="text-sm font-medium text-gray-900">
+                    {Math.round(((tenant?.activeUsers || 0) / (tenant?.maxUsers || 1)) * 100)}%
+                  </p>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div
+                    className="bg-blue-600 h-2 rounded-full transition"
+                    style={{
+                      width: `${Math.round(((tenant?.activeUsers || 0) / (tenant?.maxUsers || 1)) * 100)}%`,
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* Total Overage Cost */}
+          {/* Payment Method */}
           <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-gray-600 text-sm font-medium">Total Overage Cost (YTD)</p>
-            <p className="text-3xl font-bold text-orange-600 mt-2">
-              {formatCurrency(billingData.totalOverageCost)}
-            </p>
-            <p className="text-gray-500 text-xs mt-2">Year-to-date charges</p>
-          </div>
-
-          {/* Projected Monthly */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-gray-600 text-sm font-medium">Projected This Month</p>
-            <p className="text-3xl font-bold text-red-500 mt-2">
-              {formatCurrency(billingData.projectedMonthlyOverage)}
-            </p>
-            <p className="text-gray-500 text-xs mt-2">Based on current overages</p>
+            <h3 className="font-semibold text-gray-900 mb-4">Payment Method</h3>
+            <div className="space-y-3">
+              <div className="bg-gray-100 rounded-lg p-4 flex items-center gap-3">
+                <div className="text-2xl">💳</div>
+                <div>
+                  <p className="font-medium text-gray-900">Visa</p>
+                  <p className="text-sm text-gray-600">**** **** **** 4242</p>
+                </div>
+              </div>
+              <button className="w-full mt-4 bg-gray-200 hover:bg-gray-300 text-gray-900 font-semibold py-2 px-4 rounded-lg transition">
+                Update Method
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Alerts */}
-        {billingData.currentOverages > 0 && (
-          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4 flex items-start">
-            <div className="flex-shrink-0">
-              <svg
-                className="h-5 w-5 text-red-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 9v2m0 4v2m0 4v2M6.228 6.228a9 9 0 1112.544 12.544M6.228 6.228l12.544 12.544"
-                />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-red-800">Active Overage Charges</h3>
-              <p className="text-sm text-red-700 mt-1">
-                You have {billingData.currentOverages} users exceeding your seat limit.
-                {billingData.projectedMonthlyOverage > 0 && (
-                  <> Your projected overage charge this month is{' '}
-                  <strong>{formatCurrency(billingData.projectedMonthlyOverage)}</strong>.</>
-                )}
-              </p>
-              <a
-                href="/seat-management"
-                className="text-sm font-medium text-red-700 hover:text-red-600 mt-2 inline-block"
-              >
-                Increase Seat Limit →
-              </a>
-            </div>
+        {/* Recent Invoices */}
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <div className="p-6 border-b">
+            <h3 className="text-lg font-semibold text-gray-900">Recent Invoices</h3>
           </div>
-        )}
 
-        {/* Overage History */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-6">Overage History</h2>
-
-          {billingData.overageHistory.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-gray-500">No overage history</p>
-            </div>
+          {invoices.length === 0 ? (
+            <div className="p-8 text-center text-gray-600">No invoices found</div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Date
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Overage Users
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Charge
-                    </th>
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b">
+                <tr>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
+                    Invoice
+                  </th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
+                    Date
+                  </th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
+                    Description
+                  </th>
+                  <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900">
+                    Amount
+                  </th>
+                  <th className="px-6 py-3 text-center text-sm font-semibold text-gray-900">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {invoices.map((invoice) => (
+                  <tr key={invoice.id} className="border-b hover:bg-gray-50">
+                    <td className="px-6 py-4 font-medium text-gray-900">{invoice.id}</td>
+                    <td className="px-6 py-4 text-gray-600">
+                      {new Date(invoice.date).toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-4 text-gray-600">{invoice.description}</td>
+                    <td className="px-6 py-4 text-right font-medium text-gray-900">
+                      ${invoice.amount.toFixed(2)}
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${statusColor(invoice.status)}`}>
+                        {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-right space-x-2">
+                      <button className="text-blue-600 hover:text-blue-800 font-medium">
+                        Download
+                      </button>
+                      {invoice.status === 'pending' && (
+                        <button
+                          onClick={() => setShowPaymentModal(true)}
+                          className="text-green-600 hover:text-green-800 font-medium"
+                        >
+                          Pay
+                        </button>
+                      )}
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {billingData.overageHistory.map((entry, idx) => (
-                    <tr key={idx} className="hover:bg-gray-50 transition">
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        {formatDate(entry.date)}
-                      </td>
-                      <td className="px-6 py-4 text-sm font-medium text-red-600">
-                        {entry.overageCount} users
-                      </td>
-                      <td className="px-6 py-4 text-sm font-semibold text-gray-900">
-                        {formatCurrency(entry.cost)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                ))}
+              </tbody>
+            </table>
           )}
         </div>
+      </div>
 
-        {/* Billing Information */}
-        <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* How Billing Works */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">How Billing Works</h2>
-            <ul className="space-y-3 text-sm text-gray-600">
-              <li className="flex items-start">
-                <span className="flex-shrink-0 h-5 w-5 text-blue-500 mr-3">✓</span>
-                <span>Monthly billing cycle runs from the 1st to last day of the month</span>
-              </li>
-              <li className="flex items-start">
-                <span className="flex-shrink-0 h-5 w-5 text-blue-500 mr-3">✓</span>
-                <span>Overage charges are calculated daily based on exceeding your seat limit</span>
-              </li>
-              <li className="flex items-start">
-                <span className="flex-shrink-0 h-5 w-5 text-blue-500 mr-3">✓</span>
-                <span>Invoices are generated on the last day of the month</span>
-              </li>
-              <li className="flex items-start">
-                <span className="flex-shrink-0 h-5 w-5 text-blue-500 mr-3">✓</span>
-                <span>Payment is due within 30 days of invoice date</span>
-              </li>
-            </ul>
-          </div>
+      {/* Payment Modal */}
+      {showPaymentModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl p-8 max-w-md w-full">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Make a Payment</h2>
 
-          {/* Ways to Reduce Charges */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Reduce Overage Charges</h2>
-            <ul className="space-y-3 text-sm text-gray-600">
-              <li className="flex items-start">
-                <span className="flex-shrink-0 h-5 w-5 text-green-500 mr-3">→</span>
-                <span>Increase your seat limit to accommodate more users</span>
-              </li>
-              <li className="flex items-start">
-                <span className="flex-shrink-0 h-5 w-5 text-green-500 mr-3">→</span>
-                <span>Remove inactive users from your account</span>
-              </li>
-              <li className="flex items-start">
-                <span className="flex-shrink-0 h-5 w-5 text-green-500 mr-3">→</span>
-                <span>Upgrade your subscription tier for higher limits</span>
-              </li>
-              <li className="flex items-start">
-                <span className="flex-shrink-0 h-5 w-5 text-green-500 mr-3">→</span>
-                <span>Contact support to discuss volume discounts</span>
-              </li>
-            </ul>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                setShowPaymentModal(false);
+              }}
+              className="space-y-6"
+            >
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Card Number
+                </label>
+                <input
+                  type="text"
+                  placeholder="4242 4242 4242 4242"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Expiry
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="MM/YY"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    CVC
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="123"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="submit"
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition"
+                >
+                  Pay Now
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowPaymentModal(false)}
+                  className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-900 font-semibold py-2 px-4 rounded-lg transition"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
+

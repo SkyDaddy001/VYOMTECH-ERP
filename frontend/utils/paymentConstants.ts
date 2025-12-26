@@ -160,7 +160,7 @@ export const canRefund = (status: string): boolean => {
 }
 
 // Check if payment is final
-export const isFinalStatus = (status: string): boolean => {
+export const isFinalStatus = (status: 'successful' | 'failed' | 'cancelled' | 'refunded'): boolean => {
   return [
     PAYMENT_STATUS.SUCCESSFUL,
     PAYMENT_STATUS.FAILED,

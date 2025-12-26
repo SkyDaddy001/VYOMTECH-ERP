@@ -10,10 +10,10 @@ import { apiClient } from '@/lib/api-client';
 import type { CampaignResponse, MetricsResponse } from '@/lib/types';
 
 interface CampaignsViewProps {
-  platform: 'google' | 'meta';
+  platform?: 'google' | 'meta';
 }
 
-export function CampaignsView({ platform }: CampaignsViewProps) {
+export default function CampaignsView({ platform = 'google' }: CampaignsViewProps) {
   const [campaigns, setCampaigns] = useState<CampaignResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -26,8 +26,10 @@ export function CampaignsView({ platform }: CampaignsViewProps) {
   const loadCampaigns = async () => {
     try {
       setLoading(true);
-      const data = await apiClient.listCampaigns(platform);
-      setCampaigns(data);
+      const data = await apiClient.listCampaigns();
+      if (Array.isArray(data)) {
+        setCampaigns(data as CampaignResponse[]);
+      }
       setError(null);
     } catch (err) {
       setError(
@@ -215,8 +217,8 @@ function CampaignDetailsModal({
   const loadMetrics = async () => {
     try {
       setLoadingMetrics(true);
-      const data = await apiClient.getCampaignMetrics(campaign.id, platform);
-      setMetrics(data);
+      const response = await apiClient.getCampaignMetrics(campaign.id, platform);
+      setMetrics(response as MetricsResponse);
     } catch (err) {
       console.error('Failed to load metrics:', err);
     } finally {
@@ -253,7 +255,7 @@ function CampaignDetailsModal({
               Platform
             </label>
             <p className="text-gray-900 text-sm p-2 bg-gray-50 rounded capitalize">
-              {campaign.platform}
+              {platform}
             </p>
           </div>
           <div>

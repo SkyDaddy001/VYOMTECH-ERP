@@ -1,38 +1,28 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useAuth } from '@/lib/hooks/useAuth';
+import Link from 'next/link';
 
 export default function LoginPage() {
+  const { login, isLoading, error: authError } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError(null);
 
+    if (!email || !password) {
+      setError('Please fill in all fields');
+      return;
+    }
+
     try {
-      const response = await fetch('/api/v1/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Invalid email or password');
-      }
-
-      const data = await response.json();
-      localStorage.setItem('authToken', data.token);
-      router.push('/user-count');
+      await login(email, password);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -78,21 +68,36 @@ export default function LoginPage() {
           </div>
 
           {/* Error */}
-          {error && (
+          {(error || authError) && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded text-sm">
-              {error}
+              {error || authError}
             </div>
           )}
 
           {/* Submit */}
           <button
             type="submit"
-            disabled={loading}
+            disabled={isLoading}
             className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold py-2 px-4 rounded-lg transition"
           >
-            {loading ? 'Signing in...' : 'Sign In'}
+            {isLoading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
+
+        {/* Links */}
+        <div className="mt-4 text-center text-sm text-gray-600">
+          <p>
+            Don't have an account?{' '}
+            <Link href="/signup" className="text-blue-600 hover:text-blue-700 font-medium">
+              Sign up
+            </Link>
+          </p>
+          <p className="mt-2">
+            <Link href="/forgot-password" className="text-blue-600 hover:text-blue-700 font-medium">
+              Forgot password?
+            </Link>
+          </p>
+        </div>
 
         {/* Demo Credentials */}
         <div className="mt-6 bg-gray-50 rounded-lg p-4 text-sm text-gray-600">

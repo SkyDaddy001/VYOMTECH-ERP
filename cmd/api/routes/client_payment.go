@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"time"
 
-	"vyom-erp/cmd/api/models"
-	"vyom-erp/cmd/api/services"
+	"lms/cmd/api/models"
+	"lms/cmd/api/services"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -263,7 +263,7 @@ func GetInvoiceDetail(invoiceService *services.ClientInvoiceService, paymentServ
 
 		payments, err := paymentService.GetClientPaymentsByInvoice(invoiceID)
 		if err != nil {
-			payments = []models.ClientPayment{}
+			payments = make([]models.ClientPayment, 0)
 		}
 
 		c.JSON(http.StatusOK, gin.H{
@@ -393,8 +393,8 @@ func InitiateClientPayment(
 			OrderID:         uuid.New().String(),
 			Amount:          req.Amount,
 			Currency:        req.Currency,
-			Status:          models.PaymentStatusCreated,
-			PaymentType:     models.PaymentTypeClient,
+			Status:          "created",
+			PaymentType:     "client",
 			Provider:        req.Provider,
 			PaymentMethod:   req.PaymentMethod,
 			ClientName:      req.ClientName,
@@ -412,11 +412,11 @@ func InitiateClientPayment(
 		// Route to appropriate payment gateway
 		var gatewayOrder interface{}
 		switch req.Provider {
-		case models.PaymentProviderRazorpay:
+		case "razorpay":
 			// Use existing Razorpay service with tenant account ID
 			// This would need account-specific credentials
 			//gatewayOrder, err = initializeRazorpayOrder(account, payment)
-		case models.PaymentProviderBilldesk:
+		case "billdesk":
 			// Use existing Billdesk service with tenant account ID
 			//gatewayOrder, err = initializeBilldeskOrder(account, payment)
 		default:

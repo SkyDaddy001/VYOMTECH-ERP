@@ -409,7 +409,7 @@ export default function ClientPaymentPage() {
                         </td>
                         <td className="py-2 px-3 font-semibold">₹{payment.amount.toFixed(2)}</td>
                         <td className="py-2 px-3">
-                          <Badge variant="outline">{getStatusLabel(payment.payment_method)}</Badge>
+                          <Badge variant="default">{getStatusLabel(payment.payment_method)}</Badge>
                         </td>
                         <td className="py-2 px-3">
                           <Badge style={{ backgroundColor: getStatusColor(payment.status) }}>

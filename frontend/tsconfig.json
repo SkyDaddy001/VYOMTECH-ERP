@@ -16,10 +16,17 @@
     "noEmit": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,
+    "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "./*"
-      ]
+      "@/*": ["./*"],
+      "@/app/*": ["app/*"],
+      "@/components/ui/*": ["components/ui/*"],
+      "@/components/*": ["components/*"],
+      "@/lib/*": ["lib/*"],
+      "@/services/*": ["services/*"],
+      "@/store/*": ["src/store/*"],
+      "@/hooks/*": ["src/hooks/*"],
+      "@/utils/*": ["utils/*"]
     },
     "incremental": true,
     "isolatedModules": true,

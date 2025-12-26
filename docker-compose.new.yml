@@ -1,0 +1,281 @@
+# VYOM ERP - Complete System Docker Compose
+# Production-ready configuration with all services
+
+services:
+  # ============================================================================
+  # DATABASE LAYER
+  # ============================================================================
+  
+  mysql:
+    image: mysql:8.0
+    container_name: vyom-mysql
+    hostname: mysql
+    restart: unless-stopped
+    
+    # Environment Configuration
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root123}
+      MYSQL_DATABASE: ${DB_NAME:-vyomtech_db}
+      MYSQL_USER: ${DB_USER:-vyom_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-vyom_pass123}
+      
+      # MySQL Performance Tuning
+      MYSQL_INITDB_SKIP_TZINFO: "yes"
+      MYSQL_TCP_PORT: 3306
+    
+    # Port Mapping
+    ports:
+      - "${DB_PORT:-3306}:3306"
+    
+    # Data Persistence
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./backend/prisma/migrations:/docker-entrypoint-initdb.d
+    
+    # Health Check
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD:-root123}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    
+    # Networking
+    networks:
+      - vyom-network
+    
+    # Performance & Security
+    command:
+      - "--max_connections=1000"
+      - "--sql-mode=STRICT_TRANS_TABLES,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION"
+      - "--character-set-server=utf8mb4"
+      - "--collation-server=utf8mb4_unicode_ci"
+
+  # ============================================================================
+  # BACKEND API LAYER
+  # ============================================================================
+  
+  backend:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    image: vyomtech-backend:latest
+    container_name: vyom-backend
+    hostname: backend
+    restart: unless-stopped
+    
+    # Dependencies
+    depends_on:
+      mysql:
+        condition: service_healthy
+    
+    # Core Environment Variables
+    environment:
+      # Application
+      APP_NAME: "VYOM ERP"
+      APP_ENV: ${APP_ENV:-production}
+      APP_HOST: "0.0.0.0"
+      APP_PORT: ${APP_PORT:-8080}
+      GIN_MODE: ${GIN_MODE:-release}
+      
+      # Database Connection
+      DATABASE_URL: mysql://${DB_USER:-vyom_user}:${DB_PASSWORD:-vyom_pass123}@mysql:3306/${DB_NAME:-vyomtech_db}
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: ${DB_USER:-vyom_user}
+      DB_PASSWORD: ${DB_PASSWORD:-vyom_pass123}
+      DB_NAME: ${DB_NAME:-vyomtech_db}
+      
+      # Connection Pool Settings
+      DB_MAX_CONNECTIONS: ${DB_MAX_CONNECTIONS:-25}
+      DB_MIN_CONNECTIONS: ${DB_MIN_CONNECTIONS:-5}
+      DB_CONNECTION_TIMEOUT: ${DB_CONNECTION_TIMEOUT:-30}
+      
+      # JWT & Security
+      JWT_SECRET: ${JWT_SECRET:-your-secret-key-change-in-production}
+      JWT_EXPIRY: ${JWT_EXPIRY:-24h}
+      JWT_REFRESH_EXPIRY: ${JWT_REFRESH_EXPIRY:-7d}
+      API_SECRET_KEY: ${API_SECRET_KEY:-api-secret-key-change}
+      BCRYPT_COST: ${BCRYPT_COST:-10}
+      
+      # OAuth Configuration
+      GOOGLE_OAUTH_CLIENT_ID: ${GOOGLE_OAUTH_CLIENT_ID}
+      GOOGLE_OAUTH_CLIENT_SECRET: ${GOOGLE_OAUTH_CLIENT_SECRET}
+      GOOGLE_OAUTH_REDIRECT_URI: ${GOOGLE_OAUTH_REDIRECT_URI:-http://localhost:3000/api/auth/callback}
+      META_OAUTH_CLIENT_ID: ${META_OAUTH_CLIENT_ID}
+      META_OAUTH_CLIENT_SECRET: ${META_OAUTH_CLIENT_SECRET}
+      META_OAUTH_REDIRECT_URI: ${META_OAUTH_REDIRECT_URI:-http://localhost:3000/api/auth/callback}
+      
+      # CORS Configuration
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://frontend:3000}
+      CORS_ALLOWED_METHODS: "GET,POST,PUT,PATCH,DELETE,OPTIONS"
+      CORS_ALLOWED_HEADERS: "Content-Type,Authorization"
+      CORS_CREDENTIALS: "true"
+      CORS_MAX_AGE: "3600"
+      
+      # Rate Limiting
+      RATE_LIMIT_ENABLED: ${RATE_LIMIT_ENABLED:-true}
+      RATE_LIMIT_REQUESTS: ${RATE_LIMIT_REQUESTS:-100}
+      RATE_LIMIT_WINDOW: ${RATE_LIMIT_WINDOW:-1m}
+      
+      # Logging
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      LOG_FORMAT: ${LOG_FORMAT:-json}
+      
+      # Feature Flags
+      ENABLE_OAUTH: ${ENABLE_OAUTH:-true}
+      ENABLE_PAYMENT_GATEWAY: ${ENABLE_PAYMENT_GATEWAY:-true}
+      ENABLE_EMAIL_NOTIFICATIONS: ${ENABLE_EMAIL_NOTIFICATIONS:-false}
+      
+      # Tenant Configuration
+      MULTI_TENANT_MODE: ${MULTI_TENANT_MODE:-true}
+      TENANT_ISOLATION_ENABLED: ${TENANT_ISOLATION_ENABLED:-true}
+    
+    # Port Mapping
+    ports:
+      - "${APP_PORT:-8080}:${APP_PORT:-8080}"
+    
+    # Health Check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${APP_PORT:-8080}/api/v1/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    
+    # Networking
+    networks:
+      - vyom-network
+    
+    # Logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ============================================================================
+  # FRONTEND APPLICATION LAYER
+  # ============================================================================
+  
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ./Dockerfile
+    image: vyomtech-frontend:latest
+    container_name: vyom-frontend
+    hostname: frontend
+    restart: unless-stopped
+    
+    # Dependencies
+    depends_on:
+      backend:
+        condition: service_healthy
+    
+    # Environment Variables
+    environment:
+      # Next.js Configuration
+      NODE_ENV: ${NODE_ENV:-production}
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://backend:8080/api/v1}
+      NEXT_PUBLIC_APP_NAME: "VYOM ERP"
+      NEXT_PUBLIC_APP_VERSION: "1.0.0"
+      
+      # Analytics (Optional)
+      NEXT_PUBLIC_ENABLE_ANALYTICS: ${NEXT_PUBLIC_ENABLE_ANALYTICS:-false}
+    
+    # Port Mapping
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    
+    # Health Check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+    
+    # Networking
+    networks:
+      - vyom-network
+    
+    # Logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ============================================================================
+  # UTILITY & MANAGEMENT SERVICES
+  # ============================================================================
+  
+  # Adminer - Database UI Management
+  adminer:
+    image: adminer:4.8.1-standalone
+    container_name: vyom-adminer
+    hostname: adminer
+    restart: unless-stopped
+    
+    environment:
+      ADMINER_DEFAULT_SERVER: mysql
+      ADMINER_DEFAULT_DB: ${DB_NAME:-vyomtech_db}
+      ADMINER_DESIGN: petalicious
+    
+    ports:
+      - "${ADMINER_PORT:-8081}:8080"
+    
+    depends_on:
+      - mysql
+    
+    networks:
+      - vyom-network
+
+  # PHPMyAdmin - Alternative Database Management (Optional)
+  phpmyadmin:
+    image: phpmyadmin:5.2.1-apache
+    container_name: vyom-phpmyadmin
+    hostname: phpmyadmin
+    restart: unless-stopped
+    
+    environment:
+      PMA_HOST: mysql
+      PMA_USER: root
+      PMA_PASSWORD: ${DB_ROOT_PASSWORD:-root123}
+      PMA_DB: ${DB_NAME:-vyomtech_db}
+      UPLOAD_LIMIT: 300M
+    
+    ports:
+      - "${PHPMYADMIN_PORT:-8082}:80"
+    
+    depends_on:
+      - mysql
+    
+    networks:
+      - vyom-network
+    
+    profiles:
+      - optional  # Only run if explicitly requested
+
+# ============================================================================
+# VOLUMES - Data Persistence
+# ============================================================================
+
+volumes:
+  mysql_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/data/mysql
+
+# ============================================================================
+# NETWORKS - Service Communication
+# ============================================================================
+
+networks:
+  vyom-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

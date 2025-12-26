@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"vyom-erp/cmd/api/models"
+	"lms/cmd/api/models"
 )
 
 // ===== SALES & PRESALES REP SERVICES =====
@@ -513,7 +513,7 @@ func (s *SalesAnalyticsService) GetSalesDashboard(tenantID string) (*models.Sale
 		tenantID, models.LeadStatusConverted).Scan(&dashboard.ConversionRate)
 
 	if dashboard.TotalLeads > 0 {
-		dashboard.ConversionRate = (dashboard.ConversionRate / dashboard.TotalLeads) * 100
+		dashboard.ConversionRate = (float64(dashboard.ConversionRate) / float64(dashboard.TotalLeads)) * 100
 	}
 
 	// Opportunities

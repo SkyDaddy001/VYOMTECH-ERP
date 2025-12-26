@@ -86,7 +86,7 @@ func main() {
 			protected.GET("/tenant/users/active", getActiveUsersRealtime)
 			protected.GET("/tenant/users/seat-available", checkSeatAvailability)
 			protected.GET("/tenant/users/list", listTenantUsers)
-			protected.GET("/users/:userId/activity", getUserActivity)
+			protected.GET("/users/:id/activity", getUserActivity)
 			protected.GET("/tenant/users/stats", getUserCountStats)
 			protected.GET("/tenant/users/report", exportUserCountReport)
 			protected.PATCH("/tenant/users/limit", updateTenantUserLimit)

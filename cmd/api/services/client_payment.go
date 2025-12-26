@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"vyom-erp/cmd/api/models"
+	"lms/cmd/api/models"
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
