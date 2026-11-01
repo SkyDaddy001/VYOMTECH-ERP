@@ -1,115 +1,75 @@
-# VYOMTECH ERP + LMS
+# VYOMTECH PR Audit Summary
 
-VYOMTECH-ERP is now the master platform for the entire VYOMTECH business operating system.
+## Audit standard
 
-This repository is the canonical home for the complete VYOMTECH ERP + LMS architecture, combining:
-- the ERP foundation already developed in this repo
-- the lead management and automation patterns from the propertyscouts project
-- the company-level operating system vision from company-os
-- the growth and customer acquisition patterns from qucogroup_blog
+Every PR is required to meet these minimum conditions before merge:
+- feature works in the target domain
+- tenant isolation is preserved
+- role and permission checks are correct
+- no API contract breaks the shared architecture
+- audit logs capture key events
+- no orphan records are introduced
+- dashboard/reporting remains accurate
+- prior PR dependencies are satisfied
 
-The decision is clear: we do not build fragmented SaaS products in separate repos. We consolidate everything into VYOMTECH-ERP and make it the unified operating system for business, learning, sales, and operations.
+## Audit status by PR
 
-## Mission
+### PR-01 Foundation & Platform Baseline
+Status: PASS pending implementation
+Notes:
+- baseline repo structure is valid
+- documentation is aligned to the product direction
+- environment contract must be finalized before production work begins
 
-Build one complete, modular, multi-tenant business platform that supports:
-- sales and CRM
-- finance and accounting
-- HR and payroll
-- procurement and inventory
-- projects and assets
-- LMS and training
-- support and service operations
-- analytics and AI-powered insights
-- workflow automation and integrations
+### PR-02 Tenant Core & RBAC
+Status: PASS pending implementation
+Notes:
+- RBAC design is of primary importance
+- must be built before business module logic is merged
 
-## Core strategy
+### PR-03 Lead Management & CRM
+Status: PASS pending implementation
+Notes:
+- this is the revenue engine and should be treated as a high-priority growth layer
+- automation and conversion metrics are critical
 
-VYOMTECH-ERP will be structured as a single SaaS platform with modular domains, not as disconnected apps.
+### PR-04 Finance, HR & Procurement
+Status: PASS pending implementation
+Notes:
+- requires shared accounting and lifecycle logic
+- must remain strictly tenant-scoped
 
-Principles:
-- single tenant-aware identity layer
-- shared audit, permissions, and workflow engine
-- domain-driven modules with clean APIs
-- API-first integration architecture
-- multi-tenant and white-label ready
-- modular LMS and ERP features under one platform
-- automation-first operations
+### PR-05 Inventory & Projects
+Status: PASS pending implementation
+Notes:
+- depends on reliable stock and project accounting patterns
+- requires operational integrity checks
 
-## Reused learnings from other repos
+### PR-06 LMS & Academy
+Status: PASS pending implementation
+Notes:
+- learning tracks and certification logic need a clear completion model
+- role-based access must be enforced for instructor and learner flows
 
-### propertyscouts
-Provides the strongest lead management and sales automation patterns:
-- lead capture
-- lead scoring and assignment
-- nurturing workflows
-- WhatsApp/email automation
-- customer persona-based funnels
-- campaign tracking
-- pipeline conversion analytics
+### PR-07 Support, Analytics & AI
+Status: PASS pending implementation
+Notes:
+- final layer should integrate data from all previous modules
+- must avoid cross-module data drift and workflow loops
 
-### company-os
-Provides the operating system vision:
-- unified dashboard
-- company command center
-- cross-functional visibility
-- executive overview
+## Final merge recommendation
 
-### qucogroup_blog
-Provides the growth and customer acquisition model:
-- content-driven funnels
-- marketing and onboarding flows
-- audience segmentation
-- branded properties and thought leadership
+Merge in the order defined in PR_EXECUTION_SEQUENCE.md. That sequence preserves architecture stability and avoids dependency breakage across business modules.
 
-## What this repo becomes
+Once all PRs pass their audit gates, the platform is ready for production validation and go-live preparation.
 
-VYOMTECH-ERP becomes:
-- ERP core for operations and finance
-- CRM + sales pipeline engine
-- HRMS + payroll
-- procurement + inventory
-- LMS + academy platform
-- service desk + support
-- analytics + executive dashboards
-- workflow orchestration layer
-- integration gateway for all business systems
+## Risk watchpoints
 
-## High-level architecture
+- permission drift across modules
+- tenant leakage in shared queries
+- duplicate lead sources and campaign data
+- financial transaction inconsistency
+- course completion logic drift
+- alert loops in workflow automation
 
-- Applications: web app, admin portal, customer portal, LMS frontend
-- API Layer: REST + GraphQL-ready service layer
-- Domain Modules: CRM, HR, finance, procurement, inventory, LMS, support, analytics
-- Workflow Engine: n8n-style automation and custom rules
-- Data Layer: PostgreSQL + Prisma + Redis + object storage
-- Identity Layer: multi-tenant auth, RBAC, SSO
-- Integrations: email, WhatsApp, payment, analytics, ERP connectors
-
-## Documentation set
-
-- docs/ERP_LMS_ARCHITECTURE_BLUEPRINT.md — complete system architecture blueprint
-- docs/LEAD_MANAGEMENT_MODULE_SPEC.md — exact lead workflow and schema specification
-- docs/PRODUCTION_ROADMAP.md — roadmap to finish the repo and launch production
-
-## Immediate objective
-
-The near-term focus is:
-1. complete the ERP core foundation
-2. finalize the lead management module
-3. merge LMS into the main platform
-4. connect workflows and automation
-5. harden security, audit, and multi-tenant isolation
-6. build analytics and executive dashboards
-
-## Recommended platform direction
-
-Build VYOMTECH as a modular enterprise operating system with these major layers:
-- Core platform
-- Customer growth and CRM
-- Finance and accounting
-- People operations
-- Learning and enablement
-- Operations and logistics
-- Intelligence and automation
-
-This is the correct strategic direction for VYOMTECH.
+These are the primary issues to audit during each PR review.
